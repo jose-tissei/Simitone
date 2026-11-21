@@ -34,12 +34,14 @@ static class Native
 
 static class Program
 {
+    static bool Real;
     const string ProcName = "Simitone.Windows";
     const string AppDir = @"C:\Users\Zé\.t3\projects\the-sims-run\app";
 
     static int Main(string[] a)
     {
         Native.SetProcessDPIAware();
+        if (a.Contains("--real")) { Real = true; a = a.Where(x => x != "--real").ToArray(); }
         if (a.Length == 0) return Usage();
         try
         {
@@ -49,10 +51,15 @@ static class Program
                 case "kill": Kill(); return 0;
                 case "status": return Status();
                 case "shot": return Shot(a.Length > 1 ? a[1] : "shot.png");
-                case "click": return Click(a, 0x0201, 0x0202, 1);
-                case "rclick": return Click(a, 0x0204, 0x0205, 2);
-                case "move": return Move(a);
-                case "key": return Key(a[1], a.Length > 2 ? int.Parse(a[2]) : 80);
+                case "click": return Real ? ClickReal(a, 1) : HookClick(a, "l");
+                case "rclick": return Real ? ClickReal(a, 2) : HookClick(a, "r");
+                case "move": return Real ? MoveReal(a) : HookMove(a);
+                case "drag": return HookDrag(a);
+                case "wheel": return HookCmds(new[] { "enable", "wheel " + a[1] }, true);
+                case "enable": return HookCmds(new[] { "enable" }, false);
+                case "disable": return HookCmds(new[] { "disable" }, false);
+                case "ping": return HookCmds(new[] { "ping" }, false);
+                case "key": return Real ? KeyReal(a[1], a.Length > 2 ? int.Parse(a[2]) : 80) : HookKey(a[1], a.Length > 2 ? int.Parse(a[2]) : 80);
                 case "wait": Thread.Sleep((int)(double.Parse(a[1]) * 1000)); return 0;
                 default: return Usage();
             }
@@ -62,7 +69,8 @@ static class Program
 
     static int Usage()
     {
-        Console.WriteLine("simtool launch [--3d] | kill | status | shot [out.png] | click X Y | rclick X Y | move X Y | key NAME [holdMs] | wait SECONDS");
+        Console.WriteLine("simtool launch [--3d] | kill | status | shot [out.png] | click X Y | rclick X Y | move X Y | drag X1 Y1 X2 Y2 | wheel N | key NAME [holdMs] | wait SECONDS | ping | disable");
+        Console.WriteLine("input goes through the in-game hook (works in the background); add --real to use focus-based real input instead");
         Console.WriteLine("X,Y are client pixels of the Simitone window. key: enter,esc,space,tab,left,right,up,down,f1-f12,a-z,0-9");
         return 2;
     }
@@ -145,6 +153,75 @@ static class Program
 
     static (int, int) Pt(string[] a, int i) => (int.Parse(a[i]), int.Parse(a[i + 1]));
 
+
+    // ---- in-game hook (SimTestHook): synthetic input over a per-user named pipe, no focus needed
+    static System.IO.Pipes.NamedPipeClientStream OpenPipe()
+    {
+        var c = new System.IO.Pipes.NamedPipeClientStream(".", "simitone-test", System.IO.Pipes.PipeDirection.InOut);
+        try { c.Connect(2000); } catch { throw new Exception("input hook not reachable: is Simitone running with the hook installed? (or use --real)"); }
+        return c;
+    }
+
+    static int HookCmds(string[] cmds, bool disableAfter, int gapMs = 0)
+    {
+        using var c = OpenPipe();
+        var w = new StreamWriter(c, new System.Text.UTF8Encoding(false), 1024, true) { AutoFlush = true };
+        var r = new StreamReader(c, System.Text.Encoding.UTF8, false, 1024, true);
+        foreach (var cmd in cmds)
+        {
+            if (cmd.StartsWith("sleep ")) { Thread.Sleep(int.Parse(cmd[6..])); continue; }
+            w.WriteLine(cmd);
+            var reply = r.ReadLine();
+            if (reply == null || !reply.StartsWith("ok")) throw new Exception($"hook rejected '{cmd}': {reply}");
+            if (cmd == "ping") Console.WriteLine(reply);
+            if (gapMs > 0) Thread.Sleep(gapMs);
+        }
+        if (disableAfter) { w.WriteLine("disable"); r.ReadLine(); }
+        return 0;
+    }
+
+    static int HookClick(string[] a, string btn)
+    {
+        var (x, y) = Pt(a, 1);
+        return HookCmds(new[] { "enable", $"mouse {x} {y}", "sleep 150", $"down {btn}", "sleep 150", $"up {btn}", "sleep 200" }, true);
+    }
+
+    static int HookMove(string[] a)
+    {
+        var (x, y) = Pt(a, 1);
+        return HookCmds(new[] { "enable", $"mouse {x} {y}", "sleep 300" }, false); // stays active (hover) until "disable" or idle timeout
+    }
+
+    static int HookDrag(string[] a)
+    {
+        var (x1, y1) = Pt(a, 1); var (x2, y2) = Pt(a, 3);
+        var cmds = new List<string> { "enable", $"mouse {x1} {y1}", "sleep 150", "down l", "sleep 100" };
+        for (int i = 1; i <= 10; i++) { cmds.Add($"mouse {x1 + (x2 - x1) * i / 10} {y1 + (y2 - y1) * i / 10}"); cmds.Add("sleep 40"); }
+        cmds.AddRange(new[] { "sleep 100", "up l", "sleep 200" });
+        return HookCmds(cmds.ToArray(), true);
+    }
+
+    static int HookKey(string name, int holdMs)
+    {
+        var k = HookKeyName(name);
+        return HookCmds(new[] { "enable", "sleep 100", $"keydown {k}", $"sleep {holdMs}", $"keyup {k}", "sleep 150" }, true);
+    }
+
+    // simtool key names -> XNA Keys enum names
+    static string HookKeyName(string n)
+    {
+        n = n.ToLowerInvariant();
+        return n switch
+        {
+            "enter" => "Enter", "esc" => "Escape", "space" => "Space", "tab" => "Tab", "backspace" => "Back", "delete" => "Delete",
+            "left" => "Left", "right" => "Right", "up" => "Up", "down" => "Down", "pageup" => "PageUp", "pagedown" => "PageDown",
+            _ when n.Length == 1 && char.IsLetter(n[0]) => n.ToUpperInvariant(),
+            _ when n.Length == 1 && char.IsDigit(n[0]) => "D" + n,
+            _ when n.StartsWith("f") && int.TryParse(n[1..], out _) => "F" + n[1..],
+            _ => throw new Exception("unknown key " + n),
+        };
+    }
+
     // ---- real input, guarded. The game reads the real mouse/keyboard and only when focused, so we
     // briefly focus it, verify it is really in front, send input, then give focus back.
     static IntPtr prevFg; static Native.POINT prevCur;
@@ -172,7 +249,7 @@ static class Program
 
     static bool IsGame(IntPtr h, Native.POINT sp) => Native.GetAncestor(Native.WindowFromPoint(sp), 2) == h;
 
-    static int Click(string[] a, uint down, uint up, int btn)
+    static int ClickReal(string[] a, int btn)
     {
         var h = Hwnd(); var (x, y) = Pt(a, 1);
         Focus(h);
@@ -189,7 +266,7 @@ static class Program
         return 0;
     }
 
-    static int Move(string[] a)
+    static int MoveReal(string[] a)
     {
         var h = Hwnd(); var (x, y) = Pt(a, 1);
         Focus(h);
@@ -208,7 +285,7 @@ static class Program
         ["pageup"] = 0x21, ["pagedown"] = 0x22, ["backspace"] = 0x08, ["delete"] = 0x2E,
     };
 
-    static int Key(string name, int holdMs = 80)
+    static int KeyReal(string name, int holdMs = 80)
     {
         var h = Hwnd();
         name = name.ToLowerInvariant();

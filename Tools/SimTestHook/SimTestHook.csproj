@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>SimTestHook</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <!-- the MonoGame build the Simitone release loads (DirectX) -->
+    <MonoGameDll Condition="'$(MonoGameDll)'==''">C:\Users\Zé\.t3\projects\the-sims-run\app\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MonoGame.Framework">
+      <HintPath>$(MonoGameDll)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>
