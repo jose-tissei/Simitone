@@ -30,3 +30,8 @@ New-Icon 'opt_cam_free.png' { param($g, $pen)
 New-Icon 'opt_cam_reload.png' { param($g, $pen)
     $g.DrawArc($pen, 11, 11, 43, 43, -60, 280)
     $g.FillPolygon([System.Drawing.Brushes]::White, @((P 44 6), (P 58 22), (P 36 24))) }
+
+# plain 2D: flat square with diagonal slash (3D off)
+New-Icon 'opt_cam_2d.png' { param($g, $pen)
+    $g.DrawRectangle($pen, 12, 12, 41, 41)
+    $g.DrawLine($pen, (P 8 57), (P 57 8)) }

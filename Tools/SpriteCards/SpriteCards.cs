@@ -32,6 +32,7 @@ public static class SpriteCards
     //   fixed   : original camera (Hybrid2D), objects are meshes except the list (sprites)
     //   classic : original camera (Hybrid2D), objects are sprites; walls, doors, windows are 3D
     //   free    : free 3D camera (Full3D)
+    //   2d      : plain original 2D game (Full2D); 3D is effectively off
     public static string Profile = "fixed";
     static bool profileLoaded;
     static readonly string[] classicMeshPrefixes = { "door", "window" };
@@ -42,7 +43,7 @@ public static class SpriteCards
     {
         if (profileLoaded) return;
         profileLoaded = true;
-        try { if (File.Exists(ProfilePath)) { var p = File.ReadAllText(ProfilePath).Trim(); if (p == "fixed" || p == "classic" || p == "free") Profile = p; } } catch { }
+        try { if (File.Exists(ProfilePath)) { var p = File.ReadAllText(ProfilePath).Trim(); if (p == "fixed" || p == "classic" || p == "free" || p == "2d") Profile = p; } } catch { }
     }
 
     // called from Simitone.Windows Main (patched): 3D is on by default; "-2d" keeps the plain 2D game
@@ -65,28 +66,64 @@ public static class SpriteCards
     static void ApplyMode()
     {
         if (!FSOEnvironment.Enable3D) return;
-        var want = Profile == "free" ? GlobalGraphicsMode.Full3D : GlobalGraphicsMode.Hybrid2D;
-        if (want == GlobalGraphicsMode.Hybrid2D && GraphicsModeControl.Mode == GlobalGraphicsMode.Hybrid2D)
-            GraphicsModeControl.ChangeMode(GlobalGraphicsMode.Full3D);
+        var want = Profile == "free" ? GlobalGraphicsMode.Full3D : Profile == "2d" ? GlobalGraphicsMode.Full2D : GlobalGraphicsMode.Hybrid2D;
+        if (want == GraphicsModeControl.Mode && want != GlobalGraphicsMode.Full3D)
+            GraphicsModeControl.ChangeMode(GlobalGraphicsMode.Full3D); // force a rebuild of the lot
         GraphicsModeControl.ChangeMode(want);
     }
 
-    public static void MenuFixed() { SetProfile("fixed"); }
-    public static void MenuClassic() { SetProfile("classic"); }
-    public static void MenuFree() { SetProfile("free"); }
+    // ---- Options menu: entries are (0 plain 2D, 1 fixed, 2 classic, 3 free, 4 reload). The patched
+    // Options menu builds the buttons; Decorate() colours the active profile's button green (the
+    // UICatButton "Selected" state) and keeps it up to date when a button is clicked.
+    static readonly string[] profileOfEntry = { "2d", "fixed", "classic", "free", null };
+    static object menuPanel;           // the Options UIButtonSubpanel currently shown
+
+    public static void Menu2D() { SetProfile("2d"); Refresh(); }
+    public static void MenuFixed() { SetProfile("fixed"); Refresh(); }
+    public static void MenuClassic() { SetProfile("classic"); Refresh(); }
+    public static void MenuFree() { SetProfile("free"); Refresh(); }
     public static void MenuReload() { lastCheck = DateTime.MinValue; loadedWrite = DateTime.MinValue; ApplyMode(); }
 
-    // labels for the Options menu entries (0 fixed, 1 classic, 2 free, 3 reload)
+    // text on each entry
     public static string Label(int id)
     {
-        LoadProfile();
         switch (id)
         {
-            case 0: return "Fixed camera" + (Profile == "fixed" ? " *" : "");
-            case 1: return "Classic objects" + (Profile == "classic" ? " *" : "");
-            case 2: return "Free camera" + (Profile == "free" ? " *" : "");
+            case 0: return "Plain 2D";
+            case 1: return "Fixed camera";
+            case 2: return "Classic objects";
+            case 3: return "Free camera";
             default: return "Reload list";
         }
+    }
+
+    // called right after the Options subpanel is built (patched into Switcher_OnCategorySelect)
+    public static object Decorate(object subpanel)
+    {
+        menuPanel = subpanel;
+        Refresh();
+        return subpanel;
+    }
+
+    static void Refresh()
+    {
+        LoadProfile();
+        try
+        {
+            if (menuPanel == null) return;
+            var get = menuPanel.GetType().GetMethod("GetChildren");
+            var kids = (System.Collections.IEnumerable)get.Invoke(menuPanel, null);
+            int i = 0;
+            foreach (var k in kids)
+            {
+                if (k.GetType().Name != "UICatButton") continue;
+                int entry = i - 3; // after Save, Neighborhood, Quit
+                var sel = k.GetType().GetProperty("Selected");
+                if (sel != null) sel.SetValue(k, entry >= 0 && entry < profileOfEntry.Length && profileOfEntry[entry] == Profile, null);
+                i++;
+            }
+        }
+        catch { }
     }
 
     static bool IsClassicMesh(string n)
@@ -151,7 +188,7 @@ public static class SpriteCards
         if (world != null) world.ForceImmediate = true;
         Reload();
         LoadProfile();
-        if (Profile == "free") return; // free camera: the engine picks meshes itself
+        if (Profile == "free" || Profile == "2d") return; // free camera / plain 2D: the engine decides itself
         var n = NameOf(c);
         Log(n);
         ComponentRenderMode m;

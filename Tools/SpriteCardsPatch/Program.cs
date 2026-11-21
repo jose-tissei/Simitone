@@ -58,7 +58,7 @@ int total = 0;
     var panel = mod.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UIMainPanel");
     var m = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
     var ins = m.Body.Instructions;
-    if (ins.Any(i => i.Operand is MethodReference r && r.Name == "Label" && r.DeclaringType.Name == "SpriteCards"))
+    if (ins.Any(i => i.Operand is MethodReference r && r.Name == "Decorate" && r.DeclaringType.Name == "SpriteCards"))
         Console.WriteLine("options menu already patched");
     else
     {
@@ -74,10 +74,11 @@ int total = 0;
         // (label id, icon, menu action)
         var entries = new (int id, string icon, string action)[]
         {
-            (0, "opt_cam_fixed.png", "MenuFixed"),
-            (1, "opt_cam_classic.png", "MenuClassic"),
-            (2, "opt_cam_free.png", "MenuFree"),
-            (3, "opt_cam_reload.png", "MenuReload"),
+            (0, "opt_cam_2d.png", "Menu2D"),
+            (1, "opt_cam_fixed.png", "MenuFixed"),
+            (2, "opt_cam_classic.png", "MenuClassic"),
+            (3, "opt_cam_free.png", "MenuFree"),
+            (4, "opt_cam_reload.png", "MenuReload"),
         };
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
         var il = m.Body.GetILProcessor();
@@ -95,6 +96,12 @@ int total = 0;
             il.InsertBefore(anchor, il.Create(OpCodes.Newobj, catFuncCtor));
             il.InsertBefore(anchor, il.Create(OpCodes.Stelem_Ref));
         }
+        // after "newobj UIButtonSubpanel" the new panel is on the stack: Decorate(panel) returns it (and colours the active button)
+        var decorateRef = mod.ImportReference(Hook("Decorate"));
+        var decorateCall = il.Create(OpCodes.Call, decorateRef);
+        il.InsertAfter(anchor, decorateCall);
+        // Decorate returns object; the consumer expects the subpanel type, so cast back
+        il.InsertAfter(decorateCall, il.Create(OpCodes.Castclass, ((MethodReference)anchor.Operand).DeclaringType));
         Console.WriteLine($"patched {m.FullName}: options menu {oldSize} -> {oldSize + entries.Length} entries");
         mod.Write(Path.Combine(outDir, "Simitone.Client.dll")); total++;
     }
