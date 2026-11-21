@@ -1,0 +1,13 @@
+diff --git a/TSOClient/FSO.UI/UILayer.cs b/TSOClient/FSO.UI/UILayer.cs
+index 2e5896cf..dc30fd37 100644
+--- a/TSOClient/FSO.UI/UILayer.cs
++++ b/TSOClient/FSO.UI/UILayer.cs
+@@ -147,6 +147,8 @@ namespace FSO.Client.UI
+                 Size = 10,
+                 Color = new Color(255, 249, 157),
+                 SelectedColor = new Color(0x00, 0x38, 0x7B),
++                //default highlight is white, which is unreadable on light buttons (eg. alert OK)
++                HighlightedColor = new Color(0x00, 0x38, 0x7B),
+                 SelectionBoxColor = new Color(255, 249, 157)
+             };
+ 

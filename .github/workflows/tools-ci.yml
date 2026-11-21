@@ -1,0 +1,60 @@
+name: Tools CI
+
+# Builds the modding tools in Tools/ against the real Simitone release and runs the automated tests that need no
+# Sims game files: unit tests for the mode logic, and integration tests that run the real patcher on the real
+# release and inspect the patched assemblies. Same script you can run locally: Tools/ci.ps1.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # the release the tools are patched against; bump deliberately and re-run
+  SIMITONE_RELEASE: v0.8.12
+
+jobs:
+  tools:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false   # the tools use the prebuilt release, not the FreeSO sources
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Restore cached release
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: release
+          key: simitone-release-${{ env.SIMITONE_RELEASE }}
+
+      - name: Download Simitone release
+        if: steps.cache.outputs.cache-hit != 'true'
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force release/dl | Out-Null
+          gh release download $env:SIMITONE_RELEASE --repo riperiperi/Simitone --pattern SimitoneWindows.zip --dir release/dl
+          Expand-Archive release/dl/SimitoneWindows.zip -DestinationPath release/app
+          Remove-Item release/dl -Recurse -Force
+
+      - name: Build and test
+        shell: pwsh
+        run: ./Tools/ci.ps1 -App release/app
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-output
+          path: |
+            Tools/**/TestResults/**
+          if-no-files-found: ignore

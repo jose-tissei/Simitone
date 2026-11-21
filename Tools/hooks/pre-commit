@@ -1,0 +1,8 @@
+#!/bin/sh
+# Runs the fast unit tests before any commit that touches Tools/. Enable once per clone:
+#   git config core.hooksPath Tools/hooks
+# (The full build + patch tests run in CI on every push; see Tools/ci.ps1.)
+if git diff --cached --name-only | grep -q '^Tools/'; then
+    echo "pre-commit: running Tools/SpriteCards.Tests ..."
+    dotnet test Tools/SpriteCards.Tests --nologo -v q || { echo "pre-commit: unit tests failed, commit aborted"; exit 1; }
+fi

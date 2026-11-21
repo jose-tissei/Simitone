@@ -1,0 +1,17 @@
+# Default 2D-model list. Used by the "3D with 2D list" mode (objects drawn with their original 2D sprites;
+# everything else is a mesh). One name per line, as in Content\spritecards.log. A trailing * matches a prefix.
+# Lines starting with "mesh:" force a mesh (used by "3D architecture, 2D objects" too).
+# Ctrl+click an object in game to override single objects (stored in Documents\Simitone\spritecards.user.txt).
+
+# magic realm objects with poor generated meshes
+clownportal
+spellbook
+stereos
+
+# trees and plants: the generated 3D versions look bad, the original sprites look right
+trees*
+shrubs*
+flowers*
+plants*
+topiar*
+hedge*
