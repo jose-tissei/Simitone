@@ -54,3 +54,14 @@ object's mode is set explicitly each frame, so switching modes in any order leav
 Icons come from `icons/make_icons.ps1` (copy `opt_cam_*.png` to `<appDir>\Content\uigraphics\live\modes\`).
 The patcher patches `FSO.LotView.dll`, `Simitone.Client.dll` (menu, Ctrl+click) and `Simitone.Windows.exe`; always run it
 against the original DLLs.
+
+## Testing
+| What | Where it runs | How |
+|---|---|---|
+| Unit tests: mode table, list parsing, overrides (`Tools/SpriteCards.Tests`, 28 tests, no game needed) | every commit (local pre-commit hook) and every push (CI) | `dotnet test Tools/SpriteCards.Tests` |
+| Patch tests: the real patcher applied to the real Simitone release, patched assemblies inspected (`Tools/PatchTests`, 10 tests) | every push (CI) | `pwsh Tools/ci.ps1 -App <extracted release>` |
+| Build of every tool + smoke runs of the older patchers | every push (CI) | `Tools/ci.ps1` |
+| End-to-end: launches the patched game, enters a lot, drives the menu and Ctrl+click chooser (`Tools/e2e/Run-E2E.ps1`, 26 checks) | locally, before pushing (needs the Sims files) | `pwsh Tools/e2e/Run-E2E.ps1` |
+
+CI is `.github/workflows/tools-ci.yml` (Windows runner, release v0.8.12 pinned). Enable the local hook once per clone with
+`git config core.hooksPath Tools/hooks`. If you change the mode table, update `ModeLogic.Modes`, its tests and the table above together.

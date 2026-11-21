@@ -32,18 +32,13 @@ using Simitone.Client.UI.Panels;
 //  Hybrid modes draw objects live (ForceImmediate) so sprites and meshes can be mixed; other modes clear it.
 public static class SpriteCards
 {
-    sealed class ModeDef
-    {
-        public string Id, Label; public GlobalGraphicsMode Engine; public bool Hybrid; public bool ListApplies; public bool ObjectsDefaultMesh;
-    }
+    static readonly ModeDef[] Modes = ModeLogic.Modes;
 
-    static readonly ModeDef[] Modes =
+    // engine graphics mode for each mode id
+    static GlobalGraphicsMode EngineOf(ModeDef m)
     {
-        new ModeDef { Id = "2d",     Label = "2D mode",                     Engine = GlobalGraphicsMode.Full2D,   Hybrid = false },
-        new ModeDef { Id = "list",   Label = "3D with 2D list",             Engine = GlobalGraphicsMode.Hybrid2D, Hybrid = true,  ListApplies = true,  ObjectsDefaultMesh = true },
-        new ModeDef { Id = "arch",   Label = "3D arch + 2D objects", Engine = GlobalGraphicsMode.Hybrid2D, Hybrid = true,  ListApplies = false, ObjectsDefaultMesh = false },
-        new ModeDef { Id = "full3d", Label = "Full 3D",                     Engine = GlobalGraphicsMode.Full3D,   Hybrid = false },
-    };
+        switch (m.Id) { case "2d": return GlobalGraphicsMode.Full2D; case "full3d": return GlobalGraphicsMode.Full3D; default: return GlobalGraphicsMode.Hybrid2D; }
+    }
 
     static ModeDef Current = Modes[1];
     static bool profileLoaded;
@@ -52,21 +47,10 @@ public static class SpriteCards
     static string UserPath { get { return Path.Combine(FSOEnvironment.UserDir ?? "", "spritecards.user.txt"); } }
     static readonly string ListPath = Path.Combine("Content", "spritecards.txt");
 
-    // objects whose file name starts with one of these stay meshes in "arch" (3D doors and windows)
-    static readonly string[] ArchMeshPrefixes = { "door", "window" };
 
     // ---------------------------------------------------------------- list files
-    static readonly HashSet<string> listSprites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    static readonly HashSet<string> listMeshes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    static readonly Dictionary<string, bool> userOverride = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase); // true = 2D model
+    static readonly ModelLists lists = new ModelLists();
     static DateTime listWrite = DateTime.MinValue, userWrite = DateTime.MinValue, lastCheck = DateTime.MinValue;
-
-    static bool Matches(HashSet<string> set, string n)
-    {
-        if (set.Contains(n)) return true;
-        foreach (var e in set) if (e.EndsWith("*") && n.StartsWith(e.Substring(0, e.Length - 1), StringComparison.OrdinalIgnoreCase)) return true;
-        return false;
-    }
 
     static void ReloadFiles(bool force)
     {
@@ -78,30 +62,12 @@ public static class SpriteCards
             if (File.Exists(ListPath))
             {
                 var w = File.GetLastWriteTimeUtc(ListPath);
-                if (force || w != listWrite)
-                {
-                    listWrite = w; listSprites.Clear(); listMeshes.Clear();
-                    foreach (var raw in File.ReadAllLines(ListPath))
-                    {
-                        var l = raw.Split('#')[0].Trim();
-                        if (l.Length == 0 || l.StartsWith("default ", StringComparison.OrdinalIgnoreCase)) continue; // "default ..." lines are obsolete
-                        if (l.StartsWith("mesh:", StringComparison.OrdinalIgnoreCase)) listMeshes.Add(l.Substring(5).Trim());
-                        else listSprites.Add(l);
-                    }
-                }
+                if (force || w != listWrite) { listWrite = w; ModeLogic.ParseList(File.ReadAllLines(ListPath), lists); }
             }
             if (File.Exists(UserPath))
             {
                 var w = File.GetLastWriteTimeUtc(UserPath);
-                if (force || w != userWrite)
-                {
-                    userWrite = w; userOverride.Clear();
-                    foreach (var raw in File.ReadAllLines(UserPath))
-                    {
-                        var p = raw.Split('#')[0].Trim().Split(new[] { ' ' }, 2);
-                        if (p.Length == 2 && (p[0] == "2d" || p[0] == "3d")) userOverride[p[1].Trim()] = p[0] == "2d";
-                    }
-                }
+                if (force || w != userWrite) { userWrite = w; ModeLogic.ParseOverrides(File.ReadAllLines(UserPath), lists); }
             }
         }
         catch { }
@@ -111,27 +77,18 @@ public static class SpriteCards
     {
         try
         {
-            var lines = new List<string> { "# per-object model overrides set with Ctrl+click in game: '2d name' or '3d name'" };
-            foreach (var kv in userOverride) lines.Add((kv.Value ? "2d " : "3d ") + kv.Key);
-            File.WriteAllLines(UserPath, lines.ToArray());
+            File.WriteAllLines(UserPath, ModeLogic.SerializeOverrides(lists.Overrides));
             userWrite = File.GetLastWriteTimeUtc(UserPath);
         }
         catch { }
     }
 
     // ---------------------------------------------------------------- profile (mode) handling
-    static ModeDef Find(string id)
-    {
-        if (id == "fixed") id = "list"; else if (id == "classic") id = "arch"; else if (id == "free") id = "full3d"; // old names
-        foreach (var m in Modes) if (m.Id == id) return m;
-        return null;
-    }
-
     static void LoadProfile()
     {
         if (profileLoaded) return;
         profileLoaded = true;
-        try { if (File.Exists(ProfilePath)) { var m = Find(File.ReadAllText(ProfilePath).Trim()); if (m != null) Current = m; } } catch { }
+        try { if (File.Exists(ProfilePath)) { var m = ModeLogic.Find(File.ReadAllText(ProfilePath)); if (m != null) Current = m; } } catch { }
     }
 
     // called from Simitone.Windows Main (patched): 3D is on by default; "-2d" keeps the plain 2D game
@@ -154,9 +111,9 @@ public static class SpriteCards
     static void ApplyEngineMode(bool rebuild)
     {
         if (!FSOEnvironment.Enable3D) return;
-        if (rebuild && GraphicsModeControl.Mode == Current.Engine && Current.Engine != GlobalGraphicsMode.Full3D)
+        if (rebuild && GraphicsModeControl.Mode == EngineOf(Current) && EngineOf(Current) != GlobalGraphicsMode.Full3D)
             GraphicsModeControl.ChangeMode(GlobalGraphicsMode.Full3D);
-        GraphicsModeControl.ChangeMode(Current.Engine);
+        GraphicsModeControl.ChangeMode(EngineOf(Current));
     }
 
     // ---------------------------------------------------------------- Options menu
@@ -235,26 +192,7 @@ public static class SpriteCards
         catch { return null; }
     }
 
-    static bool IsArchMesh(string n)
-    {
-        foreach (var p in ArchMeshPrefixes) if (n.StartsWith(p)) return true;
-        return false;
-    }
-
-    // true if this object is drawn with its 2D sprite in the current mode (ignoring nothing: includes overrides)
-    static bool UsesSprite(string n)
-    {
-        if (n == null || !Current.Hybrid) return true;
-        bool o;
-        if (userOverride.TryGetValue(n, out o)) return o;
-        if (Current.ListApplies)
-        {
-            if (Matches(listMeshes, n)) return false;
-            return Matches(listSprites, n) || !Current.ObjectsDefaultMesh;
-        }
-        // arch: objects are sprites except doors/windows and anything marked "mesh:"
-        return !(IsArchMesh(n) || Matches(listMeshes, n));
-    }
+    static bool UsesSprite(string n) { return ModeLogic.UsesSprite(Current, n, lists); }
 
     // injected at the top of ObjectComponent.{DoDraw,Draw,Update,Preload}
     public static void Apply(ObjectComponent c, WorldState world)
@@ -340,7 +278,7 @@ public static class SpriteCards
 
     static void SetOverride(string name, bool sprite)
     {
-        userOverride[name] = sprite;
+        lists.Overrides[name] = sprite;
         SaveUserOverrides(); // takes effect on the next frame: Apply runs for every object, every frame
     }
 
