@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>SpriteCards</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <AppDir Condition="'$(AppDir)'==''">C:\Users\Zé\.t3\projects\the-sims-run\app</AppDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FSO.LotView"><HintPath>$(AppDir)\FSO.LotView.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

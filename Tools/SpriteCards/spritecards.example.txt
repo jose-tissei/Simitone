@@ -1,0 +1,7 @@
+# One IFF name per line (as logged in Content\spritecards.log) = draw as the original sprite.
+# Every other object is drawn as a mesh. Reloaded when the file changes (then press F12 twice).
+default mesh
+clownportal    # magic portal sign
+spellbook
+stereos        # radio / boombox
+# "default sprite" flips the default; then use "mesh: name" to pick meshes instead.
