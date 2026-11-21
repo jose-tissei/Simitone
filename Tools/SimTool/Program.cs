@@ -92,7 +92,7 @@ static class Program
         Kill();
         Thread.Sleep(1000);
         var psi = new ProcessStartInfo(Path.Combine(AppDir, ProcName + ".exe"), string.Join(" ", args.Where(x => x == "--3d").Select(_ => "-3d")))
-        { WorkingDirectory = AppDir, UseShellExecute = false };
+        { WorkingDirectory = AppDir, UseShellExecute = true }; // shell-execute so the game does not inherit our stdout (would hang callers that pipe us)
         Process.Start(psi);
         for (int i = 0; i < 60; i++)
         {
