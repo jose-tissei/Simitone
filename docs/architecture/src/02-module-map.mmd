@@ -1,0 +1,13 @@
+%% caption: How the code is split into building blocks. Arrows point from a block to the blocks it relies on. The folders called tso.* on disk are the FSO.* blocks here (for example tso.world builds FSO.LotView).
+flowchart TD
+  WIN["Simitone.Windows<br/>launcher"] --> CLI["Simitone.Client<br/>screens and panels"]
+  CLI --> UI["FSO.UI<br/>shared buttons and dialogs"]
+  CLI --> SIM["FSO.SimAntics<br/>the Sims rules engine"]
+  CLI --> LOT["FSO.LotView<br/>draws the lot and the people"]
+  UI --> SIM
+  SIM --> LOT
+  LOT --> CON["FSO.Content<br/>loads game assets"]
+  CON --> FIL["FSO.Files<br/>reads the file formats"]
+  FIL --> COM["FSO.Common<br/>shared basics"]
+  LOT --> VIT["FSO.Vitaboy<br/>people models"]
+  SIM --> HIT["FSO.HIT<br/>sound"]

@@ -1,0 +1,11 @@
+%% caption: The data the game works with. Simitone has no database: this is how the original Sims 1 files relate (inferred from the chunk names in FSO.Files). FSOM, the 3D mesh, is the part Simitone adds.
+erDiagram
+  NEIGHBORHOOD ||--o{ HOUSE : contains
+  HOUSE ||--o| FAMILY : "lived in by"
+  FAMILY ||--o{ SIM : "has members"
+  HOUSE ||--o{ OBJECT_PLACED : "furnished with"
+  OBJECT_KIND ||--o{ OBJECT_PLACED : "is the type of"
+  OBJECT_KIND ||--|| BEHAVIOR : "runs (BHAV)"
+  OBJECT_KIND ||--|| DRAW_GROUP : "looks like (DGRP)"
+  DRAW_GROUP ||--o{ SPRITE : "drawn from (SPR2)"
+  DRAW_GROUP ||--o| MESH : "optional 3D copy (FSOM)"

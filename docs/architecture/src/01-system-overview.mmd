@@ -1,0 +1,16 @@
+%% caption: The big picture. You play in Simitone, which reads your own copy of The Sims 1 from disk and keeps its settings and saves in your Documents folder. Our mod layer rewrites a few parts of the released game after the fact.
+flowchart LR
+  P(["You, the player"])
+  W["Simitone.Windows<br/>starts the game"]
+  C["Simitone.Client<br/>menus, screens, buttons"]
+  E["FreeSO engine libraries<br/>rules, drawing, file reading"]
+  G[("Your Sims 1 install<br/>Program Files (x86)/Maxis/The Sims")]
+  D[("Documents/Simitone<br/>settings, saves, mod choices")]
+  M["Mod layer (Tools/)<br/>patches the released game"]
+  P -->|plays through| C
+  W -->|launches| C
+  C -->|asks for everything below| E
+  E -->|reads objects, houses, sounds from| G
+  C -->|keeps settings and saves in| D
+  M -->|adds menu and hooks to| C
+  M -->|changes how objects are drawn in| E

@@ -1,0 +1,13 @@
+%% caption: How the game decides, for each object on each frame, whether to draw its original 2D picture or a 3D model. Your Ctrl+click choices always win. Source of truth: Tools/SpriteCards/ModeLogic.cs.
+flowchart TD
+  A["Object to draw"] --> B{"Which display mode?"}
+  B -->|"2D mode or Full 3D"| C["The game engine decides<br/>for every object alike"]
+  B -->|"3D with 2D list or<br/>3D arch + 2D objects"| D{"Did you Ctrl+click it?"}
+  D -->|yes| E["Use your choice"]
+  D -->|no| F{"Which of the two?"}
+  F -->|"3D with 2D list"| G{"On the 2D list?"}
+  G -->|yes| H["Draw the 2D picture"]
+  G -->|no| I["Draw the 3D model"]
+  F -->|"3D arch + 2D objects"| J{"A door, a window,<br/>or marked mesh?"}
+  J -->|yes| I
+  J -->|no| H

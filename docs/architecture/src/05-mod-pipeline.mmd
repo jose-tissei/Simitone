@@ -1,0 +1,16 @@
+%% caption: How our changes get into the game. We never rebuild Simitone: small programs rewrite specific methods inside the released game files, and tests check the result.
+flowchart LR
+  ZIP["Released game<br/>SimitoneWindows.zip v0.8.12"]
+  PAT["Patchers (Tools/)<br/>rewrite specific methods"]
+  HOOK["Hook libraries<br/>SpriteCards.dll, SimTestHook.dll"]
+  APP["Patched game folder"]
+  TOOL["simtool<br/>screenshots and test input"]
+  TEST["Automated tests<br/>unit, patch, end-to-end"]
+  CI["GitHub Actions<br/>runs tests on every push"]
+  ZIP -->|is read by| PAT
+  PAT -->|writes patched DLLs into| APP
+  HOOK -->|is called by| APP
+  TOOL -->|drives and photographs| APP
+  TEST -->|check| PAT
+  TEST -->|check| APP
+  CI -->|runs| TEST

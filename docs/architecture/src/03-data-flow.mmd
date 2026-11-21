@@ -1,0 +1,20 @@
+%% caption: What happens from double-clicking the game until a lot is on screen. Steps 3 and 4 are inferred from class names (TS1ObjectProvider, TS1NeighbourProvider, GameController.EnterGameMode).
+sequenceDiagram
+  actor You
+  participant Win as Simitone.Windows
+  participant Loc as Game locator
+  participant Con as Content loader
+  participant Scr as Game screen
+  participant Sim as Rules engine (VM)
+  participant Wld as World drawing
+  You->>Win: start Simitone.Windows.exe
+  Win->>Loc: where is The Sims 1 installed?
+  Loc-->>Win: registry path, or the default Program Files folder
+  Win->>Con: load objects, neighborhoods, sounds from that folder
+  You->>Scr: pick a house and press Enter Lot
+  Scr->>Sim: build the house and its people
+  Scr->>Wld: draw the lot (sprites or 3D)
+  loop every frame
+    Sim->>Sim: let each object run its behavior
+    Wld->>You: show the updated picture
+  end
