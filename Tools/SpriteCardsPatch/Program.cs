@@ -55,6 +55,7 @@ int total = 0;
 // ---------------------------------------------------------------- 2. Simitone.Client.dll (Options menu)
 {
     var mod = Open("Simitone.Client.dll");
+    int nClient = 0;
     var panel = mod.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UIMainPanel");
     var m = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
     var ins = m.Body.Instructions;
@@ -75,9 +76,9 @@ int total = 0;
         var entries = new (int id, string icon, string action)[]
         {
             (0, "opt_cam_2d.png", "Menu2D"),
-            (1, "opt_cam_fixed.png", "MenuFixed"),
-            (2, "opt_cam_classic.png", "MenuClassic"),
-            (3, "opt_cam_free.png", "MenuFree"),
+            (1, "opt_cam_fixed.png", "MenuList"),
+            (2, "opt_cam_classic.png", "MenuArch"),
+            (3, "opt_cam_free.png", "MenuFull3D"),
             (4, "opt_cam_reload.png", "MenuReload"),
         };
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
@@ -103,8 +104,26 @@ int total = 0;
         // Decorate returns object; the consumer expects the subpanel type, so cast back
         il.InsertAfter(decorateCall, il.Create(OpCodes.Castclass, ((MethodReference)anchor.Operand).DeclaringType));
         Console.WriteLine($"patched {m.FullName}: options menu {oldSize} -> {oldSize + entries.Length} entries");
-        mod.Write(Path.Combine(outDir, "Simitone.Client.dll")); total++;
+        nClient++;
     }
+    // Ctrl+click on an object: UILotControl.ShowPieMenu(pt, state) starts with "if (SpriteCards.CtrlClick(this, pt, state)) return;"
+    var lot = mod.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UILotControl");
+    var onMouse = lot.Methods.First(x => x.Name == "ShowPieMenu" && x.Parameters.Count == 2);
+    if (onMouse.Body.Instructions.Take(6).Any(i => i.Operand is MethodReference r && r.Name == "CtrlClick")) Console.WriteLine("ShowPieMenu already patched");
+    else
+    {
+        var il2 = onMouse.Body.GetILProcessor();
+        var first = onMouse.Body.Instructions[0];
+        il2.InsertBefore(first, il2.Create(OpCodes.Ldarg_0));
+        il2.InsertBefore(first, il2.Create(OpCodes.Ldarg_1));
+        il2.InsertBefore(first, il2.Create(OpCodes.Ldarg_2));
+        il2.InsertBefore(first, il2.Create(OpCodes.Call, mod.ImportReference(Hook("CtrlClick"))));
+        il2.InsertBefore(first, il2.Create(OpCodes.Brfalse, first));
+        il2.InsertBefore(first, il2.Create(OpCodes.Ret));
+        Console.WriteLine("patched " + onMouse.FullName + " (Ctrl+click object model chooser)");
+        nClient++;
+    }
+    if (nClient > 0) { mod.Write(Path.Combine(outDir, "Simitone.Client.dll")); total += nClient; }
 }
 
 // ---------------------------------------------------------------- 3. Simitone.Windows.exe (3D on by default)

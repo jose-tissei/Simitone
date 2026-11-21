@@ -55,6 +55,7 @@ static class Program
                 case "rclick": return Real ? ClickReal(a, 2) : HookClick(a, "r");
                 case "move": return Real ? MoveReal(a) : HookMove(a);
                 case "drag": return HookDrag(a);
+                case "ctrlclick": { var (cx, cy) = Pt(a, 1); return HookCmds(new[] { "enable", "keydown LeftControl", $"mouse {cx} {cy}", "sleep 150", "down l", "sleep 150", "up l", "sleep 100", "keyup LeftControl", "sleep 200" }, true); }
                 case "wheel": return HookCmds(new[] { "enable", "wheel " + a[1] }, true);
                 case "enable": return HookCmds(new[] { "enable" }, false);
                 case "disable": return HookCmds(new[] { "disable" }, false);
@@ -69,7 +70,7 @@ static class Program
 
     static int Usage()
     {
-        Console.WriteLine("simtool launch [--3d] | kill | status | shot [out.png] | click X Y | rclick X Y | move X Y | drag X1 Y1 X2 Y2 | wheel N | key NAME [holdMs] | wait SECONDS | ping | disable");
+        Console.WriteLine("simtool launch [--3d] | kill | status | shot [out.png] | click X Y | rclick X Y | move X Y | drag X1 Y1 X2 Y2 | ctrlclick X Y | wheel N | key NAME [holdMs] | wait SECONDS | ping | disable");
         Console.WriteLine("input goes through the in-game hook (works in the background); add --real to use focus-based real input instead");
         Console.WriteLine("X,Y are client pixels of the Simitone window. key: enter,esc,space,tab,left,right,up,down,f1-f12,a-z,0-9");
         return 2;

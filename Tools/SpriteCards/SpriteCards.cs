@@ -3,47 +3,135 @@ using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using FSO.LotView.Components;
+using FSO.Client;
+using FSO.Client.UI.Controls;
+using FSO.Client.UI.Framework;
 using FSO.Common;
+using FSO.Common.Rendering.Framework.IO;
+using FSO.Common.Rendering.Framework.Model;
 using FSO.LotView;
+using FSO.LotView.Components;
 using FSO.LotView.Model;
+using FSO.SimAntics;
+using Simitone.Client.UI.Panels;
 
-// Per-object choice between the original 2D sprite and a 3D mesh, for the fixed (2D) camera.
-// InputHookPatch-style Cecil patch (SpriteCardsPatch) calls Apply(this) at the top of
-// ObjectComponent's draw entry points.
+// Display modes for Simitone: how the world is drawn (2D sprites vs 3D meshes) and how the camera behaves.
+// Patched into the release assemblies by SpriteCardsPatch; see README.md.
 //
-// Content\spritecards.txt: one IFF name per line (as in MeshReplace file names, e.g. "radio" for
-// radio.iff); '#' starts a comment. Objects listed there draw as their original sprite; every other
-// object draws as a mesh. First line "default sprite" flips the default (everything sprite, except
-// listed objects which become meshes: use "mesh: name").
+// COMPATIBILITY TABLE (every mode is fully described here; nothing else is implicit)
+//
+//  id      menu name                    engine mode   camera  objects default      list file      per-object override   doors/windows
+//  ------  ---------------------------  ------------  ------  -------------------  -------------  --------------------  -------------
+//  2d      2D mode                      Full2D        fixed   sprite (engine)      ignored        n/a (no meshes)       sprite
+//  list    3D with 2D list              Hybrid2D      fixed   mesh; list = sprite  applies        applies               mesh
+//  arch    3D architecture, 2D objects  Hybrid2D      fixed   sprite; list "mesh:" applies*       applies               mesh
+//  full3d  Full 3D                      Full3D        free    mesh (engine)        ignored        n/a (no sprites)      mesh
+//
+//  * in "arch", only lines starting with "mesh:" in the list file matter.
+//  The camera is a consequence of the mode (fixed for 2d/list/arch, free for full3d), never chosen separately.
+//  Hybrid modes draw objects live (ForceImmediate) so sprites and meshes can be mixed; other modes clear it.
 public static class SpriteCards
 {
-    static readonly HashSet<string> sprites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    static readonly HashSet<string> meshes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-    static bool defaultMesh = true;
-    static DateTime loadedWrite = DateTime.MinValue;
-    static DateTime lastCheck = DateTime.MinValue;
-    static string path = Path.Combine("Content", "spritecards.txt");
+    sealed class ModeDef
+    {
+        public string Id, Label; public GlobalGraphicsMode Engine; public bool Hybrid; public bool ListApplies; public bool ObjectsDefaultMesh;
+    }
 
-    static readonly FieldInfo DrawGroupField = typeof(ObjectComponent).GetField("DrawGroup", BindingFlags.NonPublic | BindingFlags.Instance);
-    static readonly ConditionalWeakTable<object, string> nameCache = new ConditionalWeakTable<object, string>();
+    static readonly ModeDef[] Modes =
+    {
+        new ModeDef { Id = "2d",     Label = "2D mode",                     Engine = GlobalGraphicsMode.Full2D,   Hybrid = false },
+        new ModeDef { Id = "list",   Label = "3D with 2D list",             Engine = GlobalGraphicsMode.Hybrid2D, Hybrid = true,  ListApplies = true,  ObjectsDefaultMesh = true },
+        new ModeDef { Id = "arch",   Label = "3D arch + 2D objects", Engine = GlobalGraphicsMode.Hybrid2D, Hybrid = true,  ListApplies = false, ObjectsDefaultMesh = false },
+        new ModeDef { Id = "full3d", Label = "Full 3D",                     Engine = GlobalGraphicsMode.Full3D,   Hybrid = false },
+    };
 
-    // ---- profiles (chosen from the in-game Options menu, remembered in <UserDir>/spritecards.profile)
-    //   fixed   : original camera (Hybrid2D), objects are meshes except the list (sprites)
-    //   classic : original camera (Hybrid2D), objects are sprites; walls, doors, windows are 3D
-    //   free    : free 3D camera (Full3D)
-    //   2d      : plain original 2D game (Full2D); 3D is effectively off
-    public static string Profile = "fixed";
+    static ModeDef Current = Modes[1];
     static bool profileLoaded;
-    static readonly string[] classicMeshPrefixes = { "door", "window" };
 
     static string ProfilePath { get { return Path.Combine(FSOEnvironment.UserDir ?? "", "spritecards.profile"); } }
+    static string UserPath { get { return Path.Combine(FSOEnvironment.UserDir ?? "", "spritecards.user.txt"); } }
+    static readonly string ListPath = Path.Combine("Content", "spritecards.txt");
+
+    // objects whose file name starts with one of these stay meshes in "arch" (3D doors and windows)
+    static readonly string[] ArchMeshPrefixes = { "door", "window" };
+
+    // ---------------------------------------------------------------- list files
+    static readonly HashSet<string> listSprites = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    static readonly HashSet<string> listMeshes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+    static readonly Dictionary<string, bool> userOverride = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase); // true = 2D model
+    static DateTime listWrite = DateTime.MinValue, userWrite = DateTime.MinValue, lastCheck = DateTime.MinValue;
+
+    static bool Matches(HashSet<string> set, string n)
+    {
+        if (set.Contains(n)) return true;
+        foreach (var e in set) if (e.EndsWith("*") && n.StartsWith(e.Substring(0, e.Length - 1), StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    static void ReloadFiles(bool force)
+    {
+        var now = DateTime.UtcNow;
+        if (!force && (now - lastCheck).TotalSeconds < 2) return;
+        lastCheck = now;
+        try
+        {
+            if (File.Exists(ListPath))
+            {
+                var w = File.GetLastWriteTimeUtc(ListPath);
+                if (force || w != listWrite)
+                {
+                    listWrite = w; listSprites.Clear(); listMeshes.Clear();
+                    foreach (var raw in File.ReadAllLines(ListPath))
+                    {
+                        var l = raw.Split('#')[0].Trim();
+                        if (l.Length == 0 || l.StartsWith("default ", StringComparison.OrdinalIgnoreCase)) continue; // "default ..." lines are obsolete
+                        if (l.StartsWith("mesh:", StringComparison.OrdinalIgnoreCase)) listMeshes.Add(l.Substring(5).Trim());
+                        else listSprites.Add(l);
+                    }
+                }
+            }
+            if (File.Exists(UserPath))
+            {
+                var w = File.GetLastWriteTimeUtc(UserPath);
+                if (force || w != userWrite)
+                {
+                    userWrite = w; userOverride.Clear();
+                    foreach (var raw in File.ReadAllLines(UserPath))
+                    {
+                        var p = raw.Split('#')[0].Trim().Split(new[] { ' ' }, 2);
+                        if (p.Length == 2 && (p[0] == "2d" || p[0] == "3d")) userOverride[p[1].Trim()] = p[0] == "2d";
+                    }
+                }
+            }
+        }
+        catch { }
+    }
+
+    static void SaveUserOverrides()
+    {
+        try
+        {
+            var lines = new List<string> { "# per-object model overrides set with Ctrl+click in game: '2d name' or '3d name'" };
+            foreach (var kv in userOverride) lines.Add((kv.Value ? "2d " : "3d ") + kv.Key);
+            File.WriteAllLines(UserPath, lines.ToArray());
+            userWrite = File.GetLastWriteTimeUtc(UserPath);
+        }
+        catch { }
+    }
+
+    // ---------------------------------------------------------------- profile (mode) handling
+    static ModeDef Find(string id)
+    {
+        if (id == "fixed") id = "list"; else if (id == "classic") id = "arch"; else if (id == "free") id = "full3d"; // old names
+        foreach (var m in Modes) if (m.Id == id) return m;
+        return null;
+    }
 
     static void LoadProfile()
     {
         if (profileLoaded) return;
         profileLoaded = true;
-        try { if (File.Exists(ProfilePath)) { var p = File.ReadAllText(ProfilePath).Trim(); if (p == "fixed" || p == "classic" || p == "free" || p == "2d") Profile = p; } } catch { }
+        try { if (File.Exists(ProfilePath)) { var m = Find(File.ReadAllText(ProfilePath).Trim()); if (m != null) Current = m; } } catch { }
     }
 
     // called from Simitone.Windows Main (patched): 3D is on by default; "-2d" keeps the plain 2D game
@@ -54,50 +142,40 @@ public static class SpriteCards
         if (!two) FSOEnvironment.Enable3D = true;
     }
 
-    public static void SetProfile(string p)
+    static void SetMode(ModeDef m)
     {
-        Profile = p; profileLoaded = true;
-        try { File.WriteAllText(ProfilePath, p); } catch { }
-        ApplyMode();
+        Current = m; profileLoaded = true;
+        try { File.WriteAllText(ProfilePath, m.Id); } catch { }
+        ApplyEngineMode(false);
     }
 
-    // switch the world to the graphics mode the profile wants; Hybrid2D is rebuilt (via Full3D) so
-    // object sprite/mesh choices are re-evaluated
-    static void ApplyMode()
+    // Switch the engine to the mode's graphics mode. Switching between the two hybrid modes needs no
+    // rebuild (objects are re-evaluated every frame); reloading forces one through Full3D.
+    static void ApplyEngineMode(bool rebuild)
     {
         if (!FSOEnvironment.Enable3D) return;
-        var want = Profile == "free" ? GlobalGraphicsMode.Full3D : Profile == "2d" ? GlobalGraphicsMode.Full2D : GlobalGraphicsMode.Hybrid2D;
-        if (want == GraphicsModeControl.Mode && want != GlobalGraphicsMode.Full3D)
-            GraphicsModeControl.ChangeMode(GlobalGraphicsMode.Full3D); // force a rebuild of the lot
-        GraphicsModeControl.ChangeMode(want);
+        if (rebuild && GraphicsModeControl.Mode == Current.Engine && Current.Engine != GlobalGraphicsMode.Full3D)
+            GraphicsModeControl.ChangeMode(GlobalGraphicsMode.Full3D);
+        GraphicsModeControl.ChangeMode(Current.Engine);
     }
 
-    // ---- Options menu: entries are (0 plain 2D, 1 fixed, 2 classic, 3 free, 4 reload). The patched
-    // Options menu builds the buttons; Decorate() colours the active profile's button green (the
-    // UICatButton "Selected" state) and keeps it up to date when a button is clicked.
-    static readonly string[] profileOfEntry = { "2d", "fixed", "classic", "free", null };
-    static object menuPanel;           // the Options UIButtonSubpanel currently shown
+    // ---------------------------------------------------------------- Options menu
+    // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list
+    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null };
+    static object menuPanel; // the Options subpanel currently shown
 
-    public static void Menu2D() { SetProfile("2d"); Refresh(); }
-    public static void MenuFixed() { SetProfile("fixed"); Refresh(); }
-    public static void MenuClassic() { SetProfile("classic"); Refresh(); }
-    public static void MenuFree() { SetProfile("free"); Refresh(); }
-    public static void MenuReload() { lastCheck = DateTime.MinValue; loadedWrite = DateTime.MinValue; ApplyMode(); }
+    public static void Menu2D() { SetMode(Modes[0]); Refresh(); }
+    public static void MenuList() { SetMode(Modes[1]); Refresh(); }
+    public static void MenuArch() { SetMode(Modes[2]); Refresh(); }
+    public static void MenuFull3D() { SetMode(Modes[3]); Refresh(); }
+    public static void MenuReload() { ReloadFiles(true); ApplyEngineMode(true); }
 
-    // text on each entry
     public static string Label(int id)
     {
-        switch (id)
-        {
-            case 0: return "Plain 2D";
-            case 1: return "Fixed camera";
-            case 2: return "Classic objects";
-            case 3: return "Free camera";
-            default: return "Reload list";
-        }
+        return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 
-    // called right after the Options subpanel is built (patched into Switcher_OnCategorySelect)
+    // after the Options subpanel is built: colour the active mode's button green and keep it current
     public static object Decorate(object subpanel)
     {
         menuPanel = subpanel;
@@ -111,53 +189,30 @@ public static class SpriteCards
         try
         {
             if (menuPanel == null) return;
-            var get = menuPanel.GetType().GetMethod("GetChildren");
-            var kids = (System.Collections.IEnumerable)get.Invoke(menuPanel, null);
+            var kids = (System.Collections.IEnumerable)menuPanel.GetType().GetMethod("GetChildren").Invoke(menuPanel, null);
             int i = 0;
             foreach (var k in kids)
             {
                 if (k.GetType().Name != "UICatButton") continue;
                 int entry = i - 3; // after Save, Neighborhood, Quit
                 var sel = k.GetType().GetProperty("Selected");
-                if (sel != null) sel.SetValue(k, entry >= 0 && entry < profileOfEntry.Length && profileOfEntry[entry] == Profile, null);
+                if (sel != null) sel.SetValue(k, entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id, null);
                 i++;
             }
         }
         catch { }
     }
 
-    static bool IsClassicMesh(string n)
-    {
-        foreach (var p in classicMeshPrefixes) if (n.StartsWith(p)) return true;
-        return false;
-    }
-
-    static void Reload()
-    {
-        var now = DateTime.UtcNow;
-        if ((now - lastCheck).TotalSeconds < 2) return;
-        lastCheck = now;
-        try
-        {
-            if (!File.Exists(path)) return;
-            var w = File.GetLastWriteTimeUtc(path);
-            if (w == loadedWrite) return;
-            loadedWrite = w;
-            sprites.Clear(); meshes.Clear(); defaultMesh = true;
-            foreach (var raw in File.ReadAllLines(path))
-            {
-                var l = raw.Split('#')[0].Trim();
-                if (l.Length == 0) continue;
-                if (l.Equals("default sprite", StringComparison.OrdinalIgnoreCase)) defaultMesh = false;
-                else if (l.Equals("default mesh", StringComparison.OrdinalIgnoreCase)) defaultMesh = true;
-                else if (l.StartsWith("mesh:", StringComparison.OrdinalIgnoreCase)) meshes.Add(l.Substring(5).Trim());
-                else sprites.Add(l);
-            }
-        }
-        catch { }
-    }
-
+    // ---------------------------------------------------------------- per-object decision
+    static readonly FieldInfo DrawGroupField = typeof(ObjectComponent).GetField("DrawGroup", BindingFlags.NonPublic | BindingFlags.Instance);
+    static readonly ConditionalWeakTable<object, string> nameCache = new ConditionalWeakTable<object, string>();
     static readonly HashSet<string> seen = new HashSet<string>();
+
+    static void Diag(string msg)
+    {
+        try { File.AppendAllText(Path.Combine("Content", "spritecards.log"), "# " + msg + Environment.NewLine); } catch { }
+    }
+
     static void Log(string n)
     {
         try { if (n != null && seen.Add(n)) File.AppendAllText(Path.Combine("Content", "spritecards.log"), n + Environment.NewLine); } catch { }
@@ -167,40 +222,144 @@ public static class SpriteCards
     {
         try
         {
-            var dg = DrawGroupField?.GetValue(c);
+            var dg = DrawGroupField == null ? null : DrawGroupField.GetValue(c);
             if (dg == null) return null;
             string n;
             if (nameCache.TryGetValue(dg, out n)) return n;
             var chunk = (FSO.Files.Formats.IFF.IffChunk)dg;
-            n = (chunk.ChunkParent?.Filename ?? "").Replace('.', '_').ToLowerInvariant();
-            // "radio_iff" -> "radio"
-            if (n.EndsWith("_iff")) n = n.Substring(0, n.Length - 4);
+            n = ((chunk.ChunkParent == null ? "" : chunk.ChunkParent.Filename) ?? "").Replace('.', '_').ToLowerInvariant();
+            if (n.EndsWith("_iff")) n = n.Substring(0, n.Length - 4); // "radio_iff" -> "radio"
             nameCache.Add(dg, n);
             return n;
         }
         catch { return null; }
     }
 
+    static bool IsArchMesh(string n)
+    {
+        foreach (var p in ArchMeshPrefixes) if (n.StartsWith(p)) return true;
+        return false;
+    }
+
+    // true if this object is drawn with its 2D sprite in the current mode (ignoring nothing: includes overrides)
+    static bool UsesSprite(string n)
+    {
+        if (n == null || !Current.Hybrid) return true;
+        bool o;
+        if (userOverride.TryGetValue(n, out o)) return o;
+        if (Current.ListApplies)
+        {
+            if (Matches(listMeshes, n)) return false;
+            return Matches(listSprites, n) || !Current.ObjectsDefaultMesh;
+        }
+        // arch: objects are sprites except doors/windows and anything marked "mesh:"
+        return !(IsArchMesh(n) || Matches(listMeshes, n));
+    }
+
+    // injected at the top of ObjectComponent.{DoDraw,Draw,Update,Preload}
     public static void Apply(ObjectComponent c, WorldState world)
     {
-        // sprites and meshes only mix correctly when objects are drawn live, in order; the default
-        // 2D camera path bakes objects into a cached static buffer
-        if (world != null) world.ForceImmediate = true;
-        Reload();
         LoadProfile();
-        if (Profile == "free" || Profile == "2d") return; // free camera / plain 2D: the engine decides itself
+        // hybrid modes draw objects live and in order (needed to mix sprites and meshes); every other mode
+        // must clear it or the 2D camera path would stay in its slow immediate mode after leaving a hybrid mode
+        if (world != null) world.ForceImmediate = Current.Hybrid;
+        ReloadFiles(false);
         var n = NameOf(c);
         Log(n);
-        ComponentRenderMode m;
-        if (n == null) m = ComponentRenderMode._2D;
-        else if (Profile == "classic")
+        // every mode sets the mode explicitly, so nothing is left over from a previously active mode
+        c.Mode = (n != null && Current.Hybrid && !UsesSprite(n)) ? ComponentRenderMode._3D : ComponentRenderMode._2D;
+    }
+
+    // ---------------------------------------------------------------- Ctrl+click an object: choose its model
+    // injected at the top of UILotControl.ShowPieMenu(pt, state), which runs for a click on the lot;
+    // returns true when the click was handled
+    public static bool CtrlClick(UILotControl lc, Microsoft.Xna.Framework.Point pt, UpdateState state)
+    {
+        if (!state.CtrlDown) return false;
+        LoadProfile();
+        try
         {
-            // objects are sprites; doors and windows (and anything the list marks "mesh:") are meshes
-            m = (meshes.Contains(n) || IsClassicMesh(n)) ? ComponentRenderMode._3D : ComponentRenderMode._2D;
+            ReloadFiles(false);
+            ObjectComponent comp = null;
+            // sprites are in the game's object-id picking buffer; meshes are not, so fall back to a ray pick
+            var id = lc.World.GetObjectIDAtScreenPos(pt.X, pt.Y, GameFacade.GraphicsDevice);
+            if (id > 0)
+            {
+                var ent = lc.vm.GetObjectById(id);
+                if (ent is VMAvatar) return false; // Ctrl+click on a Sim keeps switching control
+                comp = ent == null ? null : ent.WorldUI as ObjectComponent;
+            }
+            if (comp == null) comp = PickMesh(lc.World, pt.X, pt.Y);
+            var name = comp == null ? null : NameOf(comp);
+            Diag("ctrl+click at " + pt.X + "," + pt.Y + " -> id " + id + ", object " + (name ?? "none"));
+            if (name == null) return false;
+
+            if (!Current.Hybrid)
+            {
+                Show("Object model", "Choosing 2D or 3D per object works in '3D with 2D list' and '3D arch + 2D objects'.\nUse the Options menu to switch.", null, null);
+                return true;
+            }
+            Show("Object model: " + name, "This object is drawn with its " + (UsesSprite(name) ? "2D" : "3D") + " model.\nWhich should it use?",
+                () => SetOverride(name, true), () => SetOverride(name, false));
+            return true;
         }
-        else if (sprites.Contains(n)) m = ComponentRenderMode._2D;
-        else if (meshes.Contains(n)) m = ComponentRenderMode._3D;
-        else m = defaultMesh ? ComponentRenderMode._3D : ComponentRenderMode._2D;
-        c.Mode = m;
+        catch (Exception e) { Diag("ctrl+click failed: " + e); return false; }
+    }
+
+    static IEnumerable<ObjectComponent> BlueprintObjects(FSO.LotView.World world)
+    {
+        const BindingFlags f = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+        var t = world.GetType();
+        object bp = null;
+        var pi = t.GetProperty("Blueprint", f); if (pi != null) bp = pi.GetValue(world, null);
+        if (bp == null) { var fi = t.GetField("Blueprint", f); if (fi != null) bp = fi.GetValue(world); }
+        if (bp == null) yield break;
+        var objs = bp.GetType().GetField("Objects", f);
+        var list = (System.Collections.IEnumerable)(objs != null ? objs.GetValue(bp) : bp.GetType().GetProperty("Objects", f).GetValue(bp, null));
+        foreach (var o in list) { var oc = o as ObjectComponent; if (oc != null) yield return oc; }
+    }
+
+    // nearest visible object whose 3D bounds the cursor ray hits
+    static ObjectComponent PickMesh(FSO.LotView.World world, int x, int y)
+    {
+        var st = world.State;
+        var vp = GameFacade.GraphicsDevice.Viewport;
+        var near = vp.Unproject(new Microsoft.Xna.Framework.Vector3(x, y, 0f), st.Projection, st.View, Microsoft.Xna.Framework.Matrix.Identity);
+        var far = vp.Unproject(new Microsoft.Xna.Framework.Vector3(x, y, 1f), st.Projection, st.View, Microsoft.Xna.Framework.Matrix.Identity);
+        var dir = far - near; dir.Normalize();
+        var ray = new Microsoft.Xna.Framework.Ray(near, dir);
+        ObjectComponent best = null; float bestD = float.MaxValue;
+        foreach (var o in BlueprintObjects(world))
+        {
+            if (!o.Visible || (o.Mode & ComponentRenderMode._3D) == 0) continue;
+            var d = ray.Intersects(o.GetBounds());
+            if (d.HasValue && d.Value < bestD) { bestD = d.Value; best = o; }
+        }
+        return best;
+    }
+
+    static void SetOverride(string name, bool sprite)
+    {
+        userOverride[name] = sprite;
+        SaveUserOverrides(); // takes effect on the next frame: Apply runs for every object, every frame
+    }
+
+    static void Show(string title, string message, Action use2d, Action use3d)
+    {
+        // Simitone's own dialog style (the FSO UIAlert has no button graphics in this skin)
+        UIMobileAlert alert = null;
+        ButtonClickDelegate close = b => { if (alert != null) alert.Close(); };
+        UIAlertButton[] buttons;
+        if (use2d == null)
+            buttons = new[] { new UIAlertButton(UIAlertButtonType.OK, close, "OK") };
+        else
+            buttons = new[]
+            {
+                new UIAlertButton(UIAlertButtonType.Yes, b => { use2d(); close(b); }, "Use 2D model"),
+                new UIAlertButton(UIAlertButtonType.No, b => { use3d(); close(b); }, "Use 3D model"),
+                new UIAlertButton(UIAlertButtonType.Cancel, close, "Cancel"),
+            };
+        alert = new UIMobileAlert(new UIAlertOptions { Title = title, Message = message, Buttons = buttons });
+        UIScreen.GlobalShowDialog(alert, true);
     }
 }
