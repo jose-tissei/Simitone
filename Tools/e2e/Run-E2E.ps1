@@ -118,6 +118,7 @@ try {
         Sim kill; Start-Sleep 3
         Sim launch; Sim wait 8; Sim click 1295 460; Sim wait 2; Sim click 360 812; Sim wait 28
         Sim speed 1
+        Convo 'on' | Out-Null   # an earlier interrupted run may have left the feature switched off
         $convoStatus = Convo 'status'
         Check 'the conversation step is installed in the game scripts' ($convoStatus -match 'installed=[1-9]') $convoStatus
         Check "Laya was started by the game and answers (waited up to 90 s)" (WaitFor { (Convo 'status') -match 'laya=up' } 90) (Convo 'status')
@@ -139,6 +140,10 @@ try {
         $line = LastLine
         Check 'the autonomous Hug already knew the receiver''s temperament (the step waited for Laya)' (($line -notmatch 'temperament=Unknown') -and ($line -match 'cached=True')) $line
         Check 'the autonomous balloons are placed over the Sims' ((Convo 'status') -match 'balloons=over-heads') (Convo 'status')
+        Sim wait 40
+        Sim interact Bob Betty 'Talk.../About Interests'
+        Check 'an autonomous Talk picks its own subject and is decided without a dialog' (WaitFor { (LastLine) -match '^talk about ' } 90) (LastLine)
+        Check 'no dialog was opened for the autonomous Talk' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
         Convo 'auto' 'off' | Out-Null
         Sim wait 40
 
@@ -160,13 +165,15 @@ try {
         Sim wait 40
         Sim interact Bob Betty 'Talk.../About Interests'
         Check 'Talk opens the subject choice dialog' (WaitDialog 90) ((& $SimTool dialog) -join ' ')
-        Sim click 550 605                                   # first subject
+        Sim click 380 605                                   # first subject
         Sim wait 4
         $line = LastLine
         Check 'the chosen subject was used for the Talk' ($line -match '^talk about ') $line
 
         # off switch: no dialog while off, and the choice returns when on again
         Sim wait 40
+        # Bob has free will: he may have started a conversation of his own meanwhile and be waiting for the player's choice
+        for ($i = 0; $i -lt 4 -and ((& $SimTool dialog) -join ' ') -match 'waiting'; $i++) { & $SimTool answer 0 | Out-Null; Sim wait 6 }
         Check 'AI conversations can be turned off' ((Convo 'off') -match 'enabled=false') ''
         Sim interact Bob Betty 'Hug.../Friendly'
         Sim wait 30

@@ -12,7 +12,7 @@
 | CONV-08 Talk subjects | Built, verified | hook on the topic routine; dialog showed three subjects; the choice reached the game |
 | CONV-09 Options toggle | Built, verified | button "AI conversations", green when on, saved to `conversations.profile` |
 | CONV-10 background refill | Offline only (decided) | misses are written to `Content\conversations\missing.txt` for a `convobank` run; thin groups (kiss Gentle, compliment, tease) were refilled |
-| CONV-11 tests and CI | Built | 148 unit tests, 17 patch tests, 45 e2e checks, `ci.ps1` |
+| CONV-11 tests and CI | Built | 148 unit tests, 17 patch tests, 47 e2e checks, `ci.ps1` |
 | CONV-12 Laya starts and stops with the game | Built, verified | `LayaHost`: 127.0.0.1 only, random key, job object; `Tools/Package-Laya.ps1` builds the bundled CPU copy (1.7 GB); e2e confirms the game started `laya\python\python.exe` |
 
 ## Deviations from the plan
@@ -22,7 +22,5 @@
 - Laya is not in the repository: `Package-Laya.ps1` builds it next to the game (embeddable Python, CPU PyTorch, English weights only). CPU-only measured: ready in about 6 s, 190 ms per classification (GPU 30 ms).
 - Requests pin the `english` checkpoint; newer Laya versions otherwise route short text to the multilingual one.
 
-## Still open (small)
-- Autonomous Talk keeps the game's topic choice and shows no lines.
-- Compliment Bold still has only 2 lines (the model keeps refusing); built-in lines pad it.
-- The bank's Tease Gentle lines read as compliments; they could be hand-edited.
+## Still open
+Nothing known. (Autonomous Talk now picks the Sim's favourite subject and shows balloons; Compliment Bold and Tease Gentle lines were written by hand.)

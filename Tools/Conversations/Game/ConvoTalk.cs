@@ -96,7 +96,7 @@ namespace Simitone.Conversations
                 if (speaker == null || social == null) return VMPrimitiveExitCode.GOTO_TRUE;
                 var listener = ctx.VM.GetObjectById(social.GetAttribute(0)) as VMAvatar;
                 if (listener == null || speaker.IsPet || listener.IsPet) return VMPrimitiveExitCode.GOTO_TRUE;
-                if (!ConvoPrimitive.PlayerControls(speaker) && Boot.AutoTone < 0) return VMPrimitiveExitCode.GOTO_TRUE;
+                bool player = ConvoPrimitive.PlayerControls(speaker);
 
                 var rs = ConvoPrimitive.Read(speaker); var rl = ConvoPrimitive.Read(listener);
                 var ps = TraitProfile.From(rs); var pl = TraitProfile.From(rl);
@@ -104,6 +104,14 @@ namespace Simitone.Conversations
                 Boot.Laya.Prefetch(pl);
                 p = new Pending { Speaker = rs, Listener = rl, SpeakerProfile = ps, ListenerProfile = pl, Subjects = TopicLogic.Offer(rs.Interests, rl.Interests, rng) };
 
+                if (!player && Boot.AutoTone < 0)
+                {
+                    // a Sim nobody controls talks about the subject they like most (the game's own routine does the same: "select topic I like")
+                    var best = p.Subjects.OrderByDescending(s => p.Speaker.Interests[s.Interest]).First();
+                    Finish(ctx, p, best);
+                    handled = true;
+                    return VMPrimitiveExitCode.RETURN_TRUE;
+                }
                 if (Boot.AutoTone >= 0) { Finish(ctx, p, p.Subjects[Math.Min(p.Subjects.Count - 1, Boot.AutoTone)]); handled = true; return VMPrimitiveExitCode.RETURN_TRUE; }
                 ConvoPrimitive.ShowChoice(ctx, "Talk", "What do you want to talk to " + pl.Name + " about?", p.Subjects.Select(s => s.Title).ToArray());
                 pending.Add(thread, p);

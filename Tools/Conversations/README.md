@@ -14,7 +14,7 @@ game's relationship numbers: the game's own scripts still apply their own tables
 - **Options menu:** an "AI conversations" button (speech-bubble icon) switches the whole feature on and off; green = on. The choice
   is saved in `Documents\Simitone\conversations.profile`.
 - Sims the player does not control (autonomous socials) are not asked; they pick a tone from their personality, wait up to about 3 s of game time for Laya to classify the receiver (so the first conversation
-  already has a temperament), and still show the balloons. Autonomous Talk is left to the game.
+  already has a temperament), and still show the balloons. Autonomous Talk picks the Sim's favourite subject.
 - Children, pets and anything the feature does not recognise keep the game's original behaviour.
 
 ## How the result is decided (policy B)
@@ -87,5 +87,5 @@ and make sure Python with `laya` is available (or a bundled `laya\python`).
 ## Known limits
 - Which script variant runs depends on the installed expansions; the hook finds the outcome step by its shape and logs
   `could not find the outcome store` if a variant does not match (the game then behaves as before).
-- Autonomous Talk keeps the game's own topic choice and shows no lines.
+- Autonomous Talk: the Sim talks about the subject they like most and the balloons are shown.
 - Missing bank entries fall back to built-in lines; refilling the bank is an offline run of `ConvoBank` (no live Ollama in the game).
