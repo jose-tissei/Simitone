@@ -21,7 +21,7 @@ $mono = Join-Path $App 'Monogame\Windows\MonoGame.Framework.dll'
 # ---- build every tool -----------------------------------------------------------------------------------
 Step 'build SpriteCards (hook)'        { dotnet build "$Tools\SpriteCards" -c Release -o "$Tools\SpriteCards\out" -p:AppDir="$App" --nologo -v q }
 Step 'build SpriteCardsPatch'          { dotnet build "$Tools\SpriteCardsPatch" -c Release -o "$Tools\SpriteCardsPatch\out" --nologo -v q }
-Step 'build SimTestHook'               { dotnet build "$Tools\SimTestHook" -c Release -o "$Tools\SimTestHook\out" -p:MonoGameDll="$mono" --nologo -v q }
+Step 'build SimTestHook'               { dotnet build "$Tools\SimTestHook" -c Release -o "$Tools\SimTestHook\out" -p:MonoGameDll="$mono" -p:AppDir="$App" --nologo -v q }
 Step 'build InputHookPatch'            { dotnet build "$Tools\InputHookPatch" -c Release -o "$Tools\InputHookPatch\out" --nologo -v q }
 Step 'build ButtonHoverPatch'          { dotnet build "$Tools\ButtonHoverPatch" -c Release -o "$Tools\ButtonHoverPatch\out" --nologo -v q }
 Step 'build SimTool'                   { dotnet build "$Tools\SimTool" -c Release -o "$Tools\SimTool\out" --nologo -v q }

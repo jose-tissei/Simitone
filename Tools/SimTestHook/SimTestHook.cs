@@ -52,6 +52,7 @@ public static class SimTestHook
     // ---- replacements for Mouse.GetState(), Keyboard.GetState(), Game.IsActive
     public static MouseState Mouse()
     {
+        GameControl.Drain(); // run queued game-control commands on the game thread
         var real = Microsoft.Xna.Framework.Input.Mouse.GetState();
         if (!Enabled) return real;
         lock (L)
@@ -66,7 +67,11 @@ public static class SimTestHook
         lock (L) return new KeyboardState(keys.ToArray());
     }
 
-    public static bool IsActive(Game g) => Enabled || g.IsActive;
+    // game-control commands need the game to keep updating while it is in the background, without taking over the mouse
+    static long activeUntilTicks;
+    public static void KeepActive(int seconds) { Interlocked.Exchange(ref activeUntilTicks, DateTime.UtcNow.AddSeconds(seconds).Ticks); }
+
+    public static bool IsActive(Game g) => Enabled || g.IsActive || DateTime.UtcNow.Ticks < Interlocked.Read(ref activeUntilTicks);
 
     // ---- pipe server: one text command per line, "ok" or "err ..." back
     static void Serve()
@@ -101,6 +106,12 @@ public static class SimTestHook
     static string Handle(string line)
     {
         var p = line.Split(' ');
+        if (GameControl.Verbs.Contains(p[0]))
+        {
+            lock (L) lastCmd = DateTime.UtcNow;
+            KeepActive(8);
+            return GameControl.Run(p); // must not hold L here: the game thread takes it whenever it reads input
+        }
         lock (L)
         {
             lastCmd = DateTime.UtcNow;

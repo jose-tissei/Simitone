@@ -50,3 +50,27 @@ What was learned:
 - I chose Hug > Friendly and Tickle > Ribs. No outcome dialog appeared and I could not confirm that either action was queued or ran (the queue panel was not visible; the active-Sim portrait kept switching to a flamingo placeholder). The original DLL was restored and verified identical afterwards.
 
 Conclusion: driving this through clicks and screenshots is too fragile to be the proof. Better route for T1b: add a pipe command to `SimTestHook` that queues a named interaction between two named Sims directly (`interact Bob Betty hug-friendly`), plus a log line when script 397 runs and what attr 9 holds. That also gives the e2e suite a reliable way to test conversations later.
+
+## T1b result (2026-11-21, third session): seam confirmed, mapping partly unexplained
+
+Built `simtool sims | menu | interact | rel | dialog | answer | global | speed | time` (see `Tools/SimTool/README.md`). They run on the game thread through `SimTestHook`, so no clicks are needed. Full local CI passes with it.
+
+Confirmed in the real game, original unpatched DLL, with `simtool global 25 6` at runtime:
+- The Newbie lot has Bob (245) and Betty (246). Their starting relationship is STR 55, LTR 55 in both directions.
+- `interact Bob Betty "Hug.../Friendly"` queues the hug exactly as the pie menu does, and it runs.
+- With the flag set, **the game's own 3-button outcome dialog appears and the game blocks on it** (speed -2). So script `397` is a working seam, and writing attribute 9 changes what happens next.
+- The dialog button maps to the outcome as the scripts say (code 0 -> outcome 1, code 1 -> outcome 2, code 2 -> outcome 3, from `VMDialogPrivateStrings` and the Hug script).
+
+Measured relationship changes (Bob -> Betty / Betty -> Bob), only trials where successive readings were consistent:
+
+| Button | Result seen | Table value for that outcome |
+|---|---|---|
+| 0 (outcome 1) | -5 / -5, LTR -1 each (3 of 4 trials) | -10 / -10 |
+| 1 (outcome 2) | +2 / +4 (3 of 4 trials) | +2 / +4 (matches) |
+| 2 (outcome 3) | +2 / +4 (3 of 3 trials) | +7 / +8 (does NOT match) |
+
+Unexplained, to resolve before the feature promises table fidelity:
+1. Outcome 1 gives half the table value, and outcome 3 gives the outcome 2 value. Possible causes: the Friendly hug scales or caps the result somewhere after the dialog, or the tuning table is read differently than I assumed.
+2. Some trials showed no change or small odd changes (autonomy, the game clock reaching other events). The clock runs about 3 game minutes per real second; idle detection by queue length was unreliable because both Sims always show one background action.
+
+Next: add an instruction trace for the Hug scripts (log each executed instruction of BHAV 4172/4173 and the value of attribute 9 and the tuning index chosen) so the mapping can be read directly instead of inferred from relationship values.

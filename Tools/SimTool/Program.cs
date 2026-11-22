@@ -60,6 +60,9 @@ static class Program
                 case "enable": return HookCmds(new[] { "enable" }, false);
                 case "disable": return HookCmds(new[] { "disable" }, false);
                 case "ping": return HookCmds(new[] { "ping" }, false);
+                // game control through the hook (no clicks): see README "Game control"
+                case "sims": case "menu": case "interact": case "rel": case "dialog": case "answer": case "speed": case "global": case "time":
+                    return HookQuery(string.Join(" ", a));
                 case "key": return Real ? KeyReal(a[1], a.Length > 2 ? int.Parse(a[2]) : 80) : HookKey(a[1], a.Length > 2 ? int.Parse(a[2]) : 80);
                 case "wait": Thread.Sleep((int)(double.Parse(a[1]) * 1000)); return 0;
                 default: return Usage();
@@ -179,6 +182,19 @@ static class Program
         }
         if (disableAfter) { w.WriteLine("disable"); r.ReadLine(); }
         return 0;
+    }
+
+    // one command, reply printed (without the leading "ok"); an "err" reply fails with exit code 1
+    static int HookQuery(string cmd)
+    {
+        using var c = OpenPipe();
+        var w = new StreamWriter(c, new System.Text.UTF8Encoding(false), 1024, true) { AutoFlush = true };
+        var r = new StreamReader(c, System.Text.Encoding.UTF8, false, 1024, true);
+        w.WriteLine(cmd);
+        var reply = r.ReadLine() ?? "err no reply";
+        if (reply.StartsWith("ok")) { Console.WriteLine(reply.Length > 3 ? reply[3..] : ""); return 0; }
+        Console.Error.WriteLine(reply);
+        return 1;
     }
 
     static int HookClick(string[] a, string btn)

@@ -3,13 +3,17 @@
     <TargetFramework>net461</TargetFramework>
     <AssemblyName>SimTestHook</AssemblyName>
     <LangVersion>latest</LangVersion>
+    <!-- the Simitone release folder: the hook compiles against the game assemblies it is injected into -->
+    <AppDir Condition="'$(AppDir)'==''">$(USERPROFILE)\.t3\projects\the-sims-run\app</AppDir>
     <!-- the MonoGame build the Simitone release loads (DirectX) -->
-    <MonoGameDll Condition="'$(MonoGameDll)'==''">C:\Users\Zé\.t3\projects\the-sims-run\app\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
+    <MonoGameDll Condition="'$(MonoGameDll)'==''">$(AppDir)\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MonoGame.Framework">
-      <HintPath>$(MonoGameDll)</HintPath>
-      <Private>false</Private>
-    </Reference>
+    <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.SimAntics"><HintPath>$(AppDir)\FSO.SimAntics.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Content"><HintPath>$(AppDir)\FSO.Content.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.UI"><HintPath>$(AppDir)\FSO.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
