@@ -81,4 +81,45 @@ public class RenderSettingsTests
         Assert.Equal(AaMode.Off, s.Aa);
         Assert.Equal(LightMode.Off, s.Light);
     }
+
+    [Theory]
+    [InlineData("rc", LightMode.Cascades)] [InlineData("Cascades", LightMode.Cascades)] [InlineData("2", LightMode.Cascades)]
+    public void ParseCascades(string text, LightMode expected) { Assert.Equal(expected, RenderSettings.ParseLight(text)); }
+
+    [Fact]
+    public void LightNamesRoundTrip()
+    {
+        foreach (LightMode m in Enum.GetValues(typeof(LightMode))) Assert.Equal(m, RenderSettings.ParseLight(RenderSettings.LightName(m)));
+    }
+
+    [Fact]
+    public void ShadingIsSavedAndLoaded()
+    {
+        var back = RenderSettings.Parse(new RenderSettings { Shading = true, Light = LightMode.Cascades }.Serialize().Split((char)10));
+        Assert.True(back.Shading);
+        Assert.Equal(LightMode.Cascades, back.Light);
+        Assert.False(RenderSettings.Parse(new[] { "shade=off" }).Shading);
+        Assert.False(new RenderSettings().Shading);
+    }
+
+    [Fact]
+    public void TheDynamicLightingButtonSwitchesBothHalvesTogether()
+    {
+        var s = new RenderSettings();
+        s.CycleDynamicLighting();
+        Assert.Equal(LightMode.Cascades, s.Light);
+        Assert.True(s.Shading);
+        s.CycleDynamicLighting();
+        Assert.Equal(LightMode.Off, s.Light);
+        Assert.False(s.Shading);
+    }
+
+    [Fact]
+    public void TheButtonTurnsOffAHalfOnState()
+    {
+        var s = new RenderSettings { Shading = true };   // only one half on: the next click turns everything off
+        s.CycleDynamicLighting();
+        Assert.Equal(LightMode.Off, s.Light);
+        Assert.False(s.Shading);
+    }
 }

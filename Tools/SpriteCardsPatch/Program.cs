@@ -79,6 +79,29 @@ int total = 0;
             n++;
         }
     }
+    // With the render library: WorldConfig.DirPassOffset (the pass of the sprite effect used for lit sprites; the engine clamps it
+    // to the pass count) becomes Render.Normals.DirPass(AdvancedLighting), so directional shading can pick the effect's third pass.
+    if (renderPath != null)
+    {
+        var dirPass = AssemblyDefinition.ReadAssembly(renderPath).MainModule.GetType("Simitone.Render.Normals").Methods.First(x => x.Name == "DirPass");
+        var getter = mod.GetType("FSO.LotView.WorldConfig").Methods.First(x => x.Name == "get_DirPassOffset" && x.HasBody);
+        if (getter.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "DirPass"))
+            Console.WriteLine("directional shading hook already installed");
+        else
+        {
+            var ins0 = getter.Body.Instructions;
+            // the original begins "ldarg.0 ; <load AdvancedLighting>": keep those two, then ask the hook what to return
+            var il = getter.Body.GetILProcessor();
+            var first = ins0[0];
+            var load = ins0[1];
+            if (first.OpCode != OpCodes.Ldarg_0 || !(load.Operand is FieldReference || load.Operand is MethodReference)) throw new Exception("unexpected DirPassOffset body: " + first + " / " + load);
+            var callHook = il.Create(OpCodes.Call, mod.ImportReference(dirPass));
+            il.InsertAfter(load, callHook);
+            il.InsertAfter(callHook, il.Create(OpCodes.Ret));
+            Console.WriteLine("patched " + getter.FullName + ": returns Normals.DirPass(AdvancedLighting)");
+            n++;
+        }
+    }
     if (n > 0) { mod.Write(Path.Combine(outDir, "FSO.LotView.dll")); total += n; }
 }
 
@@ -114,7 +137,7 @@ int total = 0;
         // the AI conversations on/off entry only exists when the conversations library is being installed
         if (conversationsPath != null) entryList.Add((5, "opt_convo.png", "MenuConversations"));
         // likewise the anti-aliasing button, which exists only with the render library
-        if (renderPath != null) entryList.Add((6, "opt_aa.png", "MenuAntiAlias"));
+        if (renderPath != null) { entryList.Add((6, "opt_aa.png", "MenuAntiAlias")); entryList.Add((7, "opt_light.png", "MenuLighting")); }
         var entries = entryList.ToArray();
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
         var il = m.Body.GetILProcessor();

@@ -29,3 +29,12 @@ The engine bakes the lot's lighting into a plan-view light map and gives it to e
 (`Documents\Simitone\render.profile`, or `simtool render light mode bounce`) `Render.Lighting` runs a gather pass over that light map and adds a share of the
 surrounding light to texels that are not fully lit, then replaces the texture the shaders sample. Needs the HiDef profile. Off by default. Tune with
 `simtool render light tune <tiles> <gain>` (defaults 3 tiles, 0.6). Known limits: no occlusion yet (light can bleed through walls), recomputed every call.
+
+## Radiance cascades and directional shading
+- **Options > "Dynamic lighting: Off / On"** switches both halves together (`light=rc`, `shade=on` in `render.profile`; `simtool render light mode off|bounce|rc`, `render shade on|off`,
+  `render light rc <gain> <startPx>`, `render light view walls|gather|off` for debugging). Needs the HiDef profile for the cascades.
+- **Cascades** (`Shaders/Cascades.fx`, `Game/Lighting.cs`, `Logic/LightGrid.cs`): the lot's walls are rasterised at 4 px per tile into an atlas shaped like the engine's light map; three
+  cascades of pixel-shader ray marching gather the light around every texel, blocked by walls, and the result is added where the light map is not fully lit.
+- **Directional shading** (`Make-WorldEffect.py`, `Shaders/World2D.xnb`, `Game/Normals.cs`): re-enables the engine's own disabled third sprite pass; the installer replaces
+  `Content\DX\Effects\2DWorldBatch.xnb` (original saved in the backup folder) and a patch on `WorldConfig.DirPassOffset` selects the pass.
+- The hardware depth buffer cannot be sampled by shaders in this engine, which is why normals come from the sprite shader's derivatives instead of a depth pre-pass.

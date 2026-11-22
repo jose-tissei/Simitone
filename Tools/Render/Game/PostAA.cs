@@ -51,6 +51,9 @@ namespace Simitone.Render
         // for the Options menu: the mode name, whether anything is on, and the next mode in the cycle
         public static string ModeLabel { get { return Mode == AaMode.Fxaa ? "FXAA" : (Mode == AaMode.Smaa ? "SMAA" : "Off"); } }
         public static bool AaOn { get { return Mode != AaMode.Off; } }
+        public static string LightLabel { get { return Settings.Light == LightMode.Off && !Settings.Shading ? "Off" : (Settings.Light == LightMode.Cascades && Settings.Shading ? "On" : "Custom"); } }
+        public static bool LightOn { get { return Settings.Light != LightMode.Off || Settings.Shading; } }
+        public static void CycleLight() { Settings.CycleDynamicLighting(); Settings.Save(); Lighting.Reset(); Normals.Reset(); }
         public static void Cycle() { Mode = RenderSettings.Next(Mode); broken = false; }
 
         // false = draw the world the original way
@@ -171,6 +174,7 @@ namespace Simitone.Render
                 case "status": return "aa=" + RenderSettings.AaName(Mode) + " draws=" + Draws + " broken=" + broken + " err=" + LastError;
                 case "aa": Mode = RenderSettings.ParseAa(a.Length > 1 ? a[1] : "off"); broken = false; return "aa=" + RenderSettings.AaName(Mode);
                 case "repeat": Repeat = Math.Max(1, a.Length > 1 ? int.Parse(a[1]) : 1); return "repeat=" + Repeat;
+                case "shade": if (a.Length > 1) { Settings.Shading = a[1] == "on"; Settings.Save(); Normals.Reset(); } return "shade=" + Settings.Shading + " asks=" + Normals.Asks;
                 case "light": return Lighting.Command(a.Skip(1).ToArray());
                 case "frames": return "calls=" + Calls + " ms=" + clock.ElapsedMilliseconds;
                 case "vsync": try { return Vsync(a.Length > 1 && a[1] == "on"); } catch (Exception e) { return "vsync failed: " + e.GetType().Name + ": " + e.Message + " @ " + (e.StackTrace ?? "").Split((char)10)[0].Trim(); }

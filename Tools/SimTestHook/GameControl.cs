@@ -101,6 +101,8 @@ public static class GameControl
                 }
                 return "ok ssaa=" + ppx.GetField("SSAA").GetValue(null) + " msaa=" + ppx.GetField("MSAA").GetValue(null);
             case "time":
+                // time [hours [minutes]]: read the clock, or set it (the light follows on the next simulation ticks)
+                if (p.Length > 1) { vm.Context.Clock.Hours = int.Parse(p[1]); vm.Context.Clock.Minutes = p.Length > 2 ? int.Parse(p[2]) : 0; }
                 return "ok " + vm.Context.Clock.Hours.ToString("00") + ":" + vm.Context.Clock.Minutes.ToString("00") + " day " + vm.Context.Clock.DayOfMonth;
             case "global":
                 // global <index> [value]: read or set a VM global (e.g. 25 = debug flags; value 6 turns on the social outcome dialog)

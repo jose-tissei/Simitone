@@ -48,3 +48,9 @@ New-Icon 'opt_aa.png' { param($g, $pen)
     $g.TextRenderingHint = 'AntiAliasGridFit'
     $g.DrawString('AA', $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(0, 4, 65, 58), $sf)
     $g.DrawLine($pen, (P 10 56), (P 55 56)) }
+
+# dynamic lighting: a bulb with rays
+New-Icon 'opt_light.png' { param($g, $pen)
+    $g.DrawEllipse($pen, 22, 16, 21, 21)
+    $g.DrawLine($pen, (P 27 43), (P 38 43)); $g.DrawLine($pen, (P 28 50), (P 37 50))
+    foreach ($a in -60, -30, 0, 30, 60) { $r = [math]::PI * ($a - 90) / 180; $g.DrawLine($pen, (P (32.5 + 19 * [math]::Cos($r)) (26 + 19 * [math]::Sin($r))), (P (32.5 + 25 * [math]::Cos($r)) (26 + 25 * [math]::Sin($r)))) } }

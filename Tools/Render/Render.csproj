@@ -16,6 +16,7 @@
     <EmbeddedResource Include="Shaders\Fxaa.mgfxo" LogicalName="Fxaa.mgfxo" />
     <EmbeddedResource Include="Shaders\Smaa.mgfxo" LogicalName="Smaa.mgfxo" />
     <EmbeddedResource Include="Shaders\Bounce.mgfxo" LogicalName="Bounce.mgfxo" />
+    <EmbeddedResource Include="Shaders\Cascades.mgfxo" LogicalName="Cascades.mgfxo" />
     <EmbeddedResource Include="Shaders\AreaTex.bin" LogicalName="AreaTex.bin" />
     <EmbeddedResource Include="Shaders\SearchTex.bin" LogicalName="SearchTex.bin" />
   </ItemGroup>

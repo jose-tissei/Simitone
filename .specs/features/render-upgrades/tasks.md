@@ -24,11 +24,11 @@ Each task ends with an atomic commit.
 ## Phase 2: lighting (RND-07..09)
 | ID | Task | Depends | Done when |
 |---|---|---|---|
-| L1 | Depth-to-normal for the 2D path; debug view of normals | S3 | normals visible and stable on the Newbie lot |
-| L2 | N.L shading from room lights in the sprite shaders (effect replacement) | L1 | a lamp visibly lights facing surfaces more than the back |
-| L3 | `LightGrid` from the lot: occluders, emitters, updated on change; unit tests for rasterisation | S3 | grid debug overlay matches the floor plan |
-| L4 | `RadianceCascades` pixel-shader merge from `sparse_rc_2d` / `solis_2d` ideas; write into the light-map inputs via `PrepareLighting` | L3 | soft shadow behind a wall; colour bleed from a coloured lamp; <= 4 ms |
-| L5 | Options entry "Dynamic lighting" with off switch; e2e comparing screenshots | L4 | toggles live |
+| L1 | **DONE (via the engine pass, see Progress)** Depth-to-normal for the 2D path; debug view of normals | S3 | normals visible and stable on the Newbie lot |
+| L2 | **DONE** N.L shading from room lights in the sprite shaders (effect replacement) | L1 | a lamp visibly lights facing surfaces more than the back |
+| L3 | **DONE** `LightGrid` from the lot: occluders, emitters, updated on change; unit tests for rasterisation | S3 | grid debug overlay matches the floor plan |
+| L4 | **DONE** `RadianceCascades` pixel-shader merge from `sparse_rc_2d` / `solis_2d` ideas; write into the light-map inputs via `PrepareLighting` | L3 | soft shadow behind a wall; colour bleed from a coloured lamp; <= 4 ms |
+| L5 | **DONE** Options entry "Dynamic lighting" with off switch; e2e comparing screenshots | L4 | toggles live |
 | L6 | Vertical occlusion decision (height layers or coarse 3D grid) | L4 | note + prototype, or documented limit |
 
 ## Phase 3: optional
@@ -52,7 +52,17 @@ Each task ends with an atomic commit.
   spreads a little. It has no occlusion (light can bleed through walls) and no normals; e2e 67 checks, patch tests 25, unit tests 173.
 - **Finding that changes the plan:** the engine already has real-time lighting (a per-room light map that updates with lamps and time of day, soft shadows,
   and a direction field used for meshes). Sprites carry no normals, so L1/L2 would need normals reconstructed from the packed depth first.
-- Next (needs a decision): replace the unmasked blur by a room-masked gather or Radiance Cascades (L3/L4), or build depth-to-normal (L1/L2); ray tracing stays a research track (R1).
+- L3, L4, L5 built (2026-11-22, e2e result below): `LightGrid` rasterises the lot's walls (doors left open) into an atlas laid out like the engine's light map (4 px per tile);
+  `Cascades.fx` runs three radiance cascades in pixel shaders (scene pass, one pass per cascade merged top-down, combine pass) and adds the result to the light map
+  where it is not fully lit, so light now stops at walls. Options button "Dynamic lighting: Off / On" (x = 1724), `render.profile` keys `light=rc`, `shade=on`.
+  Limits: plan view only (no vertical occlusion, L6 stays open), 3 cascades reach about 10 tiles, wall diagonals not checked against a diagonal-wall lot.
+- L1 + L2 built differently from the plan: the **hardware depth buffer cannot be read** (checked with a probe: D24S8, bind flag DepthStencil only, and the packed depth target
+  only exists in the pure 2D launch), so no depth-to-normal pre-pass. The engine's own HLSL already contains a commented-out third pass (`psZDepthSpriteDirLight`) that
+  rebuilds normals from the depth sprite with `ddx/ddy` and shades by the direction light map. `Make-WorldEffect.py` re-enables it, the result is `Shaders/World2D.xnb`
+  (installed over `2DWorldBatch.xnb`, original backed up), and a Cecil patch on `WorldConfig.get_DirPassOffset` calls `Normals.DirPass` so the engine picks pass 2.
+  Effect: sprites facing away from the light get darker, facing sprites keep their colour (visible on bushes, fences, wall tops). Modest, and it is the original authors'
+  disabled feature, so some surfaces may look faceted.
+- Not done: L6 vertical occlusion, G1 GTAO, R1 ray tracing (research only).
 - Finding: the game saves `GlobalGraphicsMode` in `config.ini` when a mode is picked in the menu; the e2e now resets and restores it (and `render.profile`).
 
 ## Order and parallelism

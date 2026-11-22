@@ -159,6 +159,47 @@ public class RenderPatchTests : IClassFixture<RenderFixture>
     }
 
     [SkippableFact]
+    public void DirPassOffset_AsksTheDirectionalShadingHook()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.LotView.dll"))
+        {
+            var getter = m.GetType("FSO.LotView.WorldConfig").Methods.Single(x => x.Name == "get_DirPassOffset" && x.HasBody);
+            var ins = getter.Body.Instructions;
+            Assert.Equal(OpCodes.Ldarg_0, ins[0].OpCode);                                   // the AdvancedLighting flag is still loaded first
+            var call = ins[2];
+            Assert.True(call.Operand is MethodReference r && r.Name == "DirPass" && r.DeclaringType.Name == "Normals", "the getter does not call Normals.DirPass");
+            Assert.Equal(OpCodes.Ret, ins[3].OpCode);                                       // and its answer is returned
+        }
+    }
+
+    [SkippableFact]
+    public void TheLibrary_EmbedsTheCascadesEffect_AsMgfxVersion8()
+    {
+        NeedsRelease();
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Render.dll")))
+        {
+            var bytes = lib.Resources.OfType<EmbeddedResource>().Single(x => x.Name == "Cascades.mgfxo").GetResourceData();
+            Assert.Equal("MGFX", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+            Assert.Equal(8, bytes[4]);
+        }
+    }
+
+    [SkippableFact]
+    public void TheShippedWorldSpriteEffect_HasTheThirdPass_AndTheGameFileHasTheOldTwo()
+    {
+        var shipped = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "Render", "Shaders", "World2D.xnb");
+        Skip.IfNot(File.Exists(shipped), "World2D.xnb not found");
+        NeedsRelease();
+        var mine = File.ReadAllBytes(shipped);
+        var original = File.ReadAllBytes(Path.Combine(f.App, "Content", "DX", "Effects", "2DWorldBatch.xnb"));
+        int Count(byte[] b, string word) { var t = System.Text.Encoding.ASCII.GetString(b); int n = 0, i = 0; while ((i = t.IndexOf(word, i, StringComparison.Ordinal)) >= 0) { n++; i += word.Length; } return n; }
+        Assert.Equal(0, Count(original, "dirLighting"));
+        Assert.True(Count(mine, "dirLighting") >= 1, "the replacement effect has no dirLighting pass");
+        Assert.Equal(Count(original, "advLighting"), Count(mine, "advLighting"));   // everything else is kept
+    }
+
+    [SkippableFact]
     public void TheLibrary_EmbedsTheBounceEffect_AsMgfxVersion8()
     {
         NeedsRelease();

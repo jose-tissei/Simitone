@@ -34,6 +34,21 @@ static class RenderLoader
         get { try { Look(); return post != null && (bool)post.GetProperty("AaOn").GetValue(null, null); } catch { return false; } }
     }
 
+    public static string LightLabel
+    {
+        get { try { Look(); return post == null ? "Off" : (string)post.GetProperty("LightLabel").GetValue(null, null); } catch { return "Off"; } }
+    }
+
+    public static bool LightOn
+    {
+        get { try { Look(); return post != null && (bool)post.GetProperty("LightOn").GetValue(null, null); } catch { return false; } }
+    }
+
+    public static void CycleLight()
+    {
+        try { Look(); if (post != null) post.GetMethod("CycleLight").Invoke(null, null); } catch { }
+    }
+
     public static void CycleAa()
     {
         try { Look(); if (post != null) post.GetMethod("Cycle").Invoke(null, null); } catch { }

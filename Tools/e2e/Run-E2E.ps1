@@ -261,6 +261,37 @@ try {
         & $SimTool render light mode off | Out-Null; Sim wait 3; $lOff2 = Shot 'light-off-again'
         $lst2 = ImageStats $lOff $lOff2
         Check 'turning bounce light off restores the original lighting' ($lst2.Changed -lt 0.005) ('changed ' + [math]::Round($lst2.Changed * 100, 3) + '%')
+
+        # radiance cascades and directional shading, at night so the lamps matter
+        Write-Host "`n== lighting (radiance cascades, directional shading)"
+        $shadeBefore = (& $SimTool render shade) -join ' '
+        & $SimTool time 22 0 | Out-Null; Sim speed 1; Sim wait 6; Sim speed 0; Sim wait 2
+        & $SimTool render light mode off | Out-Null; & $SimTool render shade off | Out-Null; Sim wait 2; $nOff = Shot 'night-off'
+        & $SimTool render light mode rc | Out-Null; Sim wait 3; $nRc = Shot 'night-rc'
+        $rcs = (& $SimTool render light status) -join ' '
+        $rst = ImageStats $nOff $nRc
+        Check 'radiance cascades run and stay healthy' (($rcs -match 'light=rc') -and ($rcs -match 'runs=[1-9]\d*') -and ($rcs -match 'broken=False')) $rcs
+        Check 'radiance cascades change the lit picture (the soft lift touches most pixels a little)' ($rst.Changed -gt 0.003) ('changed ' + [math]::Round($rst.Changed * 100, 2) + '%')
+        Check 'radiance cascades only add light (mean change 0 to 15)' (($rst.MeanSigned -gt 0) -and ($rst.MeanSigned -lt 15)) ('mean change ' + [math]::Round($rst.MeanSigned, 3))
+        & $SimTool render light mode off | Out-Null; Sim wait 3
+        $rst2 = ImageStats $nOff (Shot 'night-rc-off-again')
+        Check 'turning radiance cascades off restores the original lighting' ($rst2.Changed -lt 0.005) ('changed ' + [math]::Round($rst2.Changed * 100, 3) + '%')
+        & $SimTool render shade on | Out-Null; Sim wait 3; $nSh = Shot 'night-shade'
+        $shs = (& $SimTool render shade) -join ' '
+        $sst = ImageStats $nOff $nSh
+        Check 'directional shading changes the sprites (0.2% to 40% of pixels)' (($sst.Changed -gt 0.002) -and ($sst.Changed -lt 0.40)) ('changed ' + [math]::Round($sst.Changed * 100, 2) + '%')
+        Check 'directional shading picks the effect pass and stays healthy' ($shs -match 'shade=True') $shs
+        & $SimTool render shade off | Out-Null; Sim wait 3
+        $sst2 = ImageStats $nOff (Shot 'night-shade-off-again')
+        Check 'turning directional shading off restores the sprites' ($sst2.Changed -lt 0.005) ('changed ' + [math]::Round($sst2.Changed * 100, 3) + '%')
+        # the Options menu button after the anti-aliasing one (x = 1724)
+        OpenMenu; Sim click 1724 985; Sim wait 3
+        Check 'the Options button turns dynamic lighting on (cascades and shading)' (((& $SimTool render light status) -join ' ' -match 'light=rc') -and ((& $SimTool render shade) -join ' ' -match 'shade=True')) ((& $SimTool render light status) -join ' ')
+        Check 'the dynamic lighting button is highlighted while on' ((GreenCount (Shot 'light-menu-on') 1724) -gt 150) ''
+        Check 'the dynamic lighting choice is saved' (((Get-Content $renderFile -Raw) -match 'light=rc') -and ((Get-Content $renderFile -Raw) -match 'shade=on')) (Get-Content $renderFile -Raw)
+        OpenMenu; Sim click 1724 985; Sim wait 3
+        Check 'the Options button turns dynamic lighting off again' (((& $SimTool render light status) -join ' ' -match 'light=off') -and ((& $SimTool render shade) -join ' ' -match 'shade=False')) ((& $SimTool render light status) -join ' ')
+        & $SimTool time 10 30 | Out-Null
         Sim speed 1
     }
 }
