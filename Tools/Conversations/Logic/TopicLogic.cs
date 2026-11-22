@@ -21,7 +21,8 @@ namespace Simitone.Conversations
         }
 
         // interest 0..1000: how the listener feels about a subject
-        public static int Liking(short interest) { return interest >= 600 ? 2 : (interest >= 300 ? 1 : 0); }   // 2 loves, 1 neutral, 0 dislikes
+        // the game's own rule (script `SHD do I like topic?`) is "interest above 600"; below 300 the listener is bored by it
+        public static int Liking(short interest) { return interest > 600 ? 2 : (interest >= 300 ? 1 : 0); }   // 2 likes, 1 neutral, 0 dislikes
 
         // Up to three subjects: one the speaker is keen on, one the listener is keen on, one other.
         // Deterministic for a given rng so tests can pin it.

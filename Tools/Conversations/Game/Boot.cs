@@ -50,10 +50,20 @@ namespace Simitone.Conversations
                 Bank = DialogueBank.Load(Path.Combine(GameDir, "Content", "conversations", "bank.json"));
                 Log("startup: enabled=" + enabled + ", bank " + (Bank.Loaded ? "loaded" : "built-in lines only"));
                 AppDomain.CurrentDomain.FirstChanceException += (s, e) => { try { var st = e.Exception.StackTrace ?? ""; if (st.Contains("Conversations") || (e.Exception.Message ?? "").Contains("Conversations")) Log("first-chance: " + e.Exception.GetType().Name + ": " + e.Exception.Message + " @ " + st.Split((char)10)[0].Trim()); } catch { } };
-                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } };
+                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } try { WriteMisses(); } catch { } };
                 if (enabled) EnsureLaya();
             }
             catch (Exception e) { Log("startup failed: " + e.Message); }
+        }
+
+        // lines the bank lacked during this run, for `convobank` to fill later (offline; nothing is generated while playing)
+        static void WriteMisses()
+        {
+            var m = Bank.Misses;
+            if (m.Count == 0) return;
+            var dir = Path.Combine(GameDir, "Content", "conversations");
+            Directory.CreateDirectory(dir);
+            File.WriteAllLines(Path.Combine(dir, "missing.txt"), m);
         }
 
         static int layaStarting;

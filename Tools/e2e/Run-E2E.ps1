@@ -105,6 +105,57 @@ try {
     OpenMenu; Sim click $menuButton['reload'] 985; Sim wait 10
     Check 'Reload list keeps the game responding' ((& $SimTool status) -match 'responding=True') ''
     Check 'Reload list keeps the mode' ((Profile) -eq 'list') (Profile)
+
+    # ---- AI conversations (only when Conversations.dll is installed and the lot has two Sims) ------------------------------
+    $convoStatus = (& $SimTool convo status 2>&1) -join ' '
+    if ($convoStatus -notmatch 'enabled=') { Write-Host "`n== AI conversations: not installed, skipped" -ForegroundColor Yellow }
+    else {
+        Write-Host "`n== AI conversations"
+        function Convo { (& $SimTool convo @args 2>&1) -join ' ' }
+        function WaitDialog([int]$seconds = 60) { WaitFor { (& $SimTool dialog 2>&1) -join ' ' -match 'waiting' } $seconds }
+        function LastLine { $l = Convo 'last'; $l }
+        # the Options panel pauses the game while it is open, so start the conversation checks from a fresh game
+        Sim kill; Start-Sleep 3
+        Sim launch; Sim wait 8; Sim click 1295 460; Sim wait 2; Sim click 360 812; Sim wait 28
+        Sim speed 1
+        $convoStatus = Convo 'status'
+        Check 'the conversation step is installed in the game scripts' ($convoStatus -match 'installed=[1-9]') $convoStatus
+        Check "Laya was started by the game and answers (waited up to 90 s)" (WaitFor { (Convo 'status') -match 'laya=up' } 90) (Convo 'status')
+        $sims = (& $SimTool sims) -join ' '
+        Check 'the lot has Bob and Betty' (($sims -match 'Bob') -and ($sims -match 'Betty')) $sims
+        Convo 'tone' 'off' | Out-Null; Convo 'force' 'off' | Out-Null
+
+        # a hug: the three-line dialog appears, the chosen tone is applied and the lines are shown
+        Sim interact Bob Betty 'Hug.../Friendly'
+        Check 'a Hug opens the three-line choice dialog' (WaitDialog 70) ((& $SimTool dialog) -join ' ')
+        $dlg = Shot 'convo-dialog'
+        Sim click 960 664                                   # Playful
+        Sim wait 4
+        $line = LastLine
+        Check 'the Playful tone was applied to the Hug' ($line -match '^hug Playful') $line
+        Check 'the result is at most one step from the game''s own outcome' (($line -match 'script=(\d) final=(\d)') -and ([math]::Abs([int]$Matches[1] - [int]$Matches[2]) -le 1)) $line
+        $overlay = Shot 'convo-overlay'
+        Check 'the speech panel is on screen' ((PixelDiff $dlg $overlay) -gt 0.05) ('changed ' + (PixelDiff $dlg $overlay))
+        Check 'the game continues after the choice' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
+
+        # Talk: subject choice
+        Sim wait 40
+        Sim interact Bob Betty 'Talk.../About Interests'
+        Check 'Talk opens the subject choice dialog' (WaitDialog 90) ((& $SimTool dialog) -join ' ')
+        Sim click 550 605                                   # first subject
+        Sim wait 4
+        $line = LastLine
+        Check 'the chosen subject was used for the Talk' ($line -match '^talk about ') $line
+
+        # off switch: no dialog while off, and the choice returns when on again
+        Sim wait 40
+        Check 'AI conversations can be turned off' ((Convo 'off') -match 'enabled=false') ''
+        Sim interact Bob Betty 'Hug.../Friendly'
+        Sim wait 30
+        Check 'with the feature off a Hug asks nothing' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
+        Convo 'on' | Out-Null
+        Check 'AI conversations can be turned on again' ((Convo 'status') -match 'enabled=True') (Convo 'status')
+    }
 }
 finally {
     & $SimTool disable | Out-Null

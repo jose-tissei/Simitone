@@ -6,7 +6,7 @@ using Xunit;
 public class TopicLogicTests
 {
     [Theory]
-    [InlineData(0, 0)] [InlineData(299, 0)] [InlineData(300, 1)] [InlineData(599, 1)] [InlineData(600, 2)] [InlineData(1000, 2)]
+    [InlineData(0, 0)] [InlineData(299, 0)] [InlineData(300, 1)] [InlineData(599, 1)] [InlineData(600, 1)] [InlineData(601, 2)] [InlineData(1000, 2)]
     public void Liking(int interest, int expected) { Assert.Equal(expected, TopicLogic.Liking((short)interest)); }
 
     [Theory]

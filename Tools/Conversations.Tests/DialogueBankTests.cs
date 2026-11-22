@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Simitone.Conversations;
 using Xunit;
 
@@ -95,5 +96,31 @@ public class DialogueBankTests
         string reason;
         Assert.False(DialogueBank.IsAcceptable(new string('a', DialogueBank.MaxLineLength + 1), out reason));
         Assert.True(DialogueBank.IsAcceptable(new string('a', DialogueBank.MaxLineLength), out reason));
+    }
+}
+
+public class TopicPlaceholderTests
+{
+    [Fact]
+    public void TopicPlaceholderIsFilledAndAccepted()
+    {
+        Assert.Equal("Did you hear about Weather?", DialogueBank.Fill("Did you hear about {topic}?", "a", "b", "c", "Weather"));
+        Assert.Equal("Did you hear about that?", DialogueBank.Fill("Did you hear about {topic}?", "a", "b", "c"));
+        string reason;
+        Assert.True(DialogueBank.IsAcceptable("Have you been following {topic} lately?", out reason));
+    }
+}
+
+public class MissTrackingTests
+{
+    [Fact]
+    public void FallbackUseIsRecordedAsAToDoList()
+    {
+        var b = DialogueBank.Parse("{\"speaker\":{\"hug\":{\"0\":[\"Hi {name}\"]}},\"reply\":{}}");
+        b.SpeakerLine("hug", Tone.Gentle, new Random(1));      // present: no miss
+        b.SpeakerLine("hug", Tone.Bold, new Random(1));        // missing
+        b.ReplyLine("kiss", 3, Temperament.Cold, new Random(1)); // missing
+        b.ReplyLine("kiss", 3, Temperament.Cold, new Random(1));
+        Assert.Equal(new[] { "reply kiss q3 cold x2", "speaker hug Bold x1" }, b.Misses.ToArray());
     }
 }

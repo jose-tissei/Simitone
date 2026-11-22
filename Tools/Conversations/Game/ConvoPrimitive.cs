@@ -49,6 +49,7 @@ namespace Simitone.Conversations
             if (ctx == null || ctx.Globals == null) { Boot.Log("install: context not ready"); return; }
             VMContext.AddPrimitive(new VMPrimitiveRegistration(new ConvoPrimitive()) { Opcode = Opcode, Name = "social_conversation", OperandModel = typeof(ConvoOperand) });
             VMContext.AddPrimitive(new VMPrimitiveRegistration(new ConvoApplyPrimitive()) { Opcode = ConvoApplyPrimitive.Opcode, Name = "social_conversation_apply", OperandModel = typeof(ConvoApplyOperand) });
+            VMContext.AddPrimitive(new VMPrimitiveRegistration(new ConvoTalkPrimitive()) { Opcode = ConvoTalkPrimitive.Opcode, Name = "social_talk_subject", OperandModel = typeof(ConvoTalkOperand) });
             var routine = ctx.Globals.Resource.GetRoutine(RoutineId) as VMRoutine;
             if (routine == null || routine.Instructions == null || routine.Instructions.Length == 0) { Boot.Log("install: routine " + RoutineId + " not found"); return; }
             var ins = routine.Instructions[0];
@@ -86,7 +87,7 @@ namespace Simitone.Conversations
 
         // The dialog is for the Sim the player is controlling. (Queue priorities cannot tell: the social script runs as a pushed
         // interaction with a low priority even when the player asked for it.)
-        static bool PlayerDriven(VMThread thread, VMEntity speaker)
+        public static bool PlayerControls(VMEntity speaker)
         {
             try
             {
@@ -133,7 +134,7 @@ namespace Simitone.Conversations
                 for (int i = 0; i < 3; i++) p.SpeakerLines[i] = DialogueBank.Fill(p.SpeakerLines[i], ps.Name, pl.Name, pl.JobTitle);
 
                 if (Boot.AutoTone >= 0) p.Tone = (Tone)Math.Min(2, Boot.AutoTone);
-                else if (PlayerDriven(thread, speaker))
+                else if (PlayerControls(speaker))
                 {
                     ShowDialog(ctx, p, key);
                     pending.Add(thread, p);
@@ -247,6 +248,18 @@ namespace Simitone.Conversations
         // ---- the three-way dialog, using the engine's own blocking-dialog path (so the clock stops and a click answers it) ----
         static void ShowDialog(VMStackFrame ctx, Pending p, string key)
         {
+            ShowChoice(ctx, Pretty(key),
+                "What do you say to " + p.Listener.Name + "?\n\n" +
+                Names.Label(Tone.Gentle) + ": \"" + p.SpeakerLines[0] + "\"\n" +
+                Names.Label(Tone.Playful) + ": \"" + p.SpeakerLines[1] + "\"\n" +
+                Names.Label(Tone.Bold) + ": \"" + p.SpeakerLines[2] + "\"",
+                new[] { Names.Label(Tone.Gentle), Names.Label(Tone.Playful), Names.Label(Tone.Bold) });
+        }
+
+        // The engine's own blocking-dialog path with up to three buttons: the clock stops, a click answers it, and the answer
+        // (0, 1, 2 = first, second, third button) arrives in the thread's VMDialogResult.
+        public static void ShowChoice(VMStackFrame ctx, string title, string message, string[] buttons)
+        {
             var vm = ctx.VM;
             var info = new VMDialogInfo
             {
@@ -254,13 +267,10 @@ namespace Simitone.Conversations
                 Caller = ctx.Caller,
                 Icon = vm.GetObjectById(ctx.StackObject.GetAttribute(0)),
                 Operand = new VMDialogOperand { Type = VMDialogType.YesNoCancel },
-                Title = Pretty(key),
-                Message = "What do you say to " + p.Listener.Name + "?\n\n" +
-                          Names.Label(Tone.Gentle) + ": \"" + p.SpeakerLines[0] + "\"\n" +
-                          Names.Label(Tone.Playful) + ": \"" + p.SpeakerLines[1] + "\"\n" +
-                          Names.Label(Tone.Bold) + ": \"" + p.SpeakerLines[2] + "\"",
+                Title = title,
+                Message = message,
                 IconName = "",
-                Yes = Names.Label(Tone.Gentle), No = Names.Label(Tone.Playful), Cancel = Names.Label(Tone.Bold),
+                Yes = buttons[0], No = buttons.Length > 1 ? buttons[1] : buttons[0], Cancel = buttons.Length > 2 ? buttons[2] : buttons[buttons.Length - 1],
                 DialogID = 0xC0DE000000000000UL | (uint)ctx.Caller.ObjectID,
             };
             vm.SignalDialog(info);

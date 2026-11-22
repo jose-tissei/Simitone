@@ -164,13 +164,15 @@ if (conversationsPath != null)
     var conv = AssemblyDefinition.ReadAssembly(conversationsPath);
     var boot = conv.MainModule.GetType("Simitone.Conversations.Boot");
     var onCtx = boot.Methods.First(m => m.Name == "OnContextReady");
+    var onSub = conv.MainModule.GetType("Simitone.Conversations.ConvoTalkPrimitive").Methods.First(m => m.Name == "OnSubRoutine");
     var mod = Open("FSO.SimAntics.dll");
-    // every lot gets a fresh VMContext whose constructor loads the global script resource. The routines in it are cached
+    bool changed = false;
+    // (a) every lot gets a fresh VMContext whose constructor loads the global script resource. The routines in it are cached
     // for the life of the process, so installing at the end of that constructor covers every lot (and is repeated harmlessly).
     var ctxType = mod.GetType("FSO.SimAntics.VMContext");
     var ctor = ctxType.Methods.First(m => m.IsConstructor && !m.IsStatic && m.Parameters.Count == 2 && m.Parameters[0].ParameterType.Name == "World" && m.Parameters[1].ParameterType.Name == "VMContext");
     if (ctor.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "OnContextReady"))
-        Console.WriteLine("conversations hook already installed");
+        Console.WriteLine("conversations context hook already installed");
     else
     {
         var onCtxRef = mod.ImportReference(onCtx);
@@ -184,10 +186,27 @@ if (conversationsPath != null)
             foreach (var other in ctor.Body.Instructions.ToList())
                 if (other.Operand == ret) other.Operand = first;
         }
-        mod.Write(Path.Combine(outDir, "FSO.SimAntics.dll"));
         Console.WriteLine("patched " + ctor.FullName + ": Boot.OnContextReady(this) before every return");
-        total++;
+        changed = true;
     }
+    // (b) VMThread.ExecuteSubRoutine(frame, opcode, operand) starts with ConvoTalkPrimitive.OnSubRoutine(frame, opcode): the Talk
+    // subject choice is found the first time its routine is called (the hook only looks; it changes no control flow)
+    var thread = mod.GetType("FSO.SimAntics.Engine.VMThread");
+    var exec = thread.Methods.First(m => m.Name == "ExecuteSubRoutine" && m.Parameters.Count == 3 && m.Parameters[1].ParameterType.Name == "UInt16");
+    if (exec.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "OnSubRoutine"))
+        Console.WriteLine("conversations subroutine hook already installed");
+    else
+    {
+        var il = exec.Body.GetILProcessor();
+        var firstIns = exec.Body.Instructions[0];
+        var onSubRef = mod.ImportReference(onSub);
+        il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_1));   // the calling frame
+        il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_2));   // the routine number
+        il.InsertBefore(firstIns, il.Create(OpCodes.Call, onSubRef));
+        Console.WriteLine("patched " + exec.FullName + ": ConvoTalkPrimitive.OnSubRoutine(frame, opcode) first");
+        changed = true;
+    }
+    if (changed) { mod.Write(Path.Combine(outDir, "FSO.SimAntics.dll")); total++; }
     // ship the library next to the game; skipped when the game folder already has an identical copy (keeps re-runs a no-op)
     var installed = Path.Combine(appDir, "Conversations.dll");
     if (!File.Exists(installed) || !File.ReadAllBytes(installed).SequenceEqual(File.ReadAllBytes(conversationsPath)))

@@ -29,6 +29,13 @@ namespace Simitone.Conversations
 
         readonly BankFile file;
         readonly Dictionary<string, int> last = new Dictionary<string, int>();
+        readonly object missLock = new object();
+        readonly SortedDictionary<string, int> misses = new SortedDictionary<string, int>();
+
+        // combinations the bank had no line for (the built-in line was used): a to-do list for the offline builder
+        public IList<string> Misses { get { lock (missLock) return misses.Select(kv => kv.Key + " x" + kv.Value).ToList(); } }
+
+        void Miss(string what) { lock (missLock) { int n; misses.TryGetValue(what, out n); misses[what] = n + 1; } }
         public bool Loaded { get; private set; }
 
         public DialogueBank() { file = new BankFile(); }
@@ -86,19 +93,23 @@ namespace Simitone.Conversations
 
         public string SpeakerLine(string interaction, Tone tone, Random rng)
         {
-            var lines = Find(interaction, tone) ?? Builtin.Speaker(tone);
+            var found = Find(interaction, tone);
+            if (found == null) Miss("speaker " + interaction + " " + Names.Label(tone));
+            var lines = found ?? Builtin.Speaker(tone);
             return Pick("s|" + interaction + "|" + (int)tone, lines, rng);
         }
 
         public string ReplyLine(string interaction, int quality, Temperament t, Random rng)
         {
-            var lines = Find(interaction, quality, t) ?? Builtin.Reply(quality);
+            var found = Find(interaction, quality, t);
+            if (found == null) Miss("reply " + interaction + " q" + quality + " " + Names.Key(t));
+            var lines = found ?? Builtin.Reply(quality);
             return Pick("r|" + interaction + "|" + quality + "|" + (int)t, lines, rng);
         }
 
-        public static string Fill(string line, string me, string name, string job)
+        public static string Fill(string line, string me, string name, string job, string topic = null)
         {
-            return (line ?? "").Replace("{me}", me ?? "").Replace("{name}", name ?? "").Replace("{job}", string.IsNullOrWhiteSpace(job) ? "friend" : job);
+            return (line ?? "").Replace("{me}", me ?? "").Replace("{name}", name ?? "").Replace("{job}", string.IsNullOrWhiteSpace(job) ? "friend" : job).Replace("{topic}", string.IsNullOrWhiteSpace(topic) ? "that" : topic);
         }
 
         // lines that pass the quality filter used both when building the bank and when loading hand edits
@@ -115,7 +126,7 @@ namespace Simitone.Conversations
             foreach (var bad in Blocked) if (low.Contains(bad)) { reason = "blocked word '" + bad + "'"; return false; }
             int open = s.Count(ch => ch == '{');
             if (open != s.Count(ch => ch == '}')) { reason = "unbalanced braces"; return false; }
-            var stripped = s.Replace("{me}", "").Replace("{name}", "").Replace("{job}", "");
+            var stripped = s.Replace("{me}", "").Replace("{name}", "").Replace("{job}", "").Replace("{topic}", "");
             if (stripped.Contains("{") || stripped.Contains("}")) { reason = "unknown placeholder"; return false; }
             return true;
         }

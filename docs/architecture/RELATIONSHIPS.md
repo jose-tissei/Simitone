@@ -94,3 +94,14 @@ It runs only on residential lots.
 
 Jealousy start/end values, marriage and move-in outcomes, the rest of the `TEST` thresholds, the phone and sofa paths,
 and where the social-object path updates LTR.
+
+## 7. Correction and later findings (conversation work)
+
+- The scripts in the base game files are not the ones that run with expansion packs installed. Expansion archives replace social scripts with
+  variants (for example `Hug - Friendly - Person A` in `HDSI*.iff`) that have their own tuning tables. For the Friendly hug the table is
+  (social motive, STR, LTR) per outcome: outcome 1: 0/-5/-1 for both Sims, outcome 2: 5/+2/0 for the speaker and 5/+4/0 for the listener,
+  outcome 3: 8/+4/+1 for both. The numbers in section 3 are from the base game and are only a guide for the expansion variants.
+- In several variants script 397 is called before the outcome exists; the script computes it afterwards in `Function: <X> - Decision`
+  and stores it with `StackObjAttr[9] = Temps[0]`. The native "choose the outcome" dialog (flag `Global[25]` bit 2) is a two-button
+  yes/no there, so it can only force outcomes 1 and 2.
+- Run `Tools/ScriptDump` on all archives (it now reads every `.far` under the install) to see the variants that really run.
