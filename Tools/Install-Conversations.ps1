@@ -18,13 +18,26 @@ New-Item -ItemType Directory -Force $Tmp, $Backup | Out-Null
 function Build($proj, $out, $extra) { & dotnet build "$Tools\$proj" -c Release -o "$Tools\$proj\out" --nologo -v q @extra; if ($LASTEXITCODE -ne 0) { throw "build failed: $proj" } }
 Build 'SpriteCards' $null @("-p:AppDir=$Pristine")
 Build 'Conversations' $null @("-p:AppDir=$Pristine")
+Build 'Render' $null @("-p:AppDir=$Pristine")
 Build 'SpriteCardsPatch' $null @()
 if ($WithSimTestHook) { Build 'SimTestHook' $null @("-p:AppDir=$Pristine") }
 
-& dotnet "$Tools\SpriteCardsPatch\out\SpriteCardsPatch.dll" $Pristine "$Tools\SpriteCards\out\SpriteCards.dll" $Tmp "$Tools\Conversations\out\Conversations.dll"
+& dotnet "$Tools\SpriteCardsPatch\out\SpriteCardsPatch.dll" $Pristine "$Tools\SpriteCards\out\SpriteCards.dll" $Tmp "$Tools\Conversations\out\Conversations.dll" "$Tools\Render\out\Render.dll"
 if ($LASTEXITCODE -ne 0) { throw 'patcher failed' }
 
-$files = @('FSO.LotView.dll', 'FSO.SimAntics.dll', 'Simitone.Client.dll', 'Simitone.Windows.exe', 'Conversations.dll')
+$files = @('FSO.LotView.dll', 'FSO.SimAntics.dll', 'Simitone.Client.dll', 'Simitone.Windows.exe', 'Conversations.dll', 'FSO.Common.dll', 'Render.dll')
+if ($WithSimTestHook) {
+    # FSO.Common.dll carries both the render hook and the test input hook; the input patcher runs on top of the render-patched copy
+    Build 'InputHookPatch' $null @()
+    $stage = Join-Path $Tmp 'stage'
+    New-Item -ItemType Directory -Force (Join-Path $stage 'Monogame\Windows') | Out-Null
+    Copy-Item (Join-Path $Pristine 'Monogame\Windows\*.dll') (Join-Path $stage 'Monogame\Windows') -Force
+    Get-ChildItem $Pristine -File | Where-Object { $_.Name -like 'FSO.*' -or $_.Name -like 'Simitone.*' } | Where-Object { $_.Extension -in '.dll', '.exe' } | Copy-Item -Destination $stage -Force
+    Copy-Item (Join-Path $Tmp 'FSO.Common.dll') $stage -Force
+    & dotnet "$Tools\InputHookPatch\out\InputHookPatch.dll" $stage "$Tools\SimTestHook\out\SimTestHook.dll" (Join-Path $Tmp 'hooked')
+    if ($LASTEXITCODE -ne 0) { throw 'input hook patcher failed' }
+    Copy-Item (Join-Path $Tmp 'hooked\FSO.Common.dll') $Tmp -Force   # FSO.UI and FSO.Client keep what the game folder has (input hook, button hover patches)
+}
 foreach ($f in $files) {
     $dst = Join-Path $App $f
     if ((Test-Path $dst) -and -not (Test-Path (Join-Path $Backup $f))) { Copy-Item $dst $Backup }

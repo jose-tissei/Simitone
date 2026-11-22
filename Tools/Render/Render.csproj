@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>Render</AssemblyName>
+    <RootNamespace>Simitone.Render</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <!-- the Simitone release folder: this library is injected into it and compiled against its assemblies -->
+    <AppDir Condition="'$(AppDir)'==''">$(USERPROFILE)\.t3\projects\the-sims-run\app</AppDir>
+    <MonoGameDll Condition="'$(MonoGameDll)'==''">$(AppDir)\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="Logic\*.cs" />
+    <Compile Include="Game\*.cs" />
+    <!-- compiled with Build-Effects.ps1 -Raw; checked in so a normal build needs no effect compiler -->
+    <EmbeddedResource Include="Shaders\Fxaa.mgfxo" LogicalName="Fxaa.mgfxo" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath><Private>false</Private></Reference>
+  </ItemGroup>
+</Project>

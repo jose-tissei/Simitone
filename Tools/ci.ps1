@@ -26,6 +26,7 @@ Step 'build InputHookPatch'            { dotnet build "$Tools\InputHookPatch" -c
 Step 'build ButtonHoverPatch'          { dotnet build "$Tools\ButtonHoverPatch" -c Release -o "$Tools\ButtonHoverPatch\out" --nologo -v q }
 Step 'build SimTool'                   { dotnet build "$Tools\SimTool" -c Release -o "$Tools\SimTool\out" --nologo -v q }
 Step 'build Conversations'             { dotnet build "$Tools\Conversations" -c Release -o "$Tools\Conversations\out" -p:AppDir="$App" --nologo -v q }
+Step 'build Render'                    { dotnet build "$Tools\Render" -c Release -o "$Tools\Render\out" -p:AppDir="$App" --nologo -v q }
 
 # ---- unit tests (pure logic) ----------------------------------------------------------------------------
 Step 'unit tests: mode logic'          { dotnet test "$Tools\SpriteCards.Tests" --nologo -v q }
@@ -37,6 +38,7 @@ Step 'patch tests: SpriteCardsPatch'   {
     $env:SPRITECARDS_DLL = "$Tools\SpriteCards\out\SpriteCards.dll"
     $env:SPRITECARDSPATCH = "$Tools\SpriteCardsPatch\out\SpriteCardsPatch.dll"
     $env:CONVERSATIONS_DLL = "$Tools\Conversations\out\Conversations.dll"
+    $env:RENDER_DLL = "$Tools\Render\out\Render.dll"
     dotnet test "$Tools\PatchTests" --nologo -v q
 }
 

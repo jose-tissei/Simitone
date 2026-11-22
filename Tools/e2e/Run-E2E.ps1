@@ -43,6 +43,23 @@ function GreenCount([string]$path, [int]$cx) {
     for ($y = 945; $y -lt 1030; $y += 2) { for ($x = $cx - 45; $x -lt $cx + 45; $x += 2) { $p = $b.GetPixel($x, $y); if ($p.G -gt 190 -and $p.R -lt 110 -and $p.B -gt 90 -and $p.B -lt 200) { $n++ } } }
     $b.Dispose(); return $n
 }
+# fraction of pixels that differ between two screenshots, and the mean signed brightness change (b - a)
+function ImageStats([string]$a, [string]$b) {
+    $x = [Drawing.Bitmap]::FromFile($a); $y = [Drawing.Bitmap]::FromFile($b)
+    $rect = New-Object Drawing.Rectangle 0, 0, $x.Width, $x.Height
+    $fmt = [Drawing.Imaging.PixelFormat]::Format32bppArgb
+    $dx = $x.LockBits($rect, 'ReadOnly', $fmt); $dy = $y.LockBits($rect, 'ReadOnly', $fmt)
+    $n = $x.Width * $x.Height * 4; $bx = New-Object byte[] $n; $by = New-Object byte[] $n
+    [Runtime.InteropServices.Marshal]::Copy($dx.Scan0, $bx, 0, $n); [Runtime.InteropServices.Marshal]::Copy($dy.Scan0, $by, 0, $n)
+    $x.UnlockBits($dx); $y.UnlockBits($dy); $x.Dispose(); $y.Dispose()
+    $changed = 0; $sum = 0L
+    for ($i = 0; $i -lt $n; $i += 4) {
+        $d = ($by[$i] - $bx[$i]) + ($by[$i + 1] - $bx[$i + 1]) + ($by[$i + 2] - $bx[$i + 2])
+        if ($d -ne 0 -or $by[$i] -ne $bx[$i] -or $by[$i + 1] -ne $bx[$i + 1] -or $by[$i + 2] -ne $bx[$i + 2]) { $changed++ }
+        $sum += $d
+    }
+    return [pscustomobject]@{ Changed = $changed / ($n / 4); MeanSigned = $sum / ($n / 4) / 3 }
+}
 function Shot([string]$name) { $p = Join-Path $Shots "$name.png"; & $SimTool shot $p | Out-Null; if ($LASTEXITCODE -ne 0) { throw "screenshot '$name' failed or was blank" }; return $p }
 
 # Options-menu buttons (client pixels, 1920x1080) and dialog buttons
@@ -52,8 +69,12 @@ function ChooseMode([string]$id, [int]$wait = 9) { OpenMenu; Sim click $menuButt
 
 # ---- setup: back up user state, start from a known state ---------------------------------------------------
 $backup = @{}
-foreach ($f in $profileFile, $userFile) { $backup[$f] = if (Test-Path $f) { Get-Content $f -Raw } else { $null } }
+$configFile = Join-Path $Docs 'config.ini'            # the game saves the graphics mode here when a mode is chosen in the menu
+$renderFile = Join-Path $Docs 'render.profile'
+foreach ($f in $profileFile, $userFile, $configFile, $renderFile) { $backup[$f] = if (Test-Path $f) { Get-Content $f -Raw } else { $null } }
 Set-Content $profileFile 'list' -Encoding ascii
+if (Test-Path $configFile) { (Get-Content $configFile -Raw) -replace 'GlobalGraphicsMode=\d', 'GlobalGraphicsMode=1' | Set-Content $configFile -NoNewline -Encoding ascii }
+Set-Content $renderFile 'aa=off' -Encoding ascii
 Remove-Item $userFile, $logFile -ErrorAction SilentlyContinue
 
 try {
@@ -180,6 +201,26 @@ try {
         Check 'with the feature off a Hug asks nothing' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
         Convo 'on' | Out-Null
         Check 'AI conversations can be turned on again' ((Convo 'status') -match 'enabled=True') (Convo 'status')
+    }
+
+    # ---- anti-aliasing (only when Render.dll is installed) ------------------------------------------------------------------
+    $rs = (& $SimTool render status 2>&1) -join ' '
+    if ($rs -notmatch 'aa=') { Write-Host "`n== anti-aliasing: not installed, skipped" -ForegroundColor Yellow }
+    else {
+        Write-Host "`n== anti-aliasing (FXAA)"
+        $aaBefore = if ($rs -match 'aa=(\w+)') { $Matches[1] } else { 'off' }
+        Sim speed 0; Sim wait 2                              # freeze the game so the screenshots show the same frame
+        & $SimTool render aa off | Out-Null; Sim wait 1; $off = Shot 'aa-off'
+        & $SimTool render aa fxaa | Out-Null; Sim wait 1; $on = Shot 'aa-fxaa'
+        $st = ImageStats $off $on
+        Check 'FXAA draws frames' ((& $SimTool render status) -join ' ' -match 'draws=[1-9]\d*') ((& $SimTool render status) -join ' ')
+        Check 'FXAA changes edge pixels only (1% to 40% of the picture)' (($st.Changed -gt 0.01) -and ($st.Changed -lt 0.40)) ('changed ' + [math]::Round($st.Changed * 100, 2) + '%')
+        Check 'FXAA does not brighten or darken the picture' ([math]::Abs($st.MeanSigned) -lt 1.0) ('mean change ' + [math]::Round($st.MeanSigned, 3))
+        & $SimTool render aa off | Out-Null; Sim wait 1; $off2 = Shot 'aa-off-again'
+        $st2 = ImageStats $off $off2
+        Check 'turning FXAA off restores the original frame' ($st2.Changed -lt 0.001) ('changed ' + [math]::Round($st2.Changed * 100, 3) + '%')
+        & $SimTool render aa $aaBefore | Out-Null
+        Sim speed 1
     }
 }
 finally {

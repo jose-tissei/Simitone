@@ -7,9 +7,10 @@
 # as a length-prefixed byte array, so only the length prefix and the total file size change.
 param(
     [Parameter(Mandatory)][string]$Fx,
-    [Parameter(Mandatory)][string]$Template,
+    [string]$Template,
     [Parameter(Mandatory)][string]$Out,
-    [string]$Profile = 'DirectX_11'
+    [string]$Profile = 'DirectX_11',
+    [switch]$Raw          # write the bare compiled effect (.mgfxo) for loading with new Effect(device, bytes); no template needed
 )
 $ErrorActionPreference = 'Stop'
 $mgfx = Join-Path $PSScriptRoot 'Mgfx'
@@ -24,6 +25,8 @@ $Out = [IO.Path]::GetFullPath($Out)
 & $exe (Resolve-Path $Fx) $obj "/Profile:$Profile"
 if ($LASTEXITCODE -ne 0) { throw "effect compile failed ($LASTEXITCODE)" }
 
+if ($Raw) { Move-Item $obj $Out -Force; Write-Host "wrote $Out ($((Get-Item $Out).Length) bytes, raw MGFX effect)"; return }
+if (-not $Template) { throw 'give -Template (a game .xnb effect) or -Raw' }
 $tpl = [IO.File]::ReadAllBytes((Resolve-Path $Template))
 $new = [IO.File]::ReadAllBytes($obj)
 # find the payload: the template's "MGFX" magic, preceded by its 4-byte length

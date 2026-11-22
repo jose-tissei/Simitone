@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -82,6 +82,11 @@ public static class GameControl
                 var boot = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("Simitone.Conversations.Boot", false)).FirstOrDefault(t => t != null);
                 if (boot == null) throw new Exception("Conversations.dll is not loaded");
                 return "ok " + (string)boot.GetMethod("Command").Invoke(null, new object[] { p.Skip(1).ToArray() });
+            case "render":
+                // render status | aa off|fxaa : the anti-aliasing / lighting passes (Render.dll), by reflection
+                var rt = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("Simitone.Render.PostAA", false)).FirstOrDefault(t => t != null);
+                if (rt == null) throw new Exception("Render.dll is not loaded (it loads on the first drawn frame)");
+                return "ok " + (string)rt.GetMethod("Command").Invoke(null, new object[] { p.Skip(1).ToArray() });
             case "aa":
                 // aa [mode]: read or set the engine's anti-aliasing mode (0 off, 1 4x MSAA, 2 2x2 SSAA), by reflection
                 var world = vm.Context.World;

@@ -10,7 +10,10 @@ using Mono.Cecil.Cil;
 var appDir = args[0]; var hookPath = args[1]; var outDir = args[2];
 // optional 4th argument: Conversations.dll. When given, the AI conversations feature is installed as well:
 //  4. FSO.SimAntics.dll  the VMContext constructor ends with Simitone.Conversations.Boot.OnContextReady(this), and the Options menu gets a toggle.
-string conversationsPath = args.Length > 3 ? args[3] : null;
+string conversationsPath = args.Length > 3 && args[3] != "-" ? args[3] : null;
+// optional 5th argument: Render.dll (anti-aliasing and lighting passes). When given:
+//  5. FSO.Common.dll  PPXDepthEngine.DrawBackbuffer starts with `if (Simitone.Render.PostAA.TryDraw(opacity, scale)) return;`
+string renderPath = args.Length > 4 && args[4] != "-" ? args[4] : null;
 Directory.CreateDirectory(outDir);
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(appDir);
@@ -211,6 +214,34 @@ if (conversationsPath != null)
     var installed = Path.Combine(appDir, "Conversations.dll");
     if (!File.Exists(installed) || !File.ReadAllBytes(installed).SequenceEqual(File.ReadAllBytes(conversationsPath)))
         File.Copy(conversationsPath, Path.Combine(outDir, "Conversations.dll"), true);
+}
+
+// ---------------------------------------------------------------- 5. FSO.Common.dll (render passes)
+if (renderPath != null)
+{
+    var rend = AssemblyDefinition.ReadAssembly(renderPath);
+    var tryDraw = rend.MainModule.GetType("Simitone.Render.PostAA").Methods.First(m => m.Name == "TryDraw");
+    var mod = Open("FSO.Common.dll");
+    var engine = mod.GetType("FSO.Common.Utils.PPXDepthEngine");
+    var blit = engine.Methods.First(m => m.Name == "DrawBackbuffer" && m.IsStatic && m.Parameters.Count == 2);
+    if (blit.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "TryDraw"))
+        Console.WriteLine("render blit hook already installed");
+    else
+    {
+        var il = blit.Body.GetILProcessor();
+        var firstIns = blit.Body.Instructions[0];
+        // if (PostAA.TryDraw(opacity, scale)) return;
+        il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_1));
+        il.InsertBefore(firstIns, il.Create(OpCodes.Call, mod.ImportReference(tryDraw)));
+        il.InsertBefore(firstIns, il.Create(OpCodes.Brfalse, firstIns));
+        il.InsertBefore(firstIns, il.Create(OpCodes.Ret));
+        Console.WriteLine("patched " + blit.FullName + ": PostAA.TryDraw(opacity, scale) first");
+        mod.Write(Path.Combine(outDir, "FSO.Common.dll")); total++;
+    }
+    var installedR = Path.Combine(appDir, "Render.dll");
+    if (!File.Exists(installedR) || !File.ReadAllBytes(installedR).SequenceEqual(File.ReadAllBytes(renderPath)))
+        File.Copy(renderPath, Path.Combine(outDir, "Render.dll"), true);
 }
 
 Console.WriteLine(total == 0 ? "nothing to patch" : $"done: {total} assembly(ies) written to {outDir}");

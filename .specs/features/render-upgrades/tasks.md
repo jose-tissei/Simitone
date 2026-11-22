@@ -13,8 +13,8 @@ Each task ends with an atomic commit.
 ## Phase 1: anti-aliasing (RND-02..05, 10, 13)
 | ID | Task | Depends | Done when |
 |---|---|---|---|
-| A1 | `Tools/Render` project (net461, `AppDir` references like `Conversations`), loader from `SpriteCards.Startup`, settings file `render.profile` | S1 | builds, loads, logs |
-| A2 | `PostChain` + `FxaaPass`; hook `DrawBackbuffer` (or `SSAAFunc`) by Cecil in `SpriteCardsPatch` (optional arg like Conversations) | A1 | e2e: edge metric on a screenshot of a sprite silhouette improves; UI pixels unchanged |
+| A1 | **DONE** `Tools/Render` project (net461, `AppDir` references like `Conversations`), loader from `SpriteCards.Startup`, settings file `render.profile` | S1 | builds, loads, logs | 
+| A2 | **DONE** `PostChain` + `FxaaPass`; hook `DrawBackbuffer` (or `SSAAFunc`) by Cecil in `SpriteCardsPatch` (optional arg like Conversations) | A1 | e2e: edge metric on a screenshot of a sprite silhouette improves; UI pixels unchanged | 
 | A3 | Survive mode switches and resizes (recreate targets, re-apply delegate after `ChangeAAMode`) | A2 | e2e cycles all four modes, game responds, pass still on |
 | A4 | Options menu entry: Off / FXAA / SMAA, persisted; Off is bit-identical to before | A2 | e2e toggles and checks |
 | A5 | `SmaaPass` (MIT port, lookup textures embedded), pick default by measurement | A2, S3 | quality compared in screenshots; cost <= 1 ms |
@@ -36,6 +36,12 @@ Each task ends with an atomic commit.
 |---|---|---|---|
 | G1 | GTAO (XeGTAO, MIT) for the 2D path | L1 | contact darkening visible, <= 1 ms |
 | R1 | DXR proof of concept in Full 3D: Vortice D3D12 device, proxy BLAS/TLAS, shadow term in a shared texture | A-phase done | one visible ray-traced shadow in Full 3D; or a written no-go with evidence |
+
+## Progress (2026-11-22)
+- S1 done. GPU recorded: NVIDIA GeForce RTX 4070 (S3 budget numbers still to measure).
+- A1, A2 done: `Tools/Render` (`PostAA`, `RenderSettings`, embedded `Fxaa.mgfxo`), Cecil hook on `PPXDepthEngine.DrawBackbuffer` (`TryDraw`), `simtool render aa off|fxaa`. Measured in the real game with the game paused: FXAA changes about 15% of pixels (edges and texture detail), mean brightness change 0, turning it off restores the original frame exactly; e2e 51 checks, patch tests 21, unit tests 159.
+- Next: A4 (Options menu entry, persisted), A3 (mode-switch checks with FXAA on), A5 (SMAA 1x), S3 (timing), S2 (MSAA + post pass).
+- Finding: the game saves `GlobalGraphicsMode` in `config.ini` when a mode is picked in the menu; the e2e now resets and restores it (and `render.profile`).
 
 ## Order and parallelism
 S1 -> (S3, S2) -> Phase 1 (A1..A6) -> Phase 2 (L1..L6, L1 and L3 parallel) -> Phase 3. Phase 1 alone already delivers a visible win.
