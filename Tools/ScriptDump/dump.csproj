@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x86</PlatformTarget><LangVersion>latest</LangVersion>
+    <AppDir>$(USERPROFILE)\.t3\projects\the-sims-run\app</AppDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath></Reference>
+    <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath></Reference>
+  </ItemGroup>
+</Project>

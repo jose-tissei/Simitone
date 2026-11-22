@@ -81,3 +81,6 @@ None found in the repo (no CLAUDE.md / AGENTS.md / GEMINI.md / .cursorrules). Ag
 - First F12/menu action right after entering a lot can be ignored while the lot loads; queued in-game event dialogs (skunk, car pool) can block clicks.
 - `Tools/e2e/Run-E2E.ps1` hard-codes 1920x1080 coordinates and the Newbie lot route (map click 1295,460 then Enter Lot 360,812).
 - Not examined: `FreeSO/Other`, `Charvatia`, `Documentation`, `FSOInstaller`, server projects.
+
+## Sims 1 relationship rules
+See docs/architecture/RELATIONSHIPS.md (decoded from the original scripts with Tools/ScriptDump).
