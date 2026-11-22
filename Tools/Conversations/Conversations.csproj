@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>Conversations</AssemblyName>
+    <RootNamespace>Simitone.Conversations</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <!-- the Simitone release folder: this library is injected into it and compiled against its assemblies -->
+    <AppDir Condition="'$(AppDir)'==''">$(USERPROFILE)\.t3\projects\the-sims-run\app</AppDir>
+    <MonoGameDll Condition="'$(MonoGameDll)'==''">$(AppDir)\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.SimAntics"><HintPath>$(AppDir)\FSO.SimAntics.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Content"><HintPath>$(AppDir)\FSO.Content.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.UI"><HintPath>$(AppDir)\FSO.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Client"><HintPath>$(AppDir)\FSO.Client.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="Newtonsoft.Json"><HintPath>$(AppDir)\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+</Project>

@@ -8,6 +8,9 @@ using Mono.Cecil.Cil;
 //  2. Simitone.Client.dll  the in-lot Options menu gets four extra entries (camera / object modes).
 //  3. Simitone.Windows.exe Main calls SpriteCards.Startup(args): 3D is on by default, "-2d" turns it off.
 var appDir = args[0]; var hookPath = args[1]; var outDir = args[2];
+// optional 4th argument: Conversations.dll. When given, the AI conversations feature is installed as well:
+//  4. FSO.SimAntics.dll  the VMContext constructor ends with Simitone.Conversations.Boot.OnContextReady(this), and the Options menu gets a toggle.
+string conversationsPath = args.Length > 3 ? args[3] : null;
 Directory.CreateDirectory(outDir);
 var resolver = new DefaultAssemblyResolver();
 resolver.AddSearchDirectory(appDir);
@@ -73,7 +76,7 @@ int total = 0;
         var actionCtor = ins.First(i => i.OpCode == OpCodes.Newobj && i.Operand is MethodReference r && r.DeclaringType.Name == "Action" && r.Parameters.Count == 2).Operand as MethodReference;
         var labelRef = mod.ImportReference(Hook("Label"));
         // (label id, icon, menu action)
-        var entries = new (int id, string icon, string action)[]
+        var entryList = new List<(int id, string icon, string action)>
         {
             (0, "opt_cam_2d.png", "Menu2D"),
             (1, "opt_cam_fixed.png", "MenuList"),
@@ -81,6 +84,9 @@ int total = 0;
             (3, "opt_cam_free.png", "MenuFull3D"),
             (4, "opt_cam_reload.png", "MenuReload"),
         };
+        // the AI conversations on/off entry only exists when the conversations library is being installed
+        if (conversationsPath != null) entryList.Add((5, "opt_convo.png", "MenuConversations"));
+        var entries = entryList.ToArray();
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
         var il = m.Body.GetILProcessor();
         var anchor = ins[ctorIdx];
@@ -150,6 +156,42 @@ int total = 0;
         Console.WriteLine("patched " + main.FullName + ": SpriteCards.Startup(args)");
         mod.Write(Path.Combine(outDir, "Simitone.Windows.exe")); total++;
     }
+}
+
+// ---------------------------------------------------------------- 4. FSO.SimAntics.dll (AI conversations)
+if (conversationsPath != null)
+{
+    var conv = AssemblyDefinition.ReadAssembly(conversationsPath);
+    var boot = conv.MainModule.GetType("Simitone.Conversations.Boot");
+    var onCtx = boot.Methods.First(m => m.Name == "OnContextReady");
+    var mod = Open("FSO.SimAntics.dll");
+    // every lot gets a fresh VMContext whose constructor loads the global script resource. The routines in it are cached
+    // for the life of the process, so installing at the end of that constructor covers every lot (and is repeated harmlessly).
+    var ctxType = mod.GetType("FSO.SimAntics.VMContext");
+    var ctor = ctxType.Methods.First(m => m.IsConstructor && !m.IsStatic && m.Parameters.Count == 2 && m.Parameters[0].ParameterType.Name == "World" && m.Parameters[1].ParameterType.Name == "VMContext");
+    if (ctor.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "OnContextReady"))
+        Console.WriteLine("conversations hook already installed");
+    else
+    {
+        var onCtxRef = mod.ImportReference(onCtx);
+        var il = ctor.Body.GetILProcessor();
+        foreach (var ret in ctor.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList())
+        {
+            var first = il.Create(OpCodes.Ldarg_0);
+            il.InsertBefore(ret, first);
+            il.InsertBefore(ret, il.Create(OpCodes.Call, onCtxRef));
+            // a jump that targeted the ret must now run our call first
+            foreach (var other in ctor.Body.Instructions.ToList())
+                if (other.Operand == ret) other.Operand = first;
+        }
+        mod.Write(Path.Combine(outDir, "FSO.SimAntics.dll"));
+        Console.WriteLine("patched " + ctor.FullName + ": Boot.OnContextReady(this) before every return");
+        total++;
+    }
+    // ship the library next to the game; skipped when the game folder already has an identical copy (keeps re-runs a no-op)
+    var installed = Path.Combine(appDir, "Conversations.dll");
+    if (!File.Exists(installed) || !File.ReadAllBytes(installed).SequenceEqual(File.ReadAllBytes(conversationsPath)))
+        File.Copy(conversationsPath, Path.Combine(outDir, "Conversations.dll"), true);
 }
 
 Console.WriteLine(total == 0 ? "nothing to patch" : $"done: {total} assembly(ies) written to {outDir}");

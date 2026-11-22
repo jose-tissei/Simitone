@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -56,7 +56,7 @@ public static class GameControl
 
     static string Execute(string[] p)
     {
-        var vm = GetVM();
+        var vm = p[0] == "convo" ? null : GetVM();   // convo commands also work on the neighbourhood map
         switch (p[0])
         {
             case "sims": return Sims(vm);
@@ -65,6 +65,23 @@ public static class GameControl
             case "rel": return Rel(Find(vm, p[1]), Find(vm, p[2]));
             case "dialog": return Dialog(vm);
             case "answer": return Answer(vm, byte.Parse(p[1]));
+            case "objs":
+                // objs [filter]: objects on the lot (not Sims) whose name contains the filter, with their first attributes
+                var flt = p.Length > 1 ? p[1] : "";
+                return "ok " + string.Join(" | ", vm.Entities.Where(e => !(e is VMAvatar) && (e.ToString() ?? "").IndexOf(flt, StringComparison.OrdinalIgnoreCase) >= 0)
+                    .Take(40).Select(e => e.ObjectID + ":" + e.ToString() + " attrs[" + string.Join(",", Enumerable.Range(0, 10).Select(i => e.GetAttribute(i))) + "]"));
+            case "attr":
+                // attr <objectId> <index> [value]: read or write an object attribute
+                var eo = vm.GetObjectById(short.Parse(p[1]));
+                if (eo == null) throw new Exception("no object " + p[1]);
+                if (p.Length > 3) eo.SetAttribute(int.Parse(p[2]), short.Parse(p[3]));
+                return "ok attr[" + p[2] + "]=" + eo.GetAttribute(int.Parse(p[2]));
+            case "convo":
+                // convo status|on|off|force N|tone N|last|log : the AI conversations feature (Conversations.dll), by reflection so
+                // the hook works without it
+                var boot = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("Simitone.Conversations.Boot", false)).FirstOrDefault(t => t != null);
+                if (boot == null) throw new Exception("Conversations.dll is not loaded");
+                return "ok " + (string)boot.GetMethod("Command").Invoke(null, new object[] { p.Skip(1).ToArray() });
             case "time":
                 return "ok " + vm.Context.Clock.Hours.ToString("00") + ":" + vm.Context.Clock.Minutes.ToString("00") + " day " + vm.Context.Clock.DayOfMonth;
             case "global":

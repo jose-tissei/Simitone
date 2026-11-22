@@ -97,6 +97,14 @@ public static class SpriteCards
         bool two = false;
         if (args != null) foreach (var a in args) if (a == "-2d") two = true;
         if (!two) FSOEnvironment.Enable3D = true;
+        // the AI conversations feature (Conversations.dll) is optional: when it is not installed nothing changes
+        ConvoLoader.Start();
+    }
+
+    public static void MenuConversations()
+    {
+        ConvoLoader.Toggle();
+        Refresh();
     }
 
     static void SetMode(ModeDef m)
@@ -117,8 +125,8 @@ public static class SpriteCards
     }
 
     // ---------------------------------------------------------------- Options menu
-    // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list
-    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null };
+    // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list, 5 AI conversations (toggle)
+    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null, null };
     static object menuPanel; // the Options subpanel currently shown
 
     public static void Menu2D() { SetMode(Modes[0]); Refresh(); }
@@ -129,6 +137,7 @@ public static class SpriteCards
 
     public static string Label(int id)
     {
+        if (id == 5) return "AI conversations";
         return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 
@@ -153,7 +162,7 @@ public static class SpriteCards
                 if (k.GetType().Name != "UICatButton") continue;
                 int entry = i - 3; // after Save, Neighborhood, Quit
                 var sel = k.GetType().GetProperty("Selected");
-                if (sel != null) sel.SetValue(k, entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id, null);
+                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
                 i++;
             }
         }

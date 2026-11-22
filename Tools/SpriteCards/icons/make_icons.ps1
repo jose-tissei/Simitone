@@ -35,3 +35,8 @@ New-Icon 'opt_cam_reload.png' { param($g, $pen)
 New-Icon 'opt_cam_2d.png' { param($g, $pen)
     $g.DrawRectangle($pen, 12, 12, 41, 41)
     $g.DrawLine($pen, (P 8 57), (P 57 8)) }
+
+# AI conversations: speech bubble with three dots
+New-Icon 'opt_convo.png' { param($g, $pen)
+    $g.DrawPolygon($pen, @((P 12 12), (P 53 12), (P 53 40), (P 33 40), (P 20 53), (P 21 40), (P 12 40)))
+    foreach ($x in 24, 33, 42) { $g.FillEllipse([System.Drawing.Brushes]::White, ($x - 3), 23, 7, 7) } }

@@ -1,0 +1,39 @@
+# Installs the AI conversations feature (and the other Tools/ patches that live in the same patcher) into a game folder.
+#   pwsh Tools/Install-Conversations.ps1 -Pristine <unmodified extracted v0.8.12> -App <game folder to update>
+# The patchers must always start from the ORIGINAL DLLs (-Pristine); -App only receives the results.
+# Files that change in -App are first copied to <Backup> (default: a "backup-conversations" folder next to -App).
+param(
+    [Parameter(Mandatory = $true)][string]$Pristine,
+    [Parameter(Mandatory = $true)][string]$App,
+    [string]$Backup = (Join-Path (Split-Path $App -Parent) 'backup-conversations'),
+    [switch]$WithSimTestHook   # also (re)install the test hook used by simtool
+)
+$ErrorActionPreference = 'Stop'
+$Pristine = (Resolve-Path $Pristine).Path
+$App = (Resolve-Path $App).Path
+$Tools = $PSScriptRoot
+$Tmp = Join-Path ([IO.Path]::GetTempPath()) ("convo-install-" + [Guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Force $Tmp, $Backup | Out-Null
+
+function Build($proj, $out, $extra) { & dotnet build "$Tools\$proj" -c Release -o "$Tools\$proj\out" --nologo -v q @extra; if ($LASTEXITCODE -ne 0) { throw "build failed: $proj" } }
+Build 'SpriteCards' $null @("-p:AppDir=$Pristine")
+Build 'Conversations' $null @("-p:AppDir=$Pristine")
+Build 'SpriteCardsPatch' $null @()
+if ($WithSimTestHook) { Build 'SimTestHook' $null @("-p:AppDir=$Pristine") }
+
+& dotnet "$Tools\SpriteCardsPatch\out\SpriteCardsPatch.dll" $Pristine "$Tools\SpriteCards\out\SpriteCards.dll" $Tmp "$Tools\Conversations\out\Conversations.dll"
+if ($LASTEXITCODE -ne 0) { throw 'patcher failed' }
+
+$files = @('FSO.LotView.dll', 'FSO.SimAntics.dll', 'Simitone.Client.dll', 'Simitone.Windows.exe', 'Conversations.dll')
+foreach ($f in $files) {
+    $dst = Join-Path $App $f
+    if ((Test-Path $dst) -and -not (Test-Path (Join-Path $Backup $f))) { Copy-Item $dst $Backup }
+    Copy-Item (Join-Path $Tmp $f) $dst -Force
+}
+Copy-Item "$Tools\SpriteCards\out\SpriteCards.dll" $App -Force
+if ($WithSimTestHook) { Copy-Item "$Tools\SimTestHook\out\SimTestHook.dll" $App -Force }
+Copy-Item "$Tools\SpriteCards\icons\opt_convo.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
+$bankSrc = Join-Path $Tools 'Conversations\bank\bank.json'
+if (Test-Path $bankSrc) { New-Item -ItemType Directory -Force (Join-Path $App 'Content\conversations') | Out-Null; Copy-Item $bankSrc (Join-Path $App 'Content\conversations\bank.json') -Force }
+Remove-Item $Tmp -Recurse -Force
+Write-Host "Installed. Originals saved in $Backup" -ForegroundColor Green

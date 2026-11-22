@@ -56,16 +56,25 @@ class P
         var sb = new StringBuilder();
         var globalNames = new Dictionary<int, string>();
         var loaded = new List<KeyValuePair<string, IffFile>>();
-        foreach (var far in new[] { "GameData/Global/Global.far", "GameData/Objects/Objects.far" })
+        foreach (var far in Directory.GetFiles(root, "*.far", SearchOption.AllDirectories).Where(f => !f.Contains("Downloads")).OrderBy(f => f))
         {
-            var arc = new FAR1Archive(Path.Combine(root, far), false);
+            FAR1Archive arc;
+            try { arc = new FAR1Archive(far, false); } catch { continue; }
             foreach (var e in arc.GetAllEntries())
             {
                 if (!e.Key.EndsWith(".iff", StringComparison.OrdinalIgnoreCase)) continue;
-                var iff = new IffFile(); iff.Read(new MemoryStream(e.Value));
-                loaded.Add(new KeyValuePair<string, IffFile>(e.Key, iff));
-                if (e.Key.Equals("Global.iff", StringComparison.OrdinalIgnoreCase))
-                    foreach (var b in iff.List<BHAV>() ?? new List<BHAV>()) globalNames[b.ChunkID] = b.ChunkLabel;
+                try
+                {
+                    var iff = new IffFile(); iff.Read(new MemoryStream(e.Value));
+                    // touch every list we print, so a damaged file is skipped here instead of stopping the dump
+                    iff.List<BHAV>(); iff.List<STR>(); iff.List<BCON>(); iff.List<TTAB>(); iff.List<TTAs>();
+                    // a later archive (expansion packs) replaces an earlier file of the same name, as in the game
+                    loaded.RemoveAll(x => x.Key.Equals(e.Key, StringComparison.OrdinalIgnoreCase));
+                    loaded.Add(new KeyValuePair<string, IffFile>(e.Key, iff));
+                    if (e.Key.Equals("Global.iff", StringComparison.OrdinalIgnoreCase))
+                        foreach (var b in iff.List<BHAV>() ?? new List<BHAV>()) globalNames[b.ChunkID] = b.ChunkLabel;
+                }
+                catch (Exception) { /* skipped */ }
             }
         }
         foreach (var kv in loaded)
