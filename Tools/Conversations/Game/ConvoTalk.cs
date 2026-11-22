@@ -135,7 +135,7 @@ namespace Simitone.Conversations
             Boot.LastDecision = "talk about " + s.Title + " listener-interest=" + p.Listener.Interests[s.Interest] + " liking=" + liking + " temperament=" + temper +
                                 " (" + p.SpeakerProfile.Name + " -> " + p.ListenerProfile.Name + ")";
             Boot.Log("decision: " + Boot.LastDecision + " | \"" + line + "\" / \"" + reply + "\"");
-            ConvoOverlay.Show(p.SpeakerProfile.Name, line, p.ListenerProfile.Name, reply);
+            ConvoOverlay.Show(ctx.VM, ctx.Caller, p.SpeakerProfile.Name, line, ctx.VM.GetObjectById(social.GetAttribute(0)), p.ListenerProfile.Name, reply);
         }
     }
 }

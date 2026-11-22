@@ -67,7 +67,28 @@ namespace Simitone.Conversations
             psi.EnvironmentVariables["LAYA_MODELS"] = "english";
             psi.EnvironmentVariables["LAYA_PRELOAD"] = "1";
             psi.EnvironmentVariables["LAYA_MAX_CONCURRENT"] = "4";
+            var root = BundleRoot(exe);
+            if (root != null)
+            {
+                // the copy that ships with the game: its own weights, no network, and nothing from the user's own Python
+                psi.EnvironmentVariables["HF_HOME"] = Path.Combine(root, "hf");
+                psi.EnvironmentVariables["HF_HUB_OFFLINE"] = "1";
+                psi.EnvironmentVariables["PYTHONNOUSERSITE"] = "1";
+            }
             return psi;
+        }
+
+        // <game>\laya for <game>\laya\python\python.exe, otherwise null (a system Python)
+        public static string BundleRoot(string exe)
+        {
+            try
+            {
+                var py = Path.GetDirectoryName(exe);
+                if (string.IsNullOrEmpty(py) || !string.Equals(Path.GetFileName(py), "python", StringComparison.OrdinalIgnoreCase)) return null;
+                var root = Path.GetDirectoryName(py);
+                return !string.IsNullOrEmpty(root) && string.Equals(Path.GetFileName(root), "laya", StringComparison.OrdinalIgnoreCase) ? root : null;
+            }
+            catch { return null; }
         }
 
         // Runs on a background thread; returns when the server answered a request or gave up.
@@ -91,7 +112,7 @@ namespace Simitone.Conversations
                     AttachToJob(p);
                     BaseUrl = "http://127.0.0.1:" + port;
                     ApiKey = key;
-                    if (WaitHealthy(p, transport, healthTimeoutSeconds)) { Ready = true; Status = "ready on port " + port; return true; }
+                    if (WaitHealthy(p, transport, healthTimeoutSeconds)) { Ready = true; Status = "ready on port " + port + " via " + c[0]; return true; }
                     Status = "server did not become healthy (" + c[0] + ")";
                     Stop();
                 }

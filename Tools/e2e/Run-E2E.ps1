@@ -121,9 +121,26 @@ try {
         $convoStatus = Convo 'status'
         Check 'the conversation step is installed in the game scripts' ($convoStatus -match 'installed=[1-9]') $convoStatus
         Check "Laya was started by the game and answers (waited up to 90 s)" (WaitFor { (Convo 'status') -match 'laya=up' } 90) (Convo 'status')
+        if (Test-Path (Join-Path $App 'laya\python\python.exe')) {
+            $layaLog = (Get-Content (Join-Path $App 'Content\conversations.log') -Tail 40) -join ' '
+            Check 'the game started the Laya bundled with it (no system Python needed)' ($layaLog -match 'laya: ready on port \d+ via .*laya\\python\\python\.exe') ($layaLog.Substring([Math]::Max(0, $layaLog.Length - 300)))
+        }
         $sims = (& $SimTool sims) -join ' '
         Check 'the lot has Bob and Betty' (($sims -match 'Bob') -and ($sims -match 'Betty')) $sims
         Convo 'tone' 'off' | Out-Null; Convo 'force' 'off' | Out-Null
+
+        # a Sim the player is not controlling: no dialog, the Sim picks a tone from their own personality, the step waits for
+        # Laya (nothing has classified Betty yet) and the balloons still appear. The test aid makes every Sim count as not
+        # player-controlled, because the game refuses to queue interactions for a Sim other than the active one.
+        Convo 'auto' 'on' | Out-Null
+        Sim interact Bob Betty 'Hug.../Friendly'
+        Check 'an autonomous Hug is decided without asking the player' (WaitFor { (LastLine) -match '^hug \w+ .*\(Bob -> Betty\)' } 60) (LastLine)
+        Check 'no dialog was opened for the autonomous Hug' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
+        $line = LastLine
+        Check 'the autonomous Hug already knew the receiver''s temperament (the step waited for Laya)' (($line -notmatch 'temperament=Unknown') -and ($line -match 'cached=True')) $line
+        Check 'the autonomous balloons are placed over the Sims' ((Convo 'status') -match 'balloons=over-heads') (Convo 'status')
+        Convo 'auto' 'off' | Out-Null
+        Sim wait 40
 
         # a hug: the three-line dialog appears, the chosen tone is applied and the lines are shown
         Sim interact Bob Betty 'Hug.../Friendly'
@@ -135,7 +152,8 @@ try {
         Check 'the Playful tone was applied to the Hug' ($line -match '^hug Playful') $line
         Check 'the result is at most one step from the game''s own outcome' (($line -match 'script=(\d) final=(\d)') -and ([math]::Abs([int]$Matches[1] - [int]$Matches[2]) -le 1)) $line
         $overlay = Shot 'convo-overlay'
-        Check 'the speech panel is on screen' ((PixelDiff $dlg $overlay) -gt 0.05) ('changed ' + (PixelDiff $dlg $overlay))
+        Check 'the speech balloons are on screen' ((PixelDiff $dlg $overlay) -gt 0.05) ('changed ' + (PixelDiff $dlg $overlay))
+        Check 'the balloons are placed over the Sims, not in the fallback strip' ((Convo 'status') -match 'balloons=over-heads') (Convo 'status')
         Check 'the game continues after the choice' ((& $SimTool dialog) -join ' ' -match 'dialog=none') ((& $SimTool dialog) -join ' ')
 
         # Talk: subject choice

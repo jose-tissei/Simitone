@@ -123,6 +123,7 @@
         "That’s a seriously impressive skill!"
       ],
       "2": [
+        "You look really sharp today, {name}.",
         "You look fantastic today, {name}."
       ]
     },
@@ -309,7 +310,16 @@
       ]
     },
     "kiss": {
-      "0": [],
+      "0": [
+        "I just wanted to see if you’d like to get closer.",
+        "You seem really lovely, {name}.",
+        "This is nice, isn't it?",
+        "I’m finding it really easy to talk to you.",
+        "Maybe we could… hold hands?",
+        "It’s a pretty wonderful feeling, isn't it {name}?",
+        "I was hoping you’d feel the same way.",
+        "Could I… perhaps brush your cheek?"
+      ],
       "1": [
         "You know, I've been admiring you lately.",
         "Seriously, your smile is amazing.",
@@ -409,7 +419,13 @@
     },
     "tease": {
       "0": [
-        "You look really nice today, {name}."
+        "You look really nice today, {name}.",
+        "You look really nice today, {name}",
+        "I was just thinking about you, honestly.",
+        "Don't worry about a thing, it's okay.",
+        "Maybe we could just sit and chat?",
+        "You have such a sweet smile, you know?",
+        "I really enjoy spending time with you, {name}."
       ],
       "1": [
         "You know, you look really good in that shirt.",

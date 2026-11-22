@@ -11,6 +11,7 @@
   <ItemGroup>
     <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.SimAntics"><HintPath>$(AppDir)\FSO.SimAntics.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.LotView"><HintPath>$(AppDir)\FSO.LotView.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Content"><HintPath>$(AppDir)\FSO.Content.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.UI"><HintPath>$(AppDir)\FSO.UI.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Client"><HintPath>$(AppDir)\FSO.Client.dll</HintPath><Private>false</Private></Reference>

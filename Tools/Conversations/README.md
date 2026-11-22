@@ -1,18 +1,20 @@
 # AI conversations
 
 Makes The Sims 1 social interactions livelier: before a social plays, the player picks one of three lines to say; the result
-depends on the other Sim's character; both lines are shown on screen. Talk offers three subjects. Nothing here changes the
+depends on the other Sim's character; both lines are shown as speech balloons over the Sims. Talk offers three subjects. Nothing here changes the
 game's relationship numbers: the game's own scripts still apply their own tables to whatever outcome is chosen.
 
 ## What the player sees
 - **Hug, Kiss, Flirt, Joke, Compliment, ... (18 socials):** a dialog "What do you say to Betty?" with three lines
-  (Gentle / Playful / Bold) and three buttons. After the choice the game plays the social and a panel at the bottom shows the
-  speaker's line and the other Sim's answer.
+  (Gentle / Playful / Bold) and three buttons. After the choice the game plays the social and a balloon over each Sim shows the
+  speaker's line, then (1.6 s later) the other Sim's answer. The balloons follow the Sims and keep inside the screen; if a Sim's
+  position is unknown the line goes to a strip at the bottom instead.
 - **Talk:** a dialog "What do you want to talk to Betty about?" with three subjects (from the eight Sim interests).
   The game then scores the subject by how much the listener likes it, as before.
 - **Options menu:** an "AI conversations" button (speech-bubble icon) switches the whole feature on and off; green = on. The choice
   is saved in `Documents\Simitone\conversations.profile`.
-- Sims the player does not control (autonomous socials) are not asked; they pick a tone from their personality.
+- Sims the player does not control (autonomous socials) are not asked; they pick a tone from their personality, wait up to about 3 s of game time for Laya to classify the receiver (so the first conversation
+  already has a temperament), and still show the balloons. Autonomous Talk is left to the game.
 - Children, pets and anything the feature does not recognise keep the game's original behaviour.
 
 ## How the result is decided (policy B)
@@ -31,8 +33,12 @@ text well. So it is used only for classification, and the rules table decides.
 `Boot.Startup` (called from the game's Main) starts `python -m laya.serve` in the background: bound to `127.0.0.1` only, on a free
 port, with a random API key, hidden, and tied to the game by a Windows job object so it stops when the game does (even on a crash).
 It looks for a bundled `laya\python\python.exe` next to the game first, then a system Python (`py -3.11`, `python`).
-Laya itself is not in this repository (about 4.4 GB with PyTorch and CUDA plus 2.3 GB of weights). If it cannot start, the
-feature turns itself off and logs one line to `Content\conversations.log`.
+Laya itself is not in this repository. `Tools/Package-Laya.ps1 -Game <game folder>` builds the bundle: embeddable Python 3.11,
+CPU PyTorch, `laya[serve]` and only the English weights, 1.7 GB in total, then self-tests it offline. Nothing needs to be installed
+on the PC and no GPU is needed. The bundled copy runs with `HF_HUB_OFFLINE=1`, its own `HF_HOME` and `PYTHONNOUSERSITE=1`.
+Every request names the `english` checkpoint (newer Laya versions route to a multilingual one otherwise, which is not bundled).
+Measured on CPU only (GPU hidden): ready in about 6 s, 190 ms per classification (GPU: 30 ms). That is fine because it runs
+in the background. If Laya cannot start, the feature falls back to the game's own outcomes and logs one line to `Content\conversations.log`.
 Set `SIMITONE_LAYA_URL` (and `SIMITONE_LAYA_KEY`) to use an already running server instead (development).
 
 ## The lines (no AI at play time)
@@ -59,7 +65,9 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
 | `Logic/` | Pure code, no game types, unit tested: traits, outcome rules, dialogue bank, Laya client and host, Talk subjects |
 | `Game/` | Game side: `Boot` (entry points), `ConvoPrimitive`, `ConvoTalk`, `ConvoOverlay` |
 | `bank/` | `bank.json` (built lines) and review sheets |
-| `../Conversations.Tests` | 134 unit tests |
+| `../Conversations.Tests` | 148 unit tests |
+| `Logic/BalloonLayout.cs` | Balloon wrapping and placement (tested) |
+| `../Package-Laya.ps1` | Builds the bundled Laya |
 | `../ConvoBank` | Offline bank builder (Ollama) |
 | `../Install-Conversations.ps1` | Patches a pristine release and installs into a game folder |
 | `../PatchTests/ConversationsPatchTests.cs` | Patcher tests against the real release |
@@ -70,6 +78,7 @@ and make sure Python with `laya` is available (or a bundled `laya\python`).
 
 ## Try it without clicking (simtool)
     simtool convo status             enabled, Laya up, bank loaded, last decision
+    simtool convo auto on|off        treat every Sim as not player-controlled (tests the autonomous path)
     simtool convo tone 1             skip the dialog and use tone 1 (0 Gentle, 1 Playful, 2 Bold)
     simtool convo force 3            force the outcome (test aid), `force off` to stop
     simtool convo last | log         last decision / log tail
@@ -78,6 +87,5 @@ and make sure Python with `laya` is available (or a bundled `laya\python`).
 ## Known limits
 - Which script variant runs depends on the installed expansions; the hook finds the outcome step by its shape and logs
   `could not find the outcome store` if a variant does not match (the game then behaves as before).
-- The first conversation with a Sim has no temperament yet when it is not chosen by the player (no time to classify): no shift.
+- Autonomous Talk keeps the game's own topic choice and shows no lines.
 - Missing bank entries fall back to built-in lines; refilling the bank is an offline run of `ConvoBank` (no live Ollama in the game).
-- Laya on a PC without a GPU was not measured.

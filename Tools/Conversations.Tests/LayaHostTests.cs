@@ -20,6 +20,26 @@ public class LayaHostTests
     }
 
     [Fact]
+    public void BundledPythonGetsItsOwnWeightsAndNoNetwork()
+    {
+        var exe = @"C:\Games\Sims\laya\python\python.exe";
+        Assert.Equal(@"C:\Games\Sims\laya", LayaHost.BundleRoot(exe));
+        var psi = LayaHost.BuildStart(exe, "-m laya.serve", 4321, "k");
+        Assert.Equal(@"C:\Games\Sims\laya\hf", psi.EnvironmentVariables["HF_HOME"]);
+        Assert.Equal("1", psi.EnvironmentVariables["HF_HUB_OFFLINE"]);
+        Assert.Equal("1", psi.EnvironmentVariables["PYTHONNOUSERSITE"]);
+    }
+
+    [Theory]
+    [InlineData("python")] [InlineData("py")] [InlineData(@"C:\Program Files\Python311\python.exe")] [InlineData(@"C:\x\python\python.exe")]
+    public void SystemPythonIsLeftAlone(string exe)
+    {
+        Assert.Null(LayaHost.BundleRoot(exe));
+        var psi = LayaHost.BuildStart(exe, "-m laya.serve", 4321, "k");
+        Assert.False(psi.EnvironmentVariables.ContainsKey("HF_HOME") && psi.EnvironmentVariables["HF_HOME"].EndsWith(@"laya\hf"));   // only the bundle redirects the weights
+    }
+
+    [Fact]
     public void FreePortIsUsable()
     {
         int port = LayaHost.FreePort();

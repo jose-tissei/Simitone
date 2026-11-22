@@ -40,7 +40,12 @@ namespace Simitone.Conversations
             public RawSim RawSpeaker, RawListener;
             public string[] SpeakerLines;     // one per tone
             public Tone Tone;
+            public bool Auto;        // an autonomous Sim: waiting for Laya, not for a dialog answer
+            public int Waits;
         }
+
+        // an autonomous Sim waits at most this many game ticks for Laya's answer about the receiver (about 3 s of game time)
+        public const int MaxAutoWaitTicks = 90;
 
         static readonly ConditionalWeakTable<VMThread, Pending> pending = new ConditionalWeakTable<VMThread, Pending>();
 
@@ -89,6 +94,7 @@ namespace Simitone.Conversations
         // interaction with a low priority even when the player asked for it.)
         public static bool PlayerControls(VMEntity speaker)
         {
+            if (Boot.TreatAsAutonomous) return false;
             try
             {
                 var screen = FSO.Client.UI.Framework.UIScreen.Current;
@@ -140,7 +146,22 @@ namespace Simitone.Conversations
                     pending.Add(thread, p);
                     return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
                 }
-                else p.Tone = AutoTone2(rs);
+                else
+                {
+                    p.Tone = AutoTone2(rs);
+                    // nobody is choosing, so there is no time to classify the receiver while waiting: give Laya a moment
+                    if (Boot.Laya.Available && !Boot.Laya.HasTemperament(pl))
+                    {
+                        p.Auto = true;
+                        pending.Add(thread, p);
+                        return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
+                    }
+                }
+            }
+            else if (p.Auto)
+            {
+                if (Boot.Laya.Available && !Boot.Laya.HasTemperament(p.Listener) && ++p.Waits < MaxAutoWaitTicks) return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
+                pending.Remove(thread);
             }
             else
             {
@@ -200,7 +221,7 @@ namespace Simitone.Conversations
             Boot.LastDecision = p.Key + " " + Names.Label(p.Tone) + " script=" + script + " final=" + outcome + " temperament=" + temper +
                                 " (" + p.Speaker.Name + " -> " + p.Listener.Name + ") laya=" + (Boot.Laya.Available ? "up" : "down") + " failures=" + Boot.Laya.Failures + " err=" + Boot.Laya.LastError + " cached=" + Boot.Laya.HasTemperament(p.Listener) + " [" + p.Listener.Summary + "]";
             Boot.Log("decision: " + Boot.LastDecision + " | \"" + line + "\" / \"" + reply + "\"");
-            ConvoOverlay.Show(p.Speaker.Name, line, p.Listener.Name, reply);
+            ConvoOverlay.Show(ctx.VM, ctx.Caller, p.Speaker.Name, line, ctx.VM.GetObjectById(ctx.StackObject.GetAttribute(0)), p.Listener.Name, reply);
             return outcome;
         }
 

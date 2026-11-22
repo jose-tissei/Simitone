@@ -22,6 +22,7 @@ namespace Simitone.Conversations
         public static string LastDecision = "";
         public static int ForceOutcome;          // test aid: when 1..3 the outcome is forced (simtool convo force N)
         public static int AutoTone = -1;         // test aid: when 0..2 the dialog is skipped and this tone is used
+        public static bool TreatAsAutonomous;    // test aid: every Sim counts as not player-controlled (the game's command checks stop tests from queueing for the other Sim)
         static bool enabled = true;
         static bool started;
 
@@ -114,14 +115,15 @@ namespace Simitone.Conversations
             {
                 case "status":
                     return "enabled=" + enabled + " laya=" + (Laya.Available ? "up" : (Laya.Configured ? "paused" : "off")) + " bank=" + (Bank.Loaded ? "loaded" : "builtin") +
-                           " force=" + ForceOutcome + " autotone=" + AutoTone + " installed=" + ConvoPrimitive.InstalledCount + " last=[" + LastDecision + "]";
+                           " force=" + ForceOutcome + " autotone=" + AutoTone + " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount + " balloons=" + ConvoOverlay.LastPlacement + " last=[" + LastDecision + "]";
                 case "on": Enabled = true; return "enabled=true";
                 case "off": Enabled = false; return "enabled=false";
                 case "force": ForceOutcome = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : 0; return "force=" + ForceOutcome;
                 case "tone": AutoTone = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : -1; return "autotone=" + AutoTone;
+                case "auto": TreatAsAutonomous = a.Length > 1 && a[1] == "on"; return "autonomous=" + TreatAsAutonomous;
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
-                default: throw new Exception("convo status|on|off|force N|tone N|last|log");
+                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|last|log");
             }
         }
     }

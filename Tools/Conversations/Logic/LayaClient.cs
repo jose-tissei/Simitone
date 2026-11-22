@@ -83,6 +83,7 @@ namespace Simitone.Conversations
             foreach (var c in criteria) { var i = c.IndexOf('|'); crit[c.Substring(0, i)] = c.Substring(i + 1); }
             var body = new JObject
             {
+                ["model"] = "english",   // never let Laya route to the multilingual checkpoint (newer versions do by default; the bundle has only this one)
                 ["state"] = new JObject { ["body"] = text },
                 ["questions"] = new JObject { ["q"] = new JObject { ["type"] = "choice", ["instructions"] = question, ["criteria"] = crit } },
             };
