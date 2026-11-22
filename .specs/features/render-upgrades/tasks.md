@@ -7,8 +7,8 @@ Each task ends with an atomic commit.
 | ID | Task | Depends | Done when |
 |---|---|---|---|
 | S1 | **DONE** Get an MGFX v8 compiler (build `FreeSO/Other/libs/FSOMonoGame/Tools` 2MGFX, or find a compatible one). Replace `Content\DX\Effects\SSAA.xnb` with a test shader (tint) | - | Verified: tint shows in the real game (`s1-tint-proof.png`); stock SSAA rebuilds byte-identical; script `Tools/Render/Build-Effects.ps1` (RND-01) |
-| S3 | Record the GPU model; time a full-screen test pass at 1920x1080 inside the game (GPU timer or frame-time log) | S1 | Numbers in `notes/measurements.md`; budget confirmed or revised |
-| S2 | Test MSAA (`-aa`) with the MRT depth target in Hybrid2D plus a post pass | S1 | Result recorded; decision on MSAA/post-AA coexistence |
+| S3 | **DONE** Record the GPU model; time a full-screen test pass at 1920x1080 inside the game (GPU timer or frame-time log) | S1 | Numbers in `notes/measurements.md`; budget confirmed or revised |
+| S2 | **DONE** Test MSAA (`-aa`) with the MRT depth target in Hybrid2D plus a post pass | S1 | Result recorded; decision on MSAA/post-AA coexistence |
 
 ## Phase 1: anti-aliasing (RND-02..05, 10, 13)
 | ID | Task | Depends | Done when |
@@ -44,7 +44,9 @@ Each task ends with an atomic commit.
 - A3 done: e2e switches 2D, arch, Full 3D and list with FXAA on; the pass keeps drawing and never marks itself broken.
 - A5 done: SMAA 1x (reference SMAA.hlsl, MIT) as three passes with embedded lookup tables. **Finding:** the shipped game runs at the Reach graphics profile (Direct3D feature level 9_3), which cannot run the SMAA shaders, so the render library now makes the game ask for HiDef when the adapter supports it (`Render.Boot.SetVsync` replaces one call in the SimitoneGame constructor; `hidef=off` in `render.profile` undoes it). Without HiDef, SMAA falls back to FXAA. Measured (game paused): SMAA changes 12.6% of pixels at edges and keeps texture detail (gravel stays crisp), FXAA changes 33% and blurs texture detail. SMAA is the better mode.
 - e2e 63 checks, patch tests 23, unit tests 164.
-- Next: S3 (frame timing), S2 (MSAA with the post pass), then Phase 2 (lighting).
+- S3 done: FXAA 0.02 ms, SMAA 0.07-0.08 ms per frame at 1080p on the RTX 4070 (details in `notes/measurements.md`).
+- S2 done: engine MSAA and the post pass coexist in Full 3D and list mode; decision: keep engine MSAA off by default.
+- Next: Phase 2 (lighting): L1 depth-to-normal, L3 light grid.
 - Finding: the game saves `GlobalGraphicsMode` in `config.ini` when a mode is picked in the menu; the e2e now resets and restores it (and `render.profile`).
 
 ## Order and parallelism

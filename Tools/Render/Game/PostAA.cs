@@ -19,8 +19,12 @@ namespace Simitone.Render
         static VertexBuffer quad;
         static GraphicsDevice quadDevice;
         static bool broken, warnedReach;
+        static TimeSpan? savedStep;
         public static string LastError = "";
         public static long Draws;
+        public static int Repeat = 1;   // measurements only: run the pass this many times per frame to make its cost visible
+        public static long Calls;     // every world blit, whether or not a pass ran (frame counter for measurements)
+        static readonly System.Diagnostics.Stopwatch clock = System.Diagnostics.Stopwatch.StartNew();
 
         public static RenderSettings Settings { get { return settings ?? (settings = RenderSettings.Load()); } }
 
@@ -38,6 +42,7 @@ namespace Simitone.Render
         // false = draw the world the original way
         public static bool TryDraw(float opacity, float scale)
         {
+            Calls++;
             try
             {
                 if (broken || Settings.Aa == AaMode.Off) return false;
@@ -59,7 +64,7 @@ namespace Simitone.Render
                 }
                 if (mode == AaMode.Smaa)
                 {
-                    smaa.Draw(gd, bb, quad, !PPXDepthEngine.WithOpacity);
+                    for (int r = 0; r < Repeat; r++) smaa.Draw(gd, bb, quad, !PPXDepthEngine.WithOpacity);
                     Draws++;
                     return true;
                 }
@@ -70,9 +75,12 @@ namespace Simitone.Render
                 fxaa.CurrentTechnique = fxaa.Techniques[0];
                 fxaa.Parameters["FxaaTexel"].SetValue(new Vector2(1f / bb.Width, 1f / bb.Height));
                 fxaa.Parameters["tex"].SetValue(bb);
-                fxaa.CurrentTechnique.Passes[0].Apply();
-                gd.SetVertexBuffer(quad);
-                gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+                for (int r = 0; r < Repeat; r++)
+                {
+                    fxaa.CurrentTechnique.Passes[0].Apply();
+                    gd.SetVertexBuffer(quad);
+                    gd.DrawPrimitives(PrimitiveType.TriangleStrip, 0, 2);
+                }
                 Draws++;
                 return true;
             }
@@ -118,6 +126,28 @@ namespace Simitone.Render
             catch { }
         }
 
+        // measurements only: with vsync and the fixed time step on, the frame rate is capped and the cost of a pass cannot be seen
+        static string Vsync(bool on)
+        {
+            Type facade = null;
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies()) { facade = asm.GetType("FSO.Client.GameFacade", false); if (facade != null) break; }
+            var game = (facade.GetField("Game", BindingFlags.Static | BindingFlags.Public) != null ? facade.GetField("Game", BindingFlags.Static | BindingFlags.Public).GetValue(null) : facade.GetProperty("Game", BindingFlags.Static | BindingFlags.Public).GetValue(null, null)) as Game;
+            if (game == null) throw new Exception("no game");
+            // the game sets IsFixedTimeStep back every frame, so the cap is lifted through the target frame time instead
+            if (savedStep == null) savedStep = game.TargetElapsedTime;
+            game.TargetElapsedTime = on ? savedStep.Value : TimeSpan.FromTicks(1000);
+            object gfx = null;   // a protected field of the engine's Game base class
+            for (var t = game.GetType(); t != null && gfx == null; t = t.BaseType)
+            {
+                var f = t.GetField("Graphics", BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.DeclaredOnly);
+                if (f != null) gfx = f.GetValue(game);
+            }
+            var dm = (GraphicsDeviceManager)gfx;
+            dm.SynchronizeWithVerticalRetrace = on;
+            dm.ApplyChanges();
+            return "vsync=" + on;
+        }
+
         // simtool render status | aa off|fxaa
         public static string Command(string[] a)
         {
@@ -126,7 +156,10 @@ namespace Simitone.Render
             {
                 case "status": return "aa=" + RenderSettings.AaName(Mode) + " draws=" + Draws + " broken=" + broken + " err=" + LastError;
                 case "aa": Mode = RenderSettings.ParseAa(a.Length > 1 ? a[1] : "off"); broken = false; return "aa=" + RenderSettings.AaName(Mode);
-                default: throw new Exception("render status|aa off|fxaa|smaa");
+                case "repeat": Repeat = Math.Max(1, a.Length > 1 ? int.Parse(a[1]) : 1); return "repeat=" + Repeat;
+                case "frames": return "calls=" + Calls + " ms=" + clock.ElapsedMilliseconds;
+                case "vsync": try { return Vsync(a.Length > 1 && a[1] == "on"); } catch (Exception e) { return "vsync failed: " + e.GetType().Name + ": " + e.Message + " @ " + (e.StackTrace ?? "").Split((char)10)[0].Trim(); }
+                default: throw new Exception("render status|aa off|fxaa|smaa|frames|vsync on|off");
             }
         }
     }

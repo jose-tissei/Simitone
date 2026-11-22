@@ -12,3 +12,14 @@ Plan: `.specs/features/render-upgrades/`. This folder holds what is needed to sh
 - Rebuilding the stock `SSAA.fx` with this compiler reproduces the shipped `SSAA.xnb` **byte for byte** (3261 bytes), so the toolchain matches the game's format exactly.
 - A tinted `SSAA.xnb` dropped into `Content\DX\Effects` is loaded by the game: the whole world renders red and the UI does not (`s1-tint-proof.png` in the spec folder). That also shows the SSAA full-screen pass sits between the world and the UI, which is where the anti-aliasing pass will go.
 - The SSAA effect is only used when the engine's SSAA mode is on, and the engine refuses SSAA in the 2D camera modes (it uses 8x MSAA instead). `simtool aa [0|1|2]` switches the mode at run time (Full 3D needed for SSAA).
+
+## Anti-aliasing (built)
+`Render.dll` adds an optional post pass at the world-to-screen blit (before the UI is drawn): **FXAA** and **SMAA 1x**.
+- Options menu button "Anti-aliasing: Off / FXAA / SMAA" (AA icon, green when on); the choice is saved in `Documents\Simitone\render.profile`
+  (`aa=off|fxaa|smaa`, `hidef=on|off`).
+- SMAA needs the HiDef graphics profile, which the shipped game does not request; the library asks for it when the adapter supports it
+  (without it SMAA falls back to FXAA). Costs on an RTX 4070 at 1080p: FXAA 0.02 ms, SMAA 0.08 ms per frame.
+- `simtool render status | aa off|fxaa|smaa | frames | repeat N | vsync on|off`, `simtool aa [0|1|2]` (engine MSAA/SSAA).
+- Shaders: `Shaders/Fxaa.fx`, `Shaders/Smaa.fx` (+ reference `SMAA.hlsl`, MIT, lookup tables from `make_smaa_tables.py`), compiled with
+  `Build-Effects.ps1 -Raw` into the `.mgfxo` files that are embedded in the library.
+- Measure: `Measure-Frames.ps1`. Results and decisions: `.specs/features/render-upgrades/notes/measurements.md`.
