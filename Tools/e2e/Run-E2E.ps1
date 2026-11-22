@@ -247,6 +247,20 @@ try {
         OpenMenu; Sim click 1604 985; Sim wait 2
         Check 'the Options button turns anti-aliasing off again' ((& $SimTool render status) -join ' ' -match 'aa=off') ((& $SimTool render status) -join ' ')
         & $SimTool render aa $aaBefore | Out-Null
+
+        # dynamic lighting (prototype: bounce light on the lot's light map)
+        Write-Host "`n== lighting (bounce)"
+        Sim speed 0; Sim wait 2
+        & $SimTool render light mode off | Out-Null; Sim wait 2; $lOff = Shot 'light-off'
+        & $SimTool render light mode bounce | Out-Null; Sim wait 3; $lOn = Shot 'light-bounce'
+        $ls = (& $SimTool render light status) -join ' '
+        $lst = ImageStats $lOff $lOn
+        Check 'the bounce pass runs and stays healthy' (($ls -match 'runs=[1-9]\d*') -and ($ls -match 'broken=False')) $ls
+        Check 'bounce light changes the lit picture (1% to 60% of pixels)' (($lst.Changed -gt 0.01) -and ($lst.Changed -lt 0.60)) ('changed ' + [math]::Round($lst.Changed * 100, 2) + '%')
+        Check 'bounce light only adds light (mean change 0 to 15)' (($lst.MeanSigned -gt 0) -and ($lst.MeanSigned -lt 15)) ('mean change ' + [math]::Round($lst.MeanSigned, 3))
+        & $SimTool render light mode off | Out-Null; Sim wait 3; $lOff2 = Shot 'light-off-again'
+        $lst2 = ImageStats $lOff $lOff2
+        Check 'turning bounce light off restores the original lighting' ($lst2.Changed -lt 0.005) ('changed ' + [math]::Round($lst2.Changed * 100, 3) + '%')
         Sim speed 1
     }
 }

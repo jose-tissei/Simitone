@@ -23,3 +23,9 @@ Plan: `.specs/features/render-upgrades/`. This folder holds what is needed to sh
 - Shaders: `Shaders/Fxaa.fx`, `Shaders/Smaa.fx` (+ reference `SMAA.hlsl`, MIT, lookup tables from `make_smaa_tables.py`), compiled with
   `Build-Effects.ps1 -Raw` into the `.mgfxo` files that are embedded in the library.
 - Measure: `Measure-Frames.ps1`. Results and decisions: `.specs/features/render-upgrades/notes/measurements.md`.
+
+## Lighting (prototype)
+The engine bakes the lot's lighting into a plan-view light map and gives it to every world shader in `WorldState.PrepareLighting`. With `light=bounce`
+(`Documents\Simitone\render.profile`, or `simtool render light mode bounce`) `Render.Lighting` runs a gather pass over that light map and adds a share of the
+surrounding light to texels that are not fully lit, then replaces the texture the shaders sample. Needs the HiDef profile. Off by default. Tune with
+`simtool render light tune <tiles> <gain>` (defaults 3 tiles, 0.6). Known limits: no occlusion yet (light can bleed through walls), recomputed every call.

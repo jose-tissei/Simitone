@@ -53,4 +53,32 @@ public class RenderSettingsTests
     {
         Assert.Equal(AaMode.Off, RenderSettings.Load(Path.Combine(Path.GetTempPath(), "no-such-" + Guid.NewGuid().ToString("N"))).Aa);
     }
+
+    [Theory]
+    [InlineData("bounce", LightMode.Bounce)] [InlineData("BOUNCE", LightMode.Bounce)] [InlineData("on", LightMode.Bounce)]
+    [InlineData("off", LightMode.Off)] [InlineData("", LightMode.Off)] [InlineData(null, LightMode.Off)] [InlineData("x", LightMode.Off)]
+    public void ParseLight(string text, LightMode expected) { Assert.Equal(expected, RenderSettings.ParseLight(text)); }
+
+    [Fact]
+    public void LightModeIsSavedWithTheOtherChoices()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "render-" + Guid.NewGuid().ToString("N"), "render.profile");
+        try
+        {
+            new RenderSettings { Aa = AaMode.Smaa, Light = LightMode.Bounce, HiDef = false }.Save(path);
+            var back = RenderSettings.Load(path);
+            Assert.Equal(AaMode.Smaa, back.Aa);
+            Assert.Equal(LightMode.Bounce, back.Light);
+            Assert.False(back.HiDef);
+        }
+        finally { try { Directory.Delete(Path.GetDirectoryName(path), true); } catch { } }
+    }
+
+    [Fact]
+    public void DefaultsAreTheOriginalGame()
+    {
+        var s = new RenderSettings();
+        Assert.Equal(AaMode.Off, s.Aa);
+        Assert.Equal(LightMode.Off, s.Light);
+    }
 }

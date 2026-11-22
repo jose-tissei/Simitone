@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using FSO.Common.Utils;
 using Microsoft.Xna.Framework;
@@ -32,6 +33,19 @@ namespace Simitone.Render
         {
             get { return Settings.Aa; }
             set { Settings.Aa = value; Settings.Save(); }
+        }
+
+        // the embedded effect and table files
+        internal static byte[] Resource(string name)
+        {
+            using (var s = typeof(PostAA).Assembly.GetManifestResourceStream(name))
+            {
+                if (s == null) throw new FileNotFoundException("embedded " + name + " is missing");
+                var bytes = new byte[s.Length];
+                int read = 0;
+                while (read < bytes.Length) { int n = s.Read(bytes, read, bytes.Length - read); if (n <= 0) break; read += n; }
+                return bytes;
+            }
         }
 
         // for the Options menu: the mode name, whether anything is on, and the next mode in the cycle
@@ -157,6 +171,7 @@ namespace Simitone.Render
                 case "status": return "aa=" + RenderSettings.AaName(Mode) + " draws=" + Draws + " broken=" + broken + " err=" + LastError;
                 case "aa": Mode = RenderSettings.ParseAa(a.Length > 1 ? a[1] : "off"); broken = false; return "aa=" + RenderSettings.AaName(Mode);
                 case "repeat": Repeat = Math.Max(1, a.Length > 1 ? int.Parse(a[1]) : 1); return "repeat=" + Repeat;
+                case "light": return Lighting.Command(a.Skip(1).ToArray());
                 case "frames": return "calls=" + Calls + " ms=" + clock.ElapsedMilliseconds;
                 case "vsync": try { return Vsync(a.Length > 1 && a[1] == "on"); } catch (Exception e) { return "vsync failed: " + e.GetType().Name + ": " + e.Message + " @ " + (e.StackTrace ?? "").Split((char)10)[0].Trim(); }
                 default: throw new Exception("render status|aa off|fxaa|smaa|frames|vsync on|off");

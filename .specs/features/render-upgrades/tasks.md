@@ -46,7 +46,13 @@ Each task ends with an atomic commit.
 - e2e 63 checks, patch tests 23, unit tests 164.
 - S3 done: FXAA 0.02 ms, SMAA 0.07-0.08 ms per frame at 1080p on the RTX 4070 (details in `notes/measurements.md`).
 - S2 done: engine MSAA and the post pass coexist in Full 3D and list mode; decision: keep engine MSAA off by default.
-- Next: Phase 2 (lighting): L1 depth-to-normal, L3 light grid.
+- Lighting prototype (not one of the listed tasks, a quick way to see what is possible): `Render.Lighting` runs a bounce-light pass over the engine's own light map
+  and hands the result to every world shader through a hook at the end of `WorldState.PrepareLighting`. Off by default (`light=bounce` in `render.profile`,
+  `simtool render light mode bounce`, `render light tune <tiles> <gain>`). Visible effect: softer, slightly brighter indirect light on floors and walls, coloured light
+  spreads a little. It has no occlusion (light can bleed through walls) and no normals; e2e 67 checks, patch tests 25, unit tests 173.
+- **Finding that changes the plan:** the engine already has real-time lighting (a per-room light map that updates with lamps and time of day, soft shadows,
+  and a direction field used for meshes). Sprites carry no normals, so L1/L2 would need normals reconstructed from the packed depth first.
+- Next (needs a decision): replace the unmasked blur by a room-masked gather or Radiance Cascades (L3/L4), or build depth-to-normal (L1/L2); ray tracing stays a research track (R1).
 - Finding: the game saves `GlobalGraphicsMode` in `config.ini` when a mode is picked in the menu; the e2e now resets and restores it (and `render.profile`).
 
 ## Order and parallelism

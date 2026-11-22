@@ -140,4 +140,33 @@ public class RenderPatchTests : IClassFixture<RenderFixture>
             Assert.DoesNotContain(calls, r => r.Name == "set_SynchronizeWithVerticalRetrace");   // replaced, not duplicated
         }
     }
+
+    [SkippableFact]
+    public void PrepareLighting_EndsWith_TheLightingHook_BeforeEveryReturn()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.LotView.dll"))
+        {
+            var prep = m.GetType("FSO.LotView.WorldState").Methods.Single(x => x.Name == "PrepareLighting" && x.HasBody);
+            var rets = prep.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList();
+            Assert.NotEmpty(rets);
+            foreach (var ret in rets)
+            {
+                Assert.True(ret.Previous.Operand is MethodReference r && r.Name == "AfterPrepare" && r.DeclaringType.Name == "Lighting", "no lighting hook before a return");
+                Assert.Equal(OpCodes.Ldarg_0, ret.Previous.Previous.OpCode);   // passes "this"
+            }
+        }
+    }
+
+    [SkippableFact]
+    public void TheLibrary_EmbedsTheBounceEffect_AsMgfxVersion8()
+    {
+        NeedsRelease();
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Render.dll")))
+        {
+            var bytes = lib.Resources.OfType<EmbeddedResource>().Single(x => x.Name == "Bounce.mgfxo").GetResourceData();
+            Assert.Equal("MGFX", System.Text.Encoding.ASCII.GetString(bytes, 0, 4));
+            Assert.Equal(8, bytes[4]);
+        }
+    }
 }

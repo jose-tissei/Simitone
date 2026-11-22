@@ -55,6 +55,30 @@ int total = 0;
         Console.WriteLine("patched " + m.FullName + " (always re-bind sprite indices)");
         n++;
     }
+    // With the render library: WorldState.PrepareLighting (which hands the lot's light map to every world shader) ends with
+    // Render.Lighting.AfterPrepare(this), so a lighting pass can replace the texture the shaders sample.
+    if (renderPath != null)
+    {
+        var afterPrepare = AssemblyDefinition.ReadAssembly(renderPath).MainModule.GetType("Simitone.Render.Lighting").Methods.First(x => x.Name == "AfterPrepare");
+        var prepare = mod.GetType("FSO.LotView.WorldState").Methods.First(x => x.Name == "PrepareLighting" && x.HasBody);
+        if (prepare.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "AfterPrepare"))
+            Console.WriteLine("lighting hook already installed");
+        else
+        {
+            var il = prepare.Body.GetILProcessor();
+            var afterRef = mod.ImportReference(afterPrepare);
+            foreach (var ret in prepare.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList())
+            {
+                var first = il.Create(OpCodes.Ldarg_0);
+                il.InsertBefore(ret, first);
+                il.InsertBefore(ret, il.Create(OpCodes.Call, afterRef));
+                foreach (var other in prepare.Body.Instructions.ToList())   // a jump that targeted the ret must run our call first
+                    if (other.Operand == ret) other.Operand = first;
+            }
+            Console.WriteLine("patched " + prepare.FullName + ": Lighting.AfterPrepare(this) before every return");
+            n++;
+        }
+    }
     if (n > 0) { mod.Write(Path.Combine(outDir, "FSO.LotView.dll")); total += n; }
 }
 
