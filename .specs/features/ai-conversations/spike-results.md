@@ -38,3 +38,15 @@ Other facts for bundling:
 - Running Laya's `--help` starts the server instead of printing help (it ignores arguments).
 
 Ollama is running with `gemma3:4b`, `qwen3:8b`, `qwen2.5:1.5b`, `llama3.2:1b`, deepseek variants and others. **Not yet done:** the sample-line comparison between gemma3:4b and qwen3:8b; it was dropped to keep this round focused on Laya and the hook.
+
+## T1b attempt (2026-11-21, second session): not completed
+
+**Correction:** the Newbie lot is **not** a single-Sim household. The family is Bob and Betty (shown on the lot card). Earlier I only saw Bob on screen and wrongly concluded there was one Sim.
+
+What was learned:
+- For Sims 1 lots, `Global[25]` is set to 4 in **two** places: `VM.Init` and `VMTS1Activator.LoadFromIff`. The first test patched only `VM.Init` and so had no effect. A patch of both (`Global[25] = 6`) is built: `the-sims-spike/FSO.SimAntics.flag6.dll` (made from the original DLL by `the-sims-spike/flag`).
+- With the full patch the game ran; the pie menu on the other Sim offers Dance, Entertain, Flirt, Hug (Friendly, Leap Into Arms, Intimate, Romantic), Kiss, Talk, Tickle (Ribs, Extreme), Ask.
+- Walls-down view (HUD icon at 145,920) shows the whole house, and zooming out (minus button at 115,996 twice) shows the whole lot. Pause is the button at (273,1040), normal speed at (183,1040). Game time passes about 3 minutes per real second, so Sims move away between clicks.
+- I chose Hug > Friendly and Tickle > Ribs. No outcome dialog appeared and I could not confirm that either action was queued or ran (the queue panel was not visible; the active-Sim portrait kept switching to a flamingo placeholder). The original DLL was restored and verified identical afterwards.
+
+Conclusion: driving this through clicks and screenshots is too fragile to be the proof. Better route for T1b: add a pipe command to `SimTestHook` that queues a named interaction between two named Sims directly (`interact Bob Betty hug-friendly`), plus a log line when script 397 runs and what attr 9 holds. That also gives the e2e suite a reliable way to test conversations later.
