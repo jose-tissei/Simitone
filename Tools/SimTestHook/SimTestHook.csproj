@@ -13,6 +13,7 @@
     <Reference Include="FSO.SimAntics"><HintPath>$(AppDir)\FSO.SimAntics.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Content"><HintPath>$(AppDir)\FSO.Content.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.UI"><HintPath>$(AppDir)\FSO.UI.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.LotView"><HintPath>$(AppDir)\FSO.LotView.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>

@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -82,6 +82,19 @@ public static class GameControl
                 var boot = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("Simitone.Conversations.Boot", false)).FirstOrDefault(t => t != null);
                 if (boot == null) throw new Exception("Conversations.dll is not loaded");
                 return "ok " + (string)boot.GetMethod("Command").Invoke(null, new object[] { p.Skip(1).ToArray() });
+            case "aa":
+                // aa [mode]: read or set the engine's anti-aliasing mode (0 off, 1 4x MSAA, 2 2x2 SSAA), by reflection
+                var world = vm.Context.World;
+                var asm = world.GetType().Assembly;
+                var cfg = asm.GetTypes().First(t => t.Name == "WorldConfig").GetField("Current").GetValue(null);
+                var aaMember = cfg.GetType().GetField("AA") ?? (System.Reflection.MemberInfo)cfg.GetType().GetProperty("AA");
+                var ppx = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType("FSO.Common.Utils.PPXDepthEngine", false)).First(t => t != null);
+                if (p.Length > 1)
+                {
+                    if (aaMember is System.Reflection.FieldInfo fi) fi.SetValue(cfg, int.Parse(p[1])); else ((System.Reflection.PropertyInfo)aaMember).SetValue(cfg, int.Parse(p[1]), null);
+                    world.GetType().GetMethod("ChangeAAMode").Invoke(world, new object[] { FSO.Client.GameFacade.GraphicsDevice });
+                }
+                return "ok ssaa=" + ppx.GetField("SSAA").GetValue(null) + " msaa=" + ppx.GetField("MSAA").GetValue(null);
             case "time":
                 return "ok " + vm.Context.Clock.Hours.ToString("00") + ":" + vm.Context.Clock.Minutes.ToString("00") + " day " + vm.Context.Clock.DayOfMonth;
             case "global":

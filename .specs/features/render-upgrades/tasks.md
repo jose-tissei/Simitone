@@ -6,7 +6,7 @@ Each task ends with an atomic commit.
 ## Phase 0: toolchain and measurements (spikes)
 | ID | Task | Depends | Done when |
 |---|---|---|---|
-| S1 | Get an MGFX v8 compiler (build `FreeSO/Other/libs/FSOMonoGame/Tools` 2MGFX, or find a compatible one). Replace `Content\DX\Effects\SSAA.xnb` with a test shader (tint) | - | The tint shows in the real game; the compiler command is in a script `Tools/Render/Build-Effects.ps1` (RND-01) |
+| S1 | **DONE** Get an MGFX v8 compiler (build `FreeSO/Other/libs/FSOMonoGame/Tools` 2MGFX, or find a compatible one). Replace `Content\DX\Effects\SSAA.xnb` with a test shader (tint) | - | Verified: tint shows in the real game (`s1-tint-proof.png`); stock SSAA rebuilds byte-identical; script `Tools/Render/Build-Effects.ps1` (RND-01) |
 | S3 | Record the GPU model; time a full-screen test pass at 1920x1080 inside the game (GPU timer or frame-time log) | S1 | Numbers in `notes/measurements.md`; budget confirmed or revised |
 | S2 | Test MSAA (`-aa`) with the MRT depth target in Hybrid2D plus a post pass | S1 | Result recorded; decision on MSAA/post-AA coexistence |
 
