@@ -47,7 +47,7 @@ class P
         return "prim" + op + " [" + BitConverter.ToString(o) + "]";
     }
 
-    static string Ptr(int p) { return p == 255 ? "TRUE" : p == 254 ? "FALSE" : p == 253 ? "ERROR" : p.ToString(); }
+    static string Ptr(int p) { return p == 255 ? "FALSE" : p == 254 ? "TRUE" : p == 253 ? "NEXT" : p.ToString(); }
 
     static void Main(string[] a)
     {

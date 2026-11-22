@@ -85,8 +85,10 @@ It runs only on residential lots.
 
 - Members of the same family start with STR from `Tuning - resident start` (20, if the table index was resolved correctly).
 - `add LTR if needed` gives LTR entries to pairs that only have STR and copies STR into LTR.
-- Each interaction has a `... TEST` script that gates it. Example: `Hug Romantic TEST` compares STR and LTR against 40 and 40
-  (outcome polarity of that helper not confirmed), then needs mood above 35 and attraction.
+- Each interaction has a `... TEST` script that gates it. Example: `Hug Romantic TEST` calls a helper that is true only when STR
+  is at least 40 and LTR is at least 40 (a missing LTR counts as 0), and then needs mood above 35 and attraction.
+- The dialog that lets a player pick a social's outcome by hand (3 buttons) exists in all 23 social scripts, but only appears
+  when bit 2 of `Global[25]` is set (a debug/cheat flag). The outcome is stored in attribute 9 of the social object (1, 2 or 3).
 
 ## 6. Not yet read
 
