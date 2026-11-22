@@ -7,8 +7,24 @@ public class RenderSettingsTests
 {
     [Theory]
     [InlineData("fxaa", AaMode.Fxaa)] [InlineData("FXAA", AaMode.Fxaa)] [InlineData(" 1 ", AaMode.Fxaa)] [InlineData("on", AaMode.Fxaa)]
+    [InlineData("smaa", AaMode.Smaa)] [InlineData("SMAA", AaMode.Smaa)] [InlineData("2", AaMode.Smaa)]
     [InlineData("off", AaMode.Off)] [InlineData("", AaMode.Off)] [InlineData(null, AaMode.Off)] [InlineData("nonsense", AaMode.Off)]
     public void ParseAa(string text, AaMode expected) { Assert.Equal(expected, RenderSettings.ParseAa(text)); }
+
+    [Fact]
+    public void TheOptionsButtonCyclesThroughEveryMode()
+    {
+        var m = AaMode.Off;
+        var seen = new System.Collections.Generic.List<AaMode>();
+        for (int i = 0; i < 3; i++) { m = RenderSettings.Next(m); seen.Add(m); }
+        Assert.Equal(new[] { AaMode.Fxaa, AaMode.Smaa, AaMode.Off }, seen.ToArray());
+    }
+
+    [Fact]
+    public void NamesRoundTrip()
+    {
+        foreach (AaMode m in Enum.GetValues(typeof(AaMode))) Assert.Equal(m, RenderSettings.ParseAa(RenderSettings.AaName(m)));
+    }
 
     [Fact]
     public void ParsesTheProfileLines()

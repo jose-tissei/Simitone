@@ -14,6 +14,9 @@
     <Compile Include="Game\*.cs" />
     <!-- compiled with Build-Effects.ps1 -Raw; checked in so a normal build needs no effect compiler -->
     <EmbeddedResource Include="Shaders\Fxaa.mgfxo" LogicalName="Fxaa.mgfxo" />
+    <EmbeddedResource Include="Shaders\Smaa.mgfxo" LogicalName="Smaa.mgfxo" />
+    <EmbeddedResource Include="Shaders\AreaTex.bin" LogicalName="AreaTex.bin" />
+    <EmbeddedResource Include="Shaders\SearchTex.bin" LogicalName="SearchTex.bin" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>

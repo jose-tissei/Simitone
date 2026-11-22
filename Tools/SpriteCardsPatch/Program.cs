@@ -89,6 +89,8 @@ int total = 0;
         };
         // the AI conversations on/off entry only exists when the conversations library is being installed
         if (conversationsPath != null) entryList.Add((5, "opt_convo.png", "MenuConversations"));
+        // likewise the anti-aliasing button, which exists only with the render library
+        if (renderPath != null) entryList.Add((6, "opt_aa.png", "MenuAntiAlias"));
         var entries = entryList.ToArray();
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
         var il = m.Body.GetILProcessor();
@@ -131,6 +133,18 @@ int total = 0;
         il2.InsertBefore(first, il2.Create(OpCodes.Ret));
         Console.WriteLine("patched " + onMouse.FullName + " (Ctrl+click object model chooser)");
         nClient++;
+    }
+    // With the render library: SimitoneGame's constructor calls Render.Boot.SetVsync(graphics, vsync) instead of setting
+    // SynchronizeWithVerticalRetrace directly, which lets the library ask for the HiDef graphics profile before the device exists.
+    if (renderPath != null)
+    {
+        var setVsync = AssemblyDefinition.ReadAssembly(renderPath).MainModule.GetType("Simitone.Render.Boot").Methods.First(x => x.Name == "SetVsync");
+        var game = mod.Types.First(t => t.Name == "SimitoneGame");
+        var ctors = game.Methods.Where(x => x.IsConstructor && !x.IsStatic && x.HasBody).ToList();
+        var calls = ctors.SelectMany(x => x.Body.Instructions).Where(i => i.Operand is MethodReference r && r.Name == "set_SynchronizeWithVerticalRetrace").ToList();
+        if (calls.Count == 0) Console.WriteLine(ctors.SelectMany(x => x.Body.Instructions).Any(i => i.Operand is MethodReference r && r.Name == "SetVsync") ? "graphics profile hook already installed" : "WARNING: no SynchronizeWithVerticalRetrace call found in SimitoneGame");
+        foreach (var c in calls) { c.OpCode = OpCodes.Call; c.Operand = mod.ImportReference(setVsync); nClient++; }
+        if (calls.Count > 0) Console.WriteLine("patched SimitoneGame constructor: vsync call -> Render.Boot.SetVsync (requests the HiDef profile)");
     }
     if (nClient > 0) { mod.Write(Path.Combine(outDir, "Simitone.Client.dll")); total += nClient; }
 }

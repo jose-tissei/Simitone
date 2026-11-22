@@ -40,3 +40,11 @@ New-Icon 'opt_cam_2d.png' { param($g, $pen)
 New-Icon 'opt_convo.png' { param($g, $pen)
     $g.DrawPolygon($pen, @((P 12 12), (P 53 12), (P 53 40), (P 33 40), (P 20 53), (P 21 40), (P 12 40)))
     foreach ($x in 24, 33, 42) { $g.FillEllipse([System.Drawing.Brushes]::White, ($x - 3), 23, 7, 7) } }
+
+# anti-aliasing: "AA" lettering
+New-Icon 'opt_aa.png' { param($g, $pen)
+    $font = New-Object System.Drawing.Font 'Arial', 26, ([System.Drawing.FontStyle]::Bold), ([System.Drawing.GraphicsUnit]::Pixel)
+    $sf = New-Object System.Drawing.StringFormat; $sf.Alignment = 'Center'; $sf.LineAlignment = 'Center'
+    $g.TextRenderingHint = 'AntiAliasGridFit'
+    $g.DrawString('AA', $font, [System.Drawing.Brushes]::White, [System.Drawing.RectangleF]::new(0, 4, 65, 58), $sf)
+    $g.DrawLine($pen, (P 10 56), (P 55 56)) }

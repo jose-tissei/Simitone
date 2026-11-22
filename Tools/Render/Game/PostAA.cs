@@ -15,9 +15,10 @@ namespace Simitone.Render
     {
         static RenderSettings settings;
         static Effect fxaa;
+        static readonly SmaaPass smaa = new SmaaPass();
         static VertexBuffer quad;
         static GraphicsDevice quadDevice;
-        static bool broken;
+        static bool broken, warnedReach;
         public static string LastError = "";
         public static long Draws;
 
@@ -29,12 +30,17 @@ namespace Simitone.Render
             set { Settings.Aa = value; Settings.Save(); }
         }
 
+        // for the Options menu: the mode name, whether anything is on, and the next mode in the cycle
+        public static string ModeLabel { get { return Mode == AaMode.Fxaa ? "FXAA" : (Mode == AaMode.Smaa ? "SMAA" : "Off"); } }
+        public static bool AaOn { get { return Mode != AaMode.Off; } }
+        public static void Cycle() { Mode = RenderSettings.Next(Mode); broken = false; }
+
         // false = draw the world the original way
         public static bool TryDraw(float opacity, float scale)
         {
             try
             {
-                if (broken || Settings.Aa != AaMode.Fxaa) return false;
+                if (broken || Settings.Aa == AaMode.Off) return false;
                 // zoom transitions and fades use the original blit; the SSAA path (render scale above 1) is the engine's own
                 if (opacity < 0.999f || Math.Abs(scale - 1f) > 0.0001f || PPXDepthEngine.SSAA > 1) return false;
                 var bb = PPXDepthEngine.GetBackbuffer();
@@ -43,6 +49,20 @@ namespace Simitone.Render
                 if (gd == null || gd.IsDisposed) return false;
                 Prepare(gd);
                 if (fxaa == null) return false;
+
+                var mode = Settings.Aa;
+                if (mode == AaMode.Smaa && gd.GraphicsProfile != GraphicsProfile.HiDef)
+                {
+                    // the SMAA shaders need Direct3D feature level 10 or higher
+                    if (!warnedReach) { warnedReach = true; Log("SMAA needs the HiDef graphics profile (device runs " + gd.GraphicsProfile + "); using FXAA instead"); }
+                    mode = AaMode.Fxaa;
+                }
+                if (mode == AaMode.Smaa)
+                {
+                    smaa.Draw(gd, bb, quad, !PPXDepthEngine.WithOpacity);
+                    Draws++;
+                    return true;
+                }
 
                 gd.BlendState = PPXDepthEngine.WithOpacity ? BlendState.AlphaBlend : BlendState.Opaque;   // exactly what the original blit uses
                 gd.DepthStencilState = DepthStencilState.None;
@@ -69,6 +89,7 @@ namespace Simitone.Render
         {
             if (fxaa != null && quad != null && quadDevice == gd) return;
             quadDevice = gd;
+            Log("graphics profile: " + gd.GraphicsProfile + ", adapter: " + gd.Adapter.Description);
             using (var s = typeof(PostAA).Assembly.GetManifestResourceStream("Fxaa.mgfxo"))
             {
                 if (s == null) throw new FileNotFoundException("embedded Fxaa.mgfxo is missing");
@@ -105,7 +126,7 @@ namespace Simitone.Render
             {
                 case "status": return "aa=" + RenderSettings.AaName(Mode) + " draws=" + Draws + " broken=" + broken + " err=" + LastError;
                 case "aa": Mode = RenderSettings.ParseAa(a.Length > 1 ? a[1] : "off"); broken = false; return "aa=" + RenderSettings.AaName(Mode);
-                default: throw new Exception("render status|aa off|fxaa");
+                default: throw new Exception("render status|aa off|fxaa|smaa");
             }
         }
     }

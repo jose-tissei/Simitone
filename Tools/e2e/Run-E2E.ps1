@@ -186,8 +186,9 @@ try {
         Sim wait 40
         Sim interact Bob Betty 'Talk.../About Interests'
         Check 'Talk opens the subject choice dialog' (WaitDialog 90) ((& $SimTool dialog) -join ' ')
-        Sim click 380 605                                   # first subject
-        Sim wait 4
+        $beforeTalk = LastLine
+        Sim click 380 605                                   # first subject (the buttons start at x = 230 whatever the subject names)
+        if (-not (WaitFor { (LastLine) -ne $beforeTalk -and (LastLine) -match '^talk about ' } 12)) { Sim click 380 605; $null = WaitFor { (LastLine) -match '^talk about ' } 12 }
         $line = LastLine
         Check 'the chosen subject was used for the Talk' ($line -match '^talk about ') $line
 
@@ -219,6 +220,32 @@ try {
         & $SimTool render aa off | Out-Null; Sim wait 1; $off2 = Shot 'aa-off-again'
         $st2 = ImageStats $off $off2
         Check 'turning FXAA off restores the original frame' ($st2.Changed -lt 0.001) ('changed ' + [math]::Round($st2.Changed * 100, 3) + '%')
+        # SMAA: needs the HiDef graphics profile, which the render library asks for at start
+        & $SimTool render aa smaa | Out-Null; Sim wait 1
+        $smStatus1 = (& $SimTool render status) -join ' '; Sim wait 2; $smStatus2 = (& $SimTool render status) -join ' '
+        $dA = if ($smStatus1 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }; $dB = if ($smStatus2 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }
+        $smaa = Shot 'aa-smaa'; $st3 = ImageStats $off $smaa
+        Check 'SMAA draws frames and stays healthy' (($dB -gt $dA) -and ($smStatus2 -match 'aa=smaa') -and ($smStatus2 -match 'broken=False')) $smStatus2
+        Check 'SMAA changes edge pixels only (1% to 40% of the picture)' (($st3.Changed -gt 0.01) -and ($st3.Changed -lt 0.40)) ('changed ' + [math]::Round($st3.Changed * 100, 2) + '%')
+        Check 'SMAA does not brighten or darken the picture' ([math]::Abs($st3.MeanSigned) -lt 2.0) ('mean change ' + [math]::Round($st3.MeanSigned, 3))
+        # the Options menu button (last button, x = 1604) switches it and keeps the choice
+        & $SimTool render aa off | Out-Null
+        OpenMenu; Sim click 1604 985; Sim wait 2
+        Check 'the Options button turns FXAA on' ((& $SimTool render status) -join ' ' -match 'aa=fxaa') ((& $SimTool render status) -join ' ')
+        Check 'the Options button is highlighted while FXAA is on' ((GreenCount (Shot 'aa-menu-on') 1604) -gt 150) ''
+        Check 'the choice is saved for the next start' ((Get-Content $renderFile -Raw) -match 'aa=fxaa') (Get-Content $renderFile -Raw)
+        # FXAA keeps working through every graphics mode switch (the render targets are rebuilt each time)
+        foreach ($m in '2d', 'arch', 'full3d', 'list') {
+            ChooseMode $m 10
+            $s1 = (& $SimTool render status) -join ' '; Sim wait 3; $s2 = (& $SimTool render status) -join ' '
+            $d1 = if ($s1 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }; $d2 = if ($s2 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }
+            if ($m -eq '2d') { Check "FXAA is still on and healthy in '$m'" (($s2 -match 'aa=fxaa') -and ($s2 -match 'broken=False')) $s2 }
+            else { Check "FXAA keeps drawing in '$m'" (($d2 -gt $d1) -and ($s2 -match 'broken=False')) "$s1 -> $s2" }
+        }
+        OpenMenu; Sim click 1604 985; Sim wait 2
+        Check 'the Options button goes on to SMAA' ((& $SimTool render status) -join ' ' -match 'aa=smaa') ((& $SimTool render status) -join ' ')
+        OpenMenu; Sim click 1604 985; Sim wait 2
+        Check 'the Options button turns anti-aliasing off again' ((& $SimTool render status) -join ' ' -match 'aa=off') ((& $SimTool render status) -join ' ')
         & $SimTool render aa $aaBefore | Out-Null
         Sim speed 1
     }

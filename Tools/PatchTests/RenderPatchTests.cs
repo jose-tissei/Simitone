@@ -112,4 +112,32 @@ public class RenderPatchTests : IClassFixture<RenderFixture>
             Assert.Equal(8, bytes[4]);   // the format version the game's MonoGame fork reads
         }
     }
+
+    [SkippableFact]
+    public void TheLibrary_EmbedsSmaa_AsMgfxVersion8_WithItsLookupTables()
+    {
+        NeedsRelease();
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Render.dll")))
+        {
+            byte[] Get(string n) { return lib.Resources.OfType<EmbeddedResource>().Single(x => x.Name == n).GetResourceData(); }
+            var fx = Get("Smaa.mgfxo");
+            Assert.Equal("MGFX", System.Text.Encoding.ASCII.GetString(fx, 0, 4));
+            Assert.Equal(8, fx[4]);
+            Assert.Equal(160 * 560 * 2, Get("AreaTex.bin").Length);
+            Assert.Equal(64 * 16, Get("SearchTex.bin").Length);
+        }
+    }
+
+    [SkippableFact]
+    public void SimitoneGameConstructor_AsksTheLibraryForTheGraphicsProfile()
+    {
+        NeedsRelease();
+        using (var m = Open("Simitone.Client.dll"))
+        {
+            var game = m.Types.First(t => t.Name == "SimitoneGame");
+            var calls = game.Methods.Where(x => x.IsConstructor && x.HasBody).SelectMany(x => x.Body.Instructions).Select(i => i.Operand).OfType<MethodReference>().ToList();
+            Assert.Contains(calls, r => r.Name == "SetVsync" && r.DeclaringType.Name == "Boot");
+            Assert.DoesNotContain(calls, r => r.Name == "set_SynchronizeWithVerticalRetrace");   // replaced, not duplicated
+        }
+    }
 }

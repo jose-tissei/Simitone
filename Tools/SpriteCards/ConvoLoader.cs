@@ -11,6 +11,8 @@ static class ConvoLoader
     static Type boot, early;
     static bool looked;
 
+    public static bool Installed { get { return File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Conversations.dll")); } }
+
     static void Look()
     {
         if (looked) return;
