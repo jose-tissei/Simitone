@@ -159,6 +159,24 @@ public class RenderPatchTests : IClassFixture<RenderFixture>
     }
 
     [SkippableFact]
+    public void TextureGet_GuardsAgainstATextureThatCouldNotBeLoaded()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.Content.dll"))
+        {
+            var get = m.GetType("FSO.Content.Model.AbstractTextureRef").Methods.Single(x => x.Name == "Get" && x.HasBody);
+            var ins = get.Body.Instructions.ToList();
+            var call = ins.Single(i => i.Operand is MethodReference r && r.Name == "OrPlaceholder" && r.DeclaringType.Name == "Fixes");
+            int k = ins.IndexOf(call);
+            Assert.Equal(OpCodes.Stfld, ins[k + 1].OpCode);                                  // the placeholder is stored back into _Instance
+            Assert.Equal("_Instance", ((FieldReference)ins[k + 1].Operand).Name);
+            // the guard runs before the first use of the DirectX flag that follows the loading code (and so before the Tag is written)
+            var tagSet = ins.First(i => i.Operand is MethodReference r2 && r2.Name == "set_Tag");
+            Assert.True(ins.IndexOf(tagSet) > k, "the Tag is written before the guard");
+        }
+    }
+
+    [SkippableFact]
     public void DirPassOffset_AsksTheDirectionalShadingHook()
     {
         NeedsRelease();

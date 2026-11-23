@@ -25,7 +25,7 @@ if ($WithSimTestHook) { Build 'SimTestHook' $null @("-p:AppDir=$Pristine") }
 & dotnet "$Tools\SpriteCardsPatch\out\SpriteCardsPatch.dll" $Pristine "$Tools\SpriteCards\out\SpriteCards.dll" $Tmp "$Tools\Conversations\out\Conversations.dll" "$Tools\Render\out\Render.dll"
 if ($LASTEXITCODE -ne 0) { throw 'patcher failed' }
 
-$files = @('FSO.LotView.dll', 'FSO.SimAntics.dll', 'Simitone.Client.dll', 'Simitone.Windows.exe', 'Conversations.dll', 'FSO.Common.dll', 'Render.dll')
+$files = @('FSO.LotView.dll', 'FSO.SimAntics.dll', 'Simitone.Client.dll', 'Simitone.Windows.exe', 'Conversations.dll', 'FSO.Common.dll', 'FSO.Content.dll', 'Render.dll')
 if ($WithSimTestHook) {
     # FSO.Common.dll carries both the render hook and the test input hook; the input patcher runs on top of the render-patched copy
     Build 'InputHookPatch' $null @()

@@ -305,5 +305,47 @@ if (renderPath != null)
         File.Copy(renderPath, Path.Combine(outDir, "Render.dll"), true);
 }
 
+// ---------------------------------------------------------------- 6. FSO.Content.dll (a texture that cannot be loaded must not end the game)
+// AbstractTextureRef.Get writes _Instance.Tag right after loading; a texture the loader could not decode left _Instance null and the game died
+// with a NullReferenceException. The patched Get first runs _Instance = Fixes.OrPlaceholder(_Instance, device, this).
+if (renderPath != null)
+{
+    var rend = AssemblyDefinition.ReadAssembly(renderPath);
+    var orPlaceholder = rend.MainModule.GetType("Simitone.Render.Fixes").Methods.First(m => m.Name == "OrPlaceholder");
+    var mod = Open("FSO.Content.dll");
+    var get = mod.GetType("FSO.Content.Model.AbstractTextureRef").Methods.First(m => m.Name == "Get" && m.HasBody);
+    if (get.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "OrPlaceholder"))
+        Console.WriteLine("texture null guard already installed");
+    else
+    {
+        var ins = get.Body.Instructions;
+        var field = mod.GetType("FSO.Content.Model.AbstractTextureRef").Fields.First(f => f.Name == "_Instance");
+        // the statement after the loading block starts with the DirectX check: insert the guard in front of it
+        var at = ins.FirstOrDefault(i => (i.OpCode == OpCodes.Call && i.Operand is MethodReference r && r.Name == "get_DirectX")
+                                      || (i.OpCode == OpCodes.Ldsfld && i.Operand is FieldReference f && f.Name == "DirectX"));
+        if (at == null) throw new Exception("AbstractTextureRef.Get: the DirectX check was not found");
+        var il = get.Body.GetILProcessor();
+        var first = il.Create(OpCodes.Ldarg_0);
+        il.InsertBefore(at, first);
+        il.InsertBefore(at, il.Create(OpCodes.Ldarg_0));
+        il.InsertBefore(at, il.Create(OpCodes.Ldfld, field));
+        il.InsertBefore(at, il.Create(OpCodes.Ldarg_1));
+        il.InsertBefore(at, il.Create(OpCodes.Ldarg_0));   // the owner, so the load can be retried later
+        il.InsertBefore(at, il.Create(OpCodes.Call, mod.ImportReference(orPlaceholder)));
+        il.InsertBefore(at, il.Create(OpCodes.Stfld, field));
+        foreach (var other in ins.ToList())   // jumps that targeted the DirectX check (leaving the loading block) must run the guard first
+            if (other.Operand == at) other.Operand = first;
+        foreach (var h in get.Body.ExceptionHandlers)
+        {
+            if (h.TryEnd == at) h.TryEnd = first;
+            if (h.HandlerStart == at) h.HandlerStart = first;
+            if (h.HandlerEnd == at) h.HandlerEnd = first;
+            if (h.TryStart == at) h.TryStart = first;
+        }
+        Console.WriteLine("patched " + get.FullName + ": _Instance = Fixes.OrPlaceholder(_Instance, device) before the Tag is written");
+        mod.Write(Path.Combine(outDir, "FSO.Content.dll")); total++;
+    }
+}
+
 Console.WriteLine(total == 0 ? "nothing to patch" : $"done: {total} assembly(ies) written to {outDir}");
 return 0;

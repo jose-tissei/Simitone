@@ -60,6 +60,7 @@ namespace Simitone.Render
         public static bool TryDraw(float opacity, float scale)
         {
             Calls++;
+            Fixes.Tick();
             try
             {
                 if (broken || Settings.Aa == AaMode.Off) return false;
