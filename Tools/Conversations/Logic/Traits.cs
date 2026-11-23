@@ -40,17 +40,55 @@ namespace Simitone.Conversations
         }
     }
 
-    // What the game tells us about one Sim. Personality values are the game's 0..1000, mood is -100..100.
+    public enum SkillKind { None = -1, Cooking = 0, Charisma = 1, Mechanical = 2, Creativity = 3, Body = 4, Logic = 5 }
+
+    // What the game tells us about one Sim. Personality and skills are 0..1000, mood and motives are -100..100.
     public class RawSim
     {
         public string Name = "Someone";
+        public short NeighborId;
         public short Nice = 500, Active = 500, Generous = 500, Playful = 500, Outgoing = 500, Neat = 500;
         public short Mood;
+        public short Social = 100;      // -100..100; 60% = +20
+        public short Cooking, Charisma, Mechanical, Creativity, Body, Logic;   // 0..1000 (100 per skill point)
+        public short StrToTarget, LtrToTarget;       // speaker -> listener (-100..100)
+        public short TargetStrToMe, TargetLtrToMe;   // listener -> speaker (-100..100)
         public short Age = 20;          // 0 = baby/toddler, under 18 = child
         public bool Female;
         public string Career = "";     // e.g. "Military", empty when unemployed
         public string JobTitle = "";   // e.g. "Recruit"
         public short[] Interests = new short[8];
+
+        public static double SocialPercent(short socialMotive)
+        {
+            return Math.Max(0.0, Math.Min(100.0, (socialMotive + 100.0) * 0.5));
+        }
+
+        public short SkillValue(SkillKind kind)
+        {
+            switch (kind)
+            {
+                case SkillKind.Cooking: return Cooking;
+                case SkillKind.Charisma: return Charisma;
+                case SkillKind.Mechanical: return Mechanical;
+                case SkillKind.Creativity: return Creativity;
+                case SkillKind.Body: return Body;
+                case SkillKind.Logic: return Logic;
+                default: return 0;
+            }
+        }
+
+        public SkillKind[] TopSkills(int minLevel = 300)
+        {
+            var all = new[] { SkillKind.Cooking, SkillKind.Charisma, SkillKind.Mechanical, SkillKind.Creativity, SkillKind.Body, SkillKind.Logic };
+            return all.Where(k => SkillValue(k) >= minLevel).OrderByDescending(k => SkillValue(k)).ToArray();
+        }
+
+        public string MemoryKey()
+        {
+            if (NeighborId > 0) return "n:" + NeighborId;
+            return "name:" + (Name ?? "someone").Trim().ToLowerInvariant();
+        }
     }
 
     // A Sim reduced to a few buckets, so the dialogue bank stays small and Laya gets a short description.

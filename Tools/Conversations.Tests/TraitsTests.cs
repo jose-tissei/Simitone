@@ -70,4 +70,29 @@ public class TraitsTests
         Assert.Equal(Temperament.Unknown, Names.ParseTemperament("nonsense"));
         Assert.Equal(Temperament.Unknown, Names.ParseTemperament(null));
     }
+
+    [Theory]
+    [InlineData(-100, 0.0)] [InlineData(0, 50.0)] [InlineData(20, 60.0)] [InlineData(100, 100.0)]
+    public void SocialPercentMapsMotiveScale(int motive, double expected)
+    {
+        Assert.Equal(expected, RawSim.SocialPercent((short)motive), 3);
+    }
+
+    [Fact]
+    public void SkillValueAndTopSkillsWork()
+    {
+        var sim = new RawSim { Cooking = 700, Charisma = 500, Logic = 200, Creativity = 800, Mechanical = 0, Body = 400 };
+        Assert.Equal(700, sim.SkillValue(SkillKind.Cooking));
+        Assert.Equal(500, sim.SkillValue(SkillKind.Charisma));
+        Assert.Equal(0, sim.SkillValue(SkillKind.None));
+        var top = sim.TopSkills(400);
+        Assert.Equal(new[] { SkillKind.Creativity, SkillKind.Cooking, SkillKind.Charisma, SkillKind.Body }, top);
+    }
+
+    [Fact]
+    public void MemoryKeyPrefersNeighborIdThenName()
+    {
+        Assert.Equal("n:42", new RawSim { NeighborId = 42, Name = "Bob" }.MemoryKey());
+        Assert.Equal("name:bob", new RawSim { NeighborId = 0, Name = "  Bob " }.MemoryKey());
+    }
 }

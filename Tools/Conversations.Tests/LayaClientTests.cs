@@ -161,4 +161,49 @@ public class LayaClientTests
         Assert.Equal("Q?", (string)j["questions"]["q"]["instructions"]);
         Assert.Equal("second", (string)j["questions"]["q"]["criteria"]["b"]);
     }
+
+    [Fact]
+    public void ScoreChoicesReturnsFullProbabilityDistribution()
+    {
+        var f = new Fake
+        {
+            Responder = b => new JObject
+            {
+                ["answers"] = new JObject
+                {
+                    ["q"] = new JObject
+                    {
+                        ["choice"] = "talk",
+                        ["probabilities"] = new JObject { ["talk"] = 0.55, ["joke"] = 0.30, ["compliment"] = 0.15 }
+                    }
+                }
+            }.ToString()
+        };
+        var c = Client(f);
+        var probs = c.ScoreChoices("Bob wants to chat.", "Which social?", new[] { "talk|chat", "joke|tell a joke", "compliment|praise" });
+        Assert.NotNull(probs);
+        Assert.Equal(3, probs.Count);
+        Assert.Equal(0.55, probs["talk"], 3);
+        Assert.Equal(0.30, probs["joke"], 3);
+        Assert.Equal(0.15, probs["compliment"], 3);
+    }
+
+    [Fact]
+    public void ScoreChoicesReturnsNullWhenUnavailableOrFailed()
+    {
+        var f = new Fake { Responder = b => throw new TimeoutException() };
+        var c = Client(f);
+        Assert.Null(c.ScoreChoices("ctx", "Q?", new[] { "a|A", "b|B" }));
+        Assert.Equal(1, c.Failures);
+
+        var unconfigured = new LayaClient(f);
+        Assert.Null(unconfigured.ScoreChoices("ctx", "Q?", new[] { "a|A", "b|B" }));
+    }
+
+    [Theory]
+    [InlineData("")] [InlineData("not json")] [InlineData("{}")] [InlineData("{\"answers\":{}}")]
+    public void ParseProbabilitiesHandlesMalformedInput(string json)
+    {
+        Assert.Null(LayaClient.ParseProbabilities(json));
+    }
 }

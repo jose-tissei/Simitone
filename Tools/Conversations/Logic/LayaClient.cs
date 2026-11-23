@@ -108,6 +108,45 @@ namespace Simitone.Conversations
             return choice;
         }
 
+        // returns all choice probabilities from a Laya /v1/systemone response, or null if malformed
+        public static Dictionary<string, double> ParseProbabilities(string response)
+        {
+            if (string.IsNullOrWhiteSpace(response)) return null;
+            try
+            {
+                var q = JObject.Parse(response)["answers"]?["q"];
+                var probs = q?["probabilities"] as JObject;
+                if (probs == null) return null;
+                var map = new Dictionary<string, double>(StringComparer.OrdinalIgnoreCase);
+                foreach (var p in probs.Properties()) map[p.Name] = (double)p.Value;
+                return map.Count > 0 ? map : null;
+            }
+            catch { return null; }
+        }
+
+        // asks Laya to score all criteria and returns the full probability distribution, or null if unavailable/failed
+        public Dictionary<string, double> ScoreChoices(string text, string question, IEnumerable<string> criteria)
+        {
+            string url, bearer;
+            lock (gate) { if (baseUrl == null || DateTime.UtcNow < pausedUntil) return null; url = baseUrl + "/v1/systemone"; bearer = key; }
+            try
+            {
+                var resp = transport.Post(url, BuildRequest(text, question, criteria), bearer, TimeoutMs);
+                lock (gate) failures = 0;
+                return ParseProbabilities(resp);
+            }
+            catch (Exception e)
+            {
+                lock (gate)
+                {
+                    LastError = e.GetType().Name + ": " + e.Message;
+                    failures++;
+                    if (failures >= 3) pausedUntil = DateTime.UtcNow.AddSeconds(30);
+                }
+                return null;
+            }
+        }
+
         string Ask(string text, string question, IEnumerable<string> criteria, out bool answered)
         {
             answered = false;
