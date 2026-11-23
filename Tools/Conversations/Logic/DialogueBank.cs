@@ -16,6 +16,7 @@ namespace Simitone.Conversations
         [JsonProperty("version")] public int Version = 1;
         [JsonProperty("speaker")] public Dictionary<string, Dictionary<string, List<string>>> Speaker = new Dictionary<string, Dictionary<string, List<string>>>();
         [JsonProperty("reply")] public Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>> Reply = new Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>();
+        [JsonProperty("subjects")] public List<AiSubject> Subjects = new List<AiSubject>();
     }
 
     public class LinePair
@@ -37,6 +38,7 @@ namespace Simitone.Conversations
 
         void Miss(string what) { lock (missLock) { int n; misses.TryGetValue(what, out n); misses[what] = n + 1; } }
         public bool Loaded { get; private set; }
+        public IList<AiSubject> RawSubjects { get { return file.Subjects ?? new List<AiSubject>(); } }
 
         public DialogueBank() { file = new BankFile(); }
 
