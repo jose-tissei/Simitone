@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -45,6 +45,13 @@ public static class GameControl
         return done.Wait(5000) ? result : "err the game thread did not respond (is the game loading, or minimised?)";
     }
 
+    static object Neighborhood()
+    {
+        var contentType = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+        var content = contentType.GetMethod("Get", Type.EmptyTypes).Invoke(null, null);
+        return contentType.GetField("Neighborhood").GetValue(content);
+    }
+
     static VM GetVM()
     {
         var screen = FSO.Client.UI.Framework.UIScreen.Current;
@@ -56,7 +63,7 @@ public static class GameControl
 
     static string Execute(string[] p)
     {
-        var vm = p[0] == "convo" ? null : GetVM();   // convo commands also work on the neighbourhood map
+        var vm = (p[0] == "convo" || p[0] == "lotname" || p[0] == "families" || p[0] == "playhouse" || p[0] == "alerts" || p[0] == "dismiss") ? null : GetVM();   // convo commands also work on the neighbourhood map
         switch (p[0])
         {
             case "sims": return Sims(vm);
@@ -100,6 +107,61 @@ public static class GameControl
                     world.GetType().GetMethod("ChangeAAMode").Invoke(world, new object[] { FSO.Client.GameFacade.GraphicsDevice });
                 }
                 return "ok ssaa=" + ppx.GetField("SSAA").GetValue(null) + " msaa=" + ppx.GetField("MSAA").GetValue(null);
+            case "lotinfo":
+            {
+                // lotinfo: what is loaded now: objects, Sims, and whether a blocking dialog is up
+                int avatars = vm.Entities.Count(e => e is VMAvatar), objects = vm.Entities.Count - avatars;
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                var down = screen.GetType().GetField("Downtown")?.GetValue(screen);
+                return "ok objects=" + objects + " sims=" + avatars + " downtown=" + down + " size=" + vm.Context.Architecture.Width + "x" + vm.Context.Architecture.Height + " hour=" + vm.Context.Clock.Hours;
+            }
+            case "alerts":
+            case "dismiss":
+            {
+                // alerts: the text of every alert box on screen ("title: message"); dismiss: closes them (what pressing OK does)
+                var any = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+                var facade = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Client.GameFacade", false)).First(x => x != null);
+                var screens = (facade.GetField("Screens", any)?.GetValue(null)) ?? facade.GetProperty("Screens", any)?.GetValue(null, null);
+                var found = new List<string>(); var toClose = new List<object>();
+                foreach (var f in screens.GetType().GetFields(any))
+                {
+                    var en = f.GetValue(screens) as System.Collections.IEnumerable;
+                    if (en == null || f.FieldType == typeof(string)) continue;
+                    foreach (var item in en)
+                    {
+                        var dlg = item?.GetType().GetField("Dialog")?.GetValue(item) ?? item;
+                        var opt = dlg?.GetType().GetField("m_Options", any)?.GetValue(dlg);
+                        if (opt == null) continue;
+                        found.Add(Convert.ToString(opt.GetType().GetField("Title")?.GetValue(opt) ?? opt.GetType().GetProperty("Title")?.GetValue(opt, null)) + ": " +
+                                  Convert.ToString(opt.GetType().GetField("Message")?.GetValue(opt) ?? opt.GetType().GetProperty("Message")?.GetValue(opt, null)));
+                        toClose.Add(dlg);
+                    }
+                }
+                if (p[0] == "dismiss")
+                {
+                    var uiScreen = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Client.UI.Framework.UIScreen", false)).First(x => x != null);
+                    foreach (var d in toClose) uiScreen.GetMethod("RemoveDialog").Invoke(null, new object[] { d });
+                    return "ok closed " + toClose.Count;
+                }
+                return "ok " + found.Count + (found.Count > 0 ? " | " + string.Join(" || ", found.Select(x => x.Replace((char)10, (char)32).Replace((char)13, (char)32))) : "");
+            }
+            case "families":
+            {
+                // families: the houses that have a family living in them, e.g. "1 3 7 21"
+                var neigh = Neighborhood();
+                var gm = neigh.GetType().GetMethod("GetFamilyForHouse");
+                var houses = new List<string>();
+                for (int h = 1; h < 100; h++) if (gm.Invoke(neigh, new object[] { (short)h }) != null) houses.Add(h.ToString());
+                return "ok " + string.Join(" ", houses);
+            }
+            case "playhouse":
+            {
+                // playhouse <n>: what choosing "play" on that house in the neighbourhood does (sets the active family, loads the lot with its Sims)
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                var m = screen.GetType().GetMethod("PlayHouse");
+                m.Invoke(screen, new object[] { short.Parse(p[1]), null });
+                return "ok playing house " + p[1];
+            }
             case "gotolot":
             {
                 // gotolot <house number>: the same lot switch the Hole in the Ground (and other travel objects) cause: the game screen's VMLotSwitch(lotId)
@@ -120,8 +182,42 @@ public static class GameControl
                 }
                 var m = screen.GetType().GetMethod("VMLotSwitch", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (m == null) throw new Exception("this screen has no VMLotSwitch");
+                {
+                    // what the Hole in the Ground's primitive (ChangeToLotInTemp0) records before it asks for the switch: the objects of the lot
+                    // downtown read it back (the Sim to spawn, the family, whether the whole family travels), and fail with a null reference without it
+                    var gm = GetVM();
+                    var ct = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+                    var nb = ct.GetField("Neighborhood").GetValue(ct.GetMethod("Get", Type.EmptyTypes).Invoke(null, null));
+                    var state = nb.GetType().GetField("GameState")?.GetValue(nb) ?? nb.GetType().GetProperty("GameState").GetValue(nb, null);
+                    var st = state.GetType();
+                    uint target = uint.Parse(p[1]);
+                    var avatar = gm.GetObjectById(gm.GetGlobalValue(3)) as VMAvatar ?? Avatars(gm).FirstOrDefault();
+                    st.GetField("ActiveFamily").SetValue(state, gm.TS1State.CurrentFamily);
+                    if (avatar != null) st.GetField("DowntownSimGUID").SetValue(state, avatar.Object.OBJ.GUID);
+                    st.GetField("LotTransitInfo").SetValue(state, (target >= 40 && target < 50) ? (short)1 : gm.GetGlobalValue(34));
+                }
                 m.Invoke(screen, new object[] { uint.Parse(p[1]) });
                 return "ok lot switch requested: " + p[1];
+            }
+            case "lotname":
+            {
+                // lotname <n>: the name and description the game gives house n (e.g. in the neighbourhood and magic town lists)
+                var ct2 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+                var nb2 = ct2.GetField("Neighborhood").GetValue(ct2.GetMethod("Get", Type.EmptyTypes).Invoke(null, null));
+                var nd = nb2.GetType().GetMethod("GetHouseNameDesc").Invoke(nb2, new object[] { int.Parse(p[1]) });
+                return "ok " + nd.GetType().GetProperty("Item1").GetValue(nd, null) + " | " + ((string)nd.GetType().GetProperty("Item2").GetValue(nd, null)).Replace((char)10, (char)32).Replace((char)13, (char)32);
+            }
+            case "camera":
+            {
+                // camera: where the world camera looks, whether the world is drawn, and where the controlled Sim stands
+                var w = vm.Context.World;
+                // camera <x> <y>: look at that tile (a lot with no Sim on it keeps the camera at its corner)
+                if (p.Length > 2) w.State.CenterTile = new Microsoft.Xna.Framework.Vector2(float.Parse(p[1]), float.Parse(p[2]));
+                var c = vm.GetObjectById(vm.GetGlobalValue(3));
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                var lc = screen.GetType().GetProperty("LotControl")?.GetValue(screen, null) as FSO.Client.UI.Framework.UIElement;
+                return "ok center=" + w.State.CenterTile + " zoom=" + w.State.Zoom + " worldVisible=" + w.Visible + " lotControlVisible=" + lc?.Visible +
+                       " sim=" + (c == null ? "none" : c.Position + " lvl " + c.Position.Level) + " speed=" + vm.SpeedMultiplier + " cutaway=" + w.State.Level;
             }
             case "time":
                 // time [hours [minutes]]: read the clock, or set it (the light follows on the next simulation ticks)
