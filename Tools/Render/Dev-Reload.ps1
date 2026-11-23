@@ -1,8 +1,19 @@
 # Developer loop: stop the game, install the current build, start it, enter the Newbie lot, freeze the simulation at the given hour.
 #   pwsh Tools/Render/Dev-Reload.ps1 [-Hour 22]
 # The simulation is paused afterwards, so two screenshots of the same state are pixel-identical (noise floor 0).
-param([int]$Hour = 22)
+# The game saves into the player's own save folder while it runs, so this script keeps a copy of that folder the first time it runs
+# (Documents/Simitone/UserData-dev-backup) and puts it back with -RestoreSave.
+param([int]$Hour = 22, [switch]$RestoreSave)
 $ErrorActionPreference = 'Stop'
+$docs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Simitone'
+$saveBackup = Join-Path $docs 'UserData-dev-backup'
+if ($RestoreSave) {
+    Stop-Process -Name Simitone.Windows -Force -ErrorAction SilentlyContinue; Start-Sleep 2
+    if (-not (Test-Path $saveBackup)) { throw "no backup at $saveBackup" }
+    Copy-Item (Join-Path $saveBackup '*') (Join-Path $docs 'UserData') -Recurse -Force
+    Write-Host "saved game restored from $saveBackup"; return
+}
+if (-not (Test-Path $saveBackup) -and (Test-Path (Join-Path $docs 'UserData'))) { Copy-Item (Join-Path $docs 'UserData') $saveBackup -Recurse; Write-Host "saved game copied to $saveBackup" }
 $root = Resolve-Path (Join-Path $PSScriptRoot '..\..')
 $st = Join-Path $root 'Tools\SimTool\out\simtool.exe'
 Stop-Process -Name Simitone.Windows -Force -ErrorAction SilentlyContinue; Start-Sleep 2
