@@ -128,59 +128,63 @@ namespace Simitone.Conversations
                     Animator.RenderFrame(rig.Avatar, rig.Anim, frame, frac, 1.0f);
                 }
 
-                // Compute CCTV-staged world position & heading
+                // Compute CCTV-staged world position & heading along an isometric ground plane path
                 float worldX = 0f;
+                float worldZ = 0f;
                 float yaw = rig.FacingYaw;
                 if (rig.PatrolWalk)
                 {
-                    // Smooth back-and-forth sweep across the CCTV view so the actor stays framed
+                    // Smooth diagonal sweep across the yard matching the Sims 1 isometric perspective
                     float phase = t * rig.WalkFreq * (float)(Math.PI * 2.0);
                     float s = (float)Math.Sin(phase);
                     float c = (float)Math.Cos(phase);
                     worldX = s * rig.WalkAmplitude;
-                    // Face direction of movement, angled slightly toward the camera so face/suit/stripes read clearly
-                    yaw = c >= 0f ? 1.10f : -1.10f;
-                    yaw += -s * 0.25f;
+                    worldZ = s * 0.42f;
+                    // Face along the diagonal path, angled slightly toward the camera so face/stripes/tail read clearly
+                    yaw = c >= 0f ? 1.05f : -2.05f;
+                    yaw += -s * 0.22f;
                 }
                 else
                 {
-                    // Stationary tampering / vault theft with subtle body sway
-                    worldX = (float)Math.Sin(t * 0.9f) * 0.12f;
-                    yaw = rig.FacingYaw + (float)Math.Sin(t * 1.3f) * 0.18f;
+                    // Active tampering / heist with subtle step & torso sway
+                    worldX = (float)Math.Sin(t * 0.85f) * 0.22f;
+                    worldZ = (float)Math.Cos(t * 0.85f) * 0.10f;
+                    yaw = rig.FacingYaw + (float)Math.Sin(t * 1.3f) * 0.20f;
                 }
 
                 rig.Avatar.Scale = Vector3.One * rig.BaseScale;
-                rig.Avatar.Position = new Vector3(worldX, 0f, 0f);
+                rig.Avatar.Position = new Vector3(worldX, 0f, worldZ);
                 rig.Avatar.RotationY = yaw;
 
                 // Crisp IR night-vision illumination on the 3D mesh; phosphor tint is applied during 2D composite
-                rig.Avatar.AmbientLight = new Vector4(1.42f, 1.48f, 1.42f, 1.0f);
+                rig.Avatar.AmbientLight = new Vector4(1.45f, 1.52f, 1.45f, 1.0f);
 
                 if (rig.Avatar.Skeleton != null && rig.Avatar.Skeleton.RootBone != null)
                     rig.Avatar.Skeleton.ComputeBonePositions(rig.Avatar.Skeleton.RootBone, Matrix.Identity);
 
-                // High-angle security-cam framing tailored to human vs pet height so nothing clips the monitor edges
+                // Overhead ~34 deg security-cam pitch calibrated to match the 2x zoomed Sims 1 lot proportions:
+                //   Humans ~42% of monitor height (matching doors/fences); Pets ~24% of monitor height.
                 if (rig.IsPet)
                 {
-                    camera.Position = new Vector3(0f, 2.30f, 4.70f);
-                    camera.Target = new Vector3(0f, 0.48f, 0f);
+                    camera.Position = new Vector3(0f, 3.25f, 5.30f);
+                    camera.Target = new Vector3(0f, 0.30f, 0f);
                 }
                 else
                 {
-                    camera.Position = new Vector3(0f, 2.65f, 4.35f);
-                    camera.Target = new Vector3(0f, 1.05f, 0f);
+                    camera.Position = new Vector3(0f, 3.55f, 5.25f);
+                    camera.Target = new Vector3(0f, 0.72f, 0f);
                 }
 
                 // Exact View * Projection screen coordinates for dead-center tracking brackets & grounded foot shadow
                 var viewProj = camera.View * camera.Projection;
-                float centerY = rig.IsPet ? 0.28f : 1.08f;
-                var bodyClip = Vector4.Transform(new Vector3(worldX, centerY, 0f), viewProj);
+                float centerY = rig.IsPet ? 0.22f : 0.68f;
+                var bodyClip = Vector4.Transform(new Vector3(worldX, centerY, worldZ), viewProj);
                 if (Math.Abs(bodyClip.W) > 0.001f)
                 {
-                    actorNormalizedX = SimLayout.Clamp(0.5f + (bodyClip.X / bodyClip.W) * 0.5f, 0.16f, 0.84f);
-                    actorNormalizedY = SimLayout.Clamp(0.5f - (bodyClip.Y / bodyClip.W) * 0.5f, 0.22f, 0.80f);
+                    actorNormalizedX = SimLayout.Clamp(0.5f + (bodyClip.X / bodyClip.W) * 0.5f, 0.14f, 0.86f);
+                    actorNormalizedY = SimLayout.Clamp(0.5f - (bodyClip.Y / bodyClip.W) * 0.5f, 0.22f, 0.84f);
                 }
-                var footClip = Vector4.Transform(new Vector3(worldX, 0f, 0f), viewProj);
+                var footClip = Vector4.Transform(new Vector3(worldX, 0f, worldZ), viewProj);
                 if (Math.Abs(footClip.W) > 0.001f)
                 {
                     actorFootNormalizedY = SimLayout.Clamp(0.5f - (footClip.Y / footClip.W) * 0.5f, 0.45f, 0.94f);
@@ -368,7 +372,7 @@ namespace Simitone.Conversations
                             bodyApr: "b001mafit_01.apr", bodyTex: "burglarmmed_01",
                             handSkin: "med",
                             animCandidates: new[] { "a2o-walking-frantic-loop.anim", "a2o-walking-loop.anim", "a2o-idle1.anim" },
-                            patrolWalk: true, walkAmp: 0.90f, walkFreq: 0.34f, animSpeed: 1.0f, facingYaw: 0.45f,
+                            patrolWalk: true, walkAmp: 1.15f, walkFreq: 0.30f, animSpeed: 1.0f, facingYaw: 0.45f,
                             label: "Night Prowler");
                         break;
 
@@ -378,7 +382,7 @@ namespace Simitone.Conversations
                             bodyApr: "b000cat_tabby.apr", bodyTex: "b000cat_tabby",
                             fallbackApr: "b008cat_bombay.apr", fallbackTex: "b008cat_bombay",
                             animCandidates: new[] { "k2o-walking-loop.anim", "k2o-stand-tailswish-loop-slow.anim", "k2o-stand-breathe-loop.anim" },
-                            scale: 0.84f, patrolWalk: true, walkAmp: 0.85f, walkFreq: 0.34f, animSpeed: 1.0f,
+                            scale: 0.48f, patrolWalk: true, walkAmp: 1.20f, walkFreq: 0.32f, animSpeed: 1.05f,
                             label: "Stray Tabby Cat");
                         break;
 
@@ -388,7 +392,7 @@ namespace Simitone.Conversations
                             bodyApr: "racoon.apr", bodyTex: "racoon",
                             fallbackApr: "b000dog_lab.apr", fallbackTex: "b000dog_lab",
                             animCandidates: new[] { "d2o-raccoon-walk-loop.anim", "d2o-walking-loop.anim", "d2o-sniff-sidetoside.anim" },
-                            scale: 0.80f, patrolWalk: true, walkAmp: 0.85f, walkFreq: 0.38f, animSpeed: 1.05f,
+                            scale: 0.46f, patrolWalk: true, walkAmp: 1.20f, walkFreq: 0.34f, animSpeed: 1.08f,
                             label: "El Bandito Raccoon");
                         break;
                 }
@@ -443,7 +447,7 @@ namespace Simitone.Conversations
                 Avatar = ava,
                 Anim = anim,
                 IsPet = false,
-                BaseScale = 0.56f,
+                BaseScale = 0.36f,
                 PatrolWalk = patrolWalk,
                 WalkAmplitude = walkAmp,
                 WalkFreq = walkFreq,

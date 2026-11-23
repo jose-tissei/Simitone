@@ -844,8 +844,8 @@ namespace Simitone.Conversations
 
             // Grounded contact shadow ellipse directly beneath the 3D Sim's projected feet
             bool isPet = ev.Kind == SecurityEventKind.StrayCat || ev.Kind == SecurityEventKind.Raccoon;
-            float shW = (isPet ? 52f : 56f) * SimLayout.Clamp(r.Width / 340f, 0.72f, 1.15f);
-            float shH = isPet ? 11f : 13f;
+            float shW = (isPet ? 34f : 38f) * SimLayout.Clamp(r.Width / 340f, 0.72f, 1.15f);
+            float shH = isPet ? 8f : 10f;
             float shY = SimLayout.Clamp(footY - shH * 0.45f, contentY + 20f, r.Bottom - shH - 4f);
             FillRoundedRect(batch, new SimRect(actorCx - shW * 0.5f, shY, shW, shH), (int)(shH * 0.5f), Color.Black * 0.46f);
 
@@ -858,19 +858,19 @@ namespace Simitone.Conversations
 
             // Bright green-white night-vision IR illumination so burglar stripes, mask, cat/raccoon markings pop clearly
             var nvTint = new Color(
-                (byte)Math.Round(202f * dimFactor),
+                (byte)Math.Round(206f * dimFactor),
                 (byte)Math.Round(255f * dimFactor),
-                (byte)Math.Round(218f * dimFactor),
+                (byte)Math.Round(220f * dimFactor),
                 (byte)255);
             batch.Draw(cctvRenderer.ActorTarget, dest, nvTint);
 
-            // Motion-tracking corner reticle dead-centered on the live 3D actor
+            // Motion-tracking corner reticle tightly framing the realistically scaled 3D actor
             float sc = SimLayout.Clamp(contentH / 128f, 0.65f, 1.15f);
-            float bw = (isPet ? 92f : 86f) * sc;
-            float bh = (isPet ? 66f : 104f) * sc;
+            float bw = (isPet ? 58f : 56f) * sc;
+            float bh = (isPet ? 44f : 72f) * sc;
             float bx = SimLayout.Clamp(actorCx - bw * 0.5f, r.X + 10f, r.Right - bw - 10f);
             float by = SimLayout.Clamp(actorCy - bh * 0.5f, contentY + 4f, r.Bottom - bh - 6f);
-            DrawMotionBrackets(batch, px, bx, by, bw, bh, 12f * sc, SimUiTokens.Amber * 0.88f);
+            DrawMotionBrackets(batch, px, bx, by, bw, bh, 10f * sc, SimUiTokens.Amber * 0.88f);
         }
 
         void DrawTreeShadowSweep(UISpriteBatch batch, Texture2D px, SimRect r, float hudH, SecurityEvent ev)
