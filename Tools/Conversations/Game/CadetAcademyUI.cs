@@ -29,13 +29,13 @@ namespace Simitone.Conversations
         bool rewardsApplied;
         int savedSpeed = 1;
         bool prevLeftDown, prevSpaceDown, prevEnterDown, prevEscDown;
-        bool hoverClose, hoverLock, hoverClaim;
+        bool hoverClose, hoverLock, hoverClaim, hoverStart, hoverSkip;
         bool finishSoundPlayed;
 
         readonly CadetAcademySceneRenderer sceneRenderer = new CadetAcademySceneRenderer();
         readonly CctvAudioEngine audio = new CctvAudioEngine();
 
-        Rectangle closeRect, timingBarHitRect, lockBtnRect, claimBtnRect;
+        Rectangle closeRect, timingBarHitRect, lockBtnRect, claimBtnRect, startBtnRect, skipBtnRect;
 
         readonly TextStyle titleStyle;
         readonly TextStyle subStyle;
@@ -77,7 +77,7 @@ namespace Simitone.Conversations
                     ? bodyLevelOverride.Value
                     : (av != null ? av.GetPersonData(VMPersonDataVariable.BodySkill) / 100 : 0);
 
-                instance.game = new CadetAcademyGame(simName, bodyLvl, seed);
+                instance.game = new CadetAcademyGame(simName, bodyLvl, seed, startInBriefing: true);
                 instance.finalOutcome = null;
                 instance.rewardsApplied = false;
                 instance.finishSoundPlayed = false;
@@ -146,7 +146,7 @@ namespace Simitone.Conversations
             {
                 var o = finalOutcome ?? game.ComputeOutcome();
                 return "game=CadetAcademy open=" + IsOpen +
-                       " finished=True grade=" + o.Grade +
+                       " briefing=False finished=True grade=" + o.Grade +
                        " pts=" + o.TotalPoints +
                        " bodyLvl=" + game.BodySkillLevel +
                        " bodyXp=" + o.Reward.BodyXpDelta +
@@ -155,6 +155,7 @@ namespace Simitone.Conversations
             }
             var st = game.ActiveStage;
             return "game=CadetAcademy open=" + IsOpen +
+                   " briefing=" + game.IsBriefing +
                    " stage=" + (game.CurrentStageIndex + 1) + "/" + CadetAcademyGame.TotalStages +
                    " kind=" + (st != null ? st.Kind.ToString() : "None") +
                    " resolving=" + game.IsResolvingStage +
@@ -170,12 +171,20 @@ namespace Simitone.Conversations
             var a = (action ?? "").Trim().ToLowerInvariant();
             switch (a)
             {
+                case "start":
+                case "begin":
+                    instance.StartDrill();
+                    return "ok " + instance.StatusText();
+                case "skip":
+                    return Close(false);
                 case "lock":
                 case "hit":
                 case "space":
                     instance.TriggerLock();
                     return "ok " + instance.StatusText();
                 case "perfect":
+                    if (instance.game.IsBriefing)
+                        instance.StartDrill();
                     if (instance.game.ActiveStage != null && !instance.game.IsResolvingStage)
                     {
                         int guard = 0;
@@ -193,7 +202,7 @@ namespace Simitone.Conversations
                 case "claim":
                     return Close(true);
                 default:
-                    return "err unknown cadet action '" + a + "' (use: lock, perfect, auto, claim)";
+                    return "err unknown cadet action '" + a + "' (use: start, skip, lock, perfect, auto, claim)";
             }
         }
 
@@ -205,9 +214,16 @@ namespace Simitone.Conversations
             return "ok " + instance.StatusText();
         }
 
+        void StartDrill()
+        {
+            if (game == null || !game.IsBriefing) return;
+            if (game.BeginDrill())
+                audio.PlayAllClear();
+        }
+
         void TriggerLock()
         {
-            if (game == null || game.IsFinished || game.IsResolvingStage) return;
+            if (game == null || game.IsBriefing || game.IsFinished || game.IsResolvingStage) return;
             var rating = game.LockIn();
             if (rating == CadetHitRating.Perfect) audio.PlayFeedback(true);
             else if (rating == CadetHitRating.Good) audio.PlayAllClear();
@@ -247,7 +263,18 @@ namespace Simitone.Conversations
                 return;
             }
 
-            if (!game.IsFinished)
+            if (game.IsBriefing)
+            {
+                if ((spaceNow && !prevSpaceDown) || (enterNow && !prevEnterDown))
+                {
+                    StartDrill();
+                    prevEscDown = escNow;
+                    prevSpaceDown = spaceNow;
+                    prevEnterDown = enterNow;
+                    return;
+                }
+            }
+            else if (!game.IsFinished)
             {
                 if ((spaceNow && !prevSpaceDown) || (enterNow && !prevEnterDown))
                     TriggerLock();
@@ -270,6 +297,8 @@ namespace Simitone.Conversations
             hoverClose = closeRect.Contains(mx, my);
             hoverLock = lockBtnRect.Contains(mx, my);
             hoverClaim = claimBtnRect.Contains(mx, my);
+            hoverStart = startBtnRect.Contains(mx, my);
+            hoverSkip = skipBtnRect.Contains(mx, my);
 
             bool left = state.MouseState.LeftButton == ButtonState.Pressed;
             if (left && !prevLeftDown)
@@ -279,7 +308,21 @@ namespace Simitone.Conversations
                     Close(game.IsFinished);
                     return;
                 }
-                if (game.IsFinished)
+                if (game.IsBriefing)
+                {
+                    if (hoverStart)
+                    {
+                        StartDrill();
+                        prevLeftDown = true;
+                        return;
+                    }
+                    if (hoverSkip)
+                    {
+                        Close(false);
+                        return;
+                    }
+                }
+                else if (game.IsFinished)
                 {
                     if (hoverClaim)
                     {
@@ -339,12 +382,16 @@ namespace Simitone.Conversations
             // 3. Live Unified 3D Academy Course Viewport (Option 2 real-time 3D world!)
             float vpY = headerBar.Bottom + 72f;
             float vpW = panel.Width - pad * 2f;
-            float vpH = Math.Min(346f, Math.Max(220f, panel.Height - 280f));
+            float vpH = game.IsBriefing
+                ? Math.Min(270f, Math.Max(188f, panel.Height - 372f))
+                : Math.Min(346f, Math.Max(220f, panel.Height - 280f));
             var viewport = new SimRect(panel.X + pad, vpY, vpW, vpH);
             DrawLive3DViewport(batch, viewport);
 
-            // 4. Interactive Timing Deck OR Final Scorecard
-            if (!game.IsFinished)
+            // 4. Pre-Game Briefing Deck OR Interactive Timing Deck OR Final Scorecard
+            if (game.IsBriefing)
+                DrawBriefingDeck(batch, px, panel, viewport, pad);
+            else if (!game.IsFinished)
                 DrawTimingDeck(batch, px, panel, viewport, pad);
             else
                 DrawScorecard(batch, panel, viewport, pad);
@@ -360,7 +407,7 @@ namespace Simitone.Conversations
             {
                 var st = game.Stages[i];
                 var r = new SimRect(panel.X + pad + i * (pillW + gap), y, pillW, 30f);
-                bool active = !game.IsFinished && i == game.CurrentStageIndex;
+                bool active = !game.IsBriefing && !game.IsFinished && i == game.CurrentStageIndex;
 
                 Color fill, border;
                 string suffix = "";
@@ -391,7 +438,7 @@ namespace Simitone.Conversations
                 else
                 {
                     fill = SimUiTokens.CardBg;
-                    border = SimUiTokens.InnerBorder;
+                    border = game.IsBriefing ? SimUiTokens.OuterBorder * 0.7f : SimUiTokens.InnerBorder;
                 }
 
                 FillRoundedRect(batch, r, SimUiTokens.RadiusControl, fill);
@@ -422,10 +469,10 @@ namespace Simitone.Conversations
 
             // Top-left live 3D camera telemetry pill
             var st = game.ActiveStage;
-            string camTag = st != null
-                ? "LIVE 3D COURSE  •  " + st.Title
-                : "LIVE 3D COURSE  •  DRILL COMPLETE";
-            var tagRect = new SimRect(inner.X + 10f, inner.Y + 10f, Math.Min(340f, inner.Width - 165f), 26f);
+            string camTag = game.IsBriefing
+                ? "ACADEMY BRIEFING  •  READY ON THE LINE"
+                : (st != null ? "LIVE 3D COURSE  •  " + st.Title : "LIVE 3D COURSE  •  DRILL COMPLETE");
+            var tagRect = new SimRect(inner.X + 10f, inner.Y + 10f, Math.Min(360f, inner.Width - 165f), 26f);
             FillRoundedRect(batch, tagRect, SimUiTokens.RadiusControl, new Color(8, 18, 30, 205));
             DrawFittedLine(batch, camTag, new SimRect(tagRect.X + 10f, tagRect.Y + 5f, tagRect.Width - 20f, 16f), cyanStyle, SimTextAlign.Left);
 
@@ -447,6 +494,79 @@ namespace Simitone.Conversations
                 FillRoundedRect(batch, callRect, SimUiTokens.RadiusControl, bg);
                 DrawFittedLine(batch, game.LastCallout, new SimRect(callRect.X + 10f, callRect.Y + 5f, callRect.Width - 20f, 16f), badgeStyle, SimTextAlign.Center);
             }
+        }
+
+        void DrawBriefingDeck(UISpriteBatch batch, Texture2D px, SimRect panel, SimRect viewport, float pad)
+        {
+            float topY = viewport.Bottom + 14f;
+            float availH = Math.Max(160f, panel.Bottom - topY - 14f);
+            float btnH = 42f;
+            float cardH = Math.Max(112f, availH - btnH - 14f);
+            float gap = 12f;
+            float colW = (panel.Width - pad * 2f - gap) * 0.5f;
+
+            var leftCard = new SimRect(panel.X + pad, topY, colW, cardH);
+            var rightCard = new SimRect(leftCard.Right + gap, topY, colW, cardH);
+
+            // Left card: WHAT WILL HAPPEN
+            FillRoundedRect(batch, leftCard, SimUiTokens.RadiusCard, SimUiTokens.CardBgAlt);
+            DrawRoundedBorder(batch, leftCard, SimUiTokens.RadiusCard, SimUiTokens.OuterBorder * 0.85f, 1);
+
+            float lx = leftCard.X + 14f;
+            float lw = leftCard.Width - 28f;
+            float ly = leftCard.Y + 12f;
+            DrawFittedLine(batch, "WHAT WILL HAPPEN  (3-STAGE COURSE)", new SimRect(lx, ly, lw, 20f), cyanStyle, SimTextAlign.Left);
+            FillRect(batch, px, lx, ly + 23f, lw, 1f, SimUiTokens.Divider);
+
+            int sweetPct = (int)Math.Round(CadetAcademyGame.ComputePerfectZoneWidth(game.BodySkillLevel) * 100f);
+            DrawFittedLine(batch, "1. Sprint Dash — Burst off the starting line at peak stride.",
+                new SimRect(lx, ly + 32f, lw, 20f), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "2. Hurdle Vault — Time your leap cleanly over the rail.",
+                new SimRect(lx, ly + 56f, lw, 20f), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "3. Target Drill — Hold steady and hit the bullseye.",
+                new SimRect(lx, ly + 80f, lw, 20f), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "Body Skill Lv." + game.BodySkillLevel + " sets your Green Sweet Spot to " + sweetPct + "%.",
+                new SimRect(lx, ly + 108f, lw, 20f), mintStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "Green = Perfect (+100)  •  Gold = Good (+65)  •  Miss (+15)",
+                new SimRect(lx, ly + 132f, lw, 18f), smallStyle, SimTextAlign.Left);
+
+            // Right card: CONTROLS & REWARDS
+            FillRoundedRect(batch, rightCard, SimUiTokens.RadiusCard, SimUiTokens.CardBgAlt);
+            DrawRoundedBorder(batch, rightCard, SimUiTokens.RadiusCard, SimUiTokens.OuterBorder * 0.85f, 1);
+
+            float rx = rightCard.X + 14f;
+            float rw = rightCard.Width - 28f;
+            float ry = rightCard.Y + 12f;
+            DrawFittedLine(batch, "CONTROLS & REWARDS", new SimRect(rx, ry, rw, 20f), cyanStyle, SimTextAlign.Left);
+            FillRect(batch, px, rx, ry + 23f, rw, 1f, SimUiTokens.Divider);
+
+            DrawFittedLine(batch, "[SPACE] / [ENTER] / CLICK — Lock marker in green zone",
+                new SimRect(rx, ry + 32f, rw, 20f), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "[ESC] or SKIP — Skip today's drill with zero penalty",
+                new SimRect(rx, ry + 56f, rw, 20f), subStyle, SimTextAlign.Left);
+            FillRect(batch, px, rx, ry + 84f, rw, 1f, SimUiTokens.Divider);
+            DrawFittedLine(batch, "Rewards (up to S-Rank / 300 pts):",
+                new SimRect(rx, ry + 92f, rw, 20f), mintStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "+Body Skill XP  •  +Job Performance  •  +Fun  •  Bonus $",
+                new SimRect(rx, ry + 116f, rw, 20f), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "The lot stays safely paused until you finish or skip.",
+                new SimRect(rx, ry + 138f, rw, 18f), smallStyle, SimTextAlign.Left);
+
+            // Action button row: START DRILL + SKIP MINIGAME
+            float btnY = leftCard.Bottom + 14f;
+            float startW = 248f;
+            float skipW = 210f;
+            float btnGap = 16f;
+            float totalBtnW = startW + skipW + btnGap;
+            float startX = panel.X + (panel.Width - totalBtnW) * 0.5f;
+
+            var startSimRect = new SimRect(startX, btnY, startW, btnH);
+            var skipSimRect = new SimRect(startSimRect.Right + btnGap, btnY, skipW, btnH);
+            startBtnRect = ToXnaRect(startSimRect);
+            skipBtnRect = ToXnaRect(skipSimRect);
+
+            DrawPillButton(batch, startSimRect, "START DRILL  [SPACE]", SimButtonVariant.Primary, hoverStart);
+            DrawPillButton(batch, skipSimRect, "SKIP MINIGAME  [ESC]", SimButtonVariant.Secondary, hoverSkip);
         }
 
         void DrawTimingDeck(UISpriteBatch batch, Texture2D px, SimRect panel, SimRect viewport, float pad)

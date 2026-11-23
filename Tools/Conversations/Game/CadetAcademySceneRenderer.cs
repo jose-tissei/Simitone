@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using FSO.Client;
 using FSO.Common.Rendering.Framework;
 using FSO.Common.Rendering.Framework.Camera;
 using FSO.Content;
+using FSO.Files.Formats.IFF.Chunks;
 using FSO.SimAntics;
+using FSO.SimAntics.Model;
 using FSO.Vitaboy;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -15,9 +18,8 @@ namespace Simitone.Conversations
     // Uses the Option 2 unified-world principle: BOTH the 3D Police Academy training yard
     // (grass field, terracotta track, hurdles, brick-and-timber vault wall, firing range berm,
     // hinged steel bullseye targets, cones, floodlight towers, grounded contact shadow) AND the
-    // player's actual 3D SimAvatar render into ONE shared RenderTarget2D + Depth24 Z-buffer
-    // through ONE dynamic 3D follow-camera — guaranteeing 100% authentic scale, depth occlusion,
-    // and 60 FPS fluidity across both 2D and Full 3D Simitone graphics modes.
+    // player's actual 3D SimAvatar (wearing their authentic TS1 Law Enforcement Career Uniform!)
+    // render into ONE shared RenderTarget2D + Depth24 Z-buffer through ONE dynamic 3D follow-camera.
     internal sealed class CadetAcademySceneRenderer : IDisposable
     {
         public const int TargetW = 760;
@@ -34,9 +36,11 @@ namespace Simitone.Conversations
 
         SimAvatar cadetAvatar;
         string boundSimKey;
+        string boundUniformTag = "none";
         Animation runAnim;
         Animation walkAnim;
         Animation idleAnim;
+        Animation jumpAnim;
         Animation cheerAnim;
 
         bool initialized;
@@ -78,6 +82,7 @@ namespace Simitone.Conversations
             return "live3d=" + HasLiveFrame +
                    " sim=" + (cadetAvatar != null) +
                    " key=" + (boundSimKey ?? "none") +
+                   " uniform=" + boundUniformTag +
                    " anim=" + (runAnim != null ? runAnim.Name : "none") +
                    (string.IsNullOrEmpty(lastAvatarErr) ? "" : " err=" + lastAvatarErr);
         }
@@ -94,7 +99,9 @@ namespace Simitone.Conversations
             try
             {
                 var st = game.ActiveStage;
-                var kind = st != null ? st.Kind : CadetDrillStageKind.TargetDrill;
+                var kind = game.IsBriefing
+                    ? CadetDrillStageKind.Sprint
+                    : (st != null ? st.Kind : CadetDrillStageKind.TargetDrill);
                 float t = game.ElapsedSeconds;
                 float resP = game.ResolutionProgress;
                 bool resolving = game.IsResolvingStage;
@@ -108,9 +115,33 @@ namespace Simitone.Conversations
                 float animSpeed = 1.45f;
                 float targetKnockAngle = 0f;
                 bool showShotFlash = false;
+                bool applyAimPose = false;
+                float aimRecoil = 0f;
                 Vector3 shotImpactPos = new Vector3(0f, 1.75f, 7.45f);
 
-                if (kind == CadetDrillStageKind.Sprint)
+                if (game.IsBriefing)
+                {
+                    // Pre-drill establishing shot: Cadet stands proudly on the track in full Police Cadet uniform
+                    // doing a brisk warm-up stride/idle while the 3D camera gently sweeps around the academy yard.
+                    simPos = new Vector3(0f, 0f, -4.2f);
+                    simYaw = 0.25f + (float)Math.Sin(t * 0.7f) * 0.14f;
+                    activeAnim = idleAnim ?? walkAnim ?? runAnim;
+                    animSpeed = 0.95f;
+                    float orbit = (float)Math.Sin(t * 0.42f) * 1.45f;
+                    camera.Position = new Vector3(3.15f + orbit, 2.85f, 1.25f);
+                    camera.Target = new Vector3(0f, 1.65f, -3.6f);
+                }
+                else if (game.IsFinished)
+                {
+                    // Victory showcase in front of the Police Academy finish gantry
+                    simPos = new Vector3(0f, 0f, 7.2f);
+                    simYaw = 0.2f + (float)Math.Sin(t * 1.2f) * 0.18f;
+                    activeAnim = cheerAnim ?? idleAnim ?? walkAnim ?? runAnim;
+                    animSpeed = 1.15f;
+                    camera.Position = new Vector3(3.4f, 2.95f, 12.6f);
+                    camera.Target = new Vector3(0f, 1.70f, 7.5f);
+                }
+                else if (kind == CadetDrillStageKind.Sprint)
                 {
                     if (!resolving)
                     {
@@ -120,7 +151,8 @@ namespace Simitone.Conversations
                         float hop = ComputeHurdleHop(z, -1.5f) + ComputeHurdleHop(z, 4.5f);
                         simPos = new Vector3(0f, hop, z);
                         simYaw = 0f;
-                        animSpeed = 1.55f;
+                        activeAnim = runAnim ?? walkAnim ?? idleAnim;
+                        animSpeed = 1.65f;
                     }
                     else
                     {
@@ -131,6 +163,9 @@ namespace Simitone.Conversations
                             : ComputeHurdleHop(z, 4.5f);
                         simPos = new Vector3(0f, hop, Math.Min(13.5f, z));
                         simYaw = 0f;
+                        activeAnim = (resP > 0.72f && rating == CadetHitRating.Perfect && cheerAnim != null)
+                            ? cheerAnim
+                            : (runAnim ?? walkAnim ?? idleAnim);
                         animSpeed = rating == CadetHitRating.Perfect ? 2.15f : (rating == CadetHitRating.Good ? 1.65f : 0.9f);
                         if (rating == CadetHitRating.Miss && resP < 0.45f)
                             simPitch = 0.22f * (float)Math.Sin(resP / 0.45f * Math.PI);
@@ -149,7 +184,8 @@ namespace Simitone.Conversations
                         float z = -6.8f + cycle;
                         simPos = new Vector3(0f, 0f, z);
                         simYaw = 0f;
-                        animSpeed = 1.48f;
+                        activeAnim = runAnim ?? walkAnim ?? idleAnim;
+                        animSpeed = 1.55f;
                     }
                     else if (rating == CadetHitRating.Miss)
                     {
@@ -167,26 +203,31 @@ namespace Simitone.Conversations
                             simPitch = -0.18f * (1f - p);
                         }
                         simYaw = 0f;
-                        animSpeed = 0.75f;
+                        activeAnim = walkAnim ?? runAnim ?? idleAnim;
+                        animSpeed = 0.85f;
                     }
                     else
                     {
                         // Clean parabolic vault arc right over the 2.15-unit timber wall onto the blue landing mat!
-                        float peakH = rating == CadetHitRating.Perfect ? 2.68f : 2.32f;
+                        float peakH = rating == CadetHitRating.Perfect ? 2.55f : 2.25f;
                         float endZ = rating == CadetHitRating.Perfect ? 5.6f : 4.7f;
                         float z = -1.6f + resP * (endZ + 1.6f);
+                        bool airborne = resP >= 0.12f && resP <= 0.84f;
                         float arc = (float)Math.Sin(Math.Min(1f, Math.Max(0f, (resP - 0.12f) / 0.72f)) * Math.PI);
-                        float y = (resP >= 0.12f && resP <= 0.84f) ? arc * peakH : 0f;
+                        float y = airborne ? arc * peakH : 0f;
                         simPos = new Vector3(0f, y, z);
                         simYaw = 0f;
-                        animSpeed = (resP >= 0.12f && resP <= 0.84f) ? 0.55f : 1.55f;
-                        if (resP >= 0.12f && resP <= 0.84f)
-                            simPitch = 0.35f * (float)Math.Cos(((resP - 0.12f) / 0.72f) * Math.PI);
+                        activeAnim = airborne
+                            ? (jumpAnim ?? runAnim ?? walkAnim)
+                            : ((resP > 0.84f && rating == CadetHitRating.Perfect && cheerAnim != null) ? cheerAnim : (runAnim ?? walkAnim));
+                        animSpeed = airborne ? 1.15f : 1.55f;
+                        if (airborne)
+                            simPitch = 0.34f * (float)Math.Cos(((resP - 0.12f) / 0.72f) * Math.PI);
                     }
 
-                    // Heroic low-angle side-quarter vault camera showing wall depth & leap arc cleanly
-                    camera.Position = new Vector3(7.6f, 3.35f, 1.8f);
-                    camera.Target = new Vector3(0f, 1.75f, 1.6f);
+                    // Heroic side-quarter vault camera with generous headroom above the timber wall
+                    camera.Position = new Vector3(8.2f, 3.85f, 2.2f);
+                    camera.Target = new Vector3(0f, 2.05f, 1.8f);
                 }
                 else // TargetDrill
                 {
@@ -194,10 +235,12 @@ namespace Simitone.Conversations
                     // Subtle aim sweep linked directly to the live timing marker!
                     float aimOffset = (game.MarkerPosition - 0.5f) * 0.45f;
                     simYaw = resolving ? 0f : aimOffset;
-                    activeAnim = (resolving && rating == CadetHitRating.Perfect && cheerAnim != null)
-                        ? cheerAnim
-                        : (idleAnim ?? walkAnim ?? runAnim);
-                    animSpeed = resolving ? 1.0f : 0.45f;
+                    bool cheerNow = resolving && resP > 0.55f && rating == CadetHitRating.Perfect && cheerAnim != null;
+                    activeAnim = cheerNow ? cheerAnim : (idleAnim ?? walkAnim ?? runAnim);
+                    animSpeed = cheerNow ? 1.15f : 0.75f;
+                    applyAimPose = !cheerNow;
+                    if (resolving && resP < 0.25f)
+                        aimRecoil = (float)Math.Sin((resP / 0.25f) * Math.PI) * 0.38f;
 
                     if (resolving)
                     {
@@ -231,9 +274,10 @@ namespace Simitone.Conversations
                 unlitTris.Clear();
                 BuildAcademyEnvironment(kind, simPos, targetKnockAngle, showShotFlash, shotImpactPos, t);
 
-                // 3. Pose the real 3D Vitaboy SimAvatar in the EXACT SAME 3D coordinates
+                // 3. Pose & animate the real 3D Vitaboy SimAvatar in the EXACT SAME 3D coordinates!
                 if (cadetAvatar != null)
                 {
+                    ResetSkeletonToBase(cadetAvatar);
                     if (activeAnim != null)
                     {
                         float fps = activeAnim.FramesPerSecond > 0 ? activeAnim.FramesPerSecond : 30f;
@@ -242,13 +286,17 @@ namespace Simitone.Conversations
                         int frame = (int)exact;
                         Animator.RenderFrame(cadetAvatar, activeAnim, frame, exact - frame, 1.0f);
                     }
+                    if (applyAimPose)
+                        ApplyTargetAimPose(cadetAvatar, aimRecoil);
+
                     cadetAvatar.Scale = Vector3.One * SimScale;
                     cadetAvatar.Position = simPos;
                     cadetAvatar.RotationY = simYaw;
                     cadetAvatar.RotationX = simPitch;
                     cadetAvatar.AmbientLight = new Vector4(1.18f, 1.16f, 1.12f, 1.0f);
-                    if (cadetAvatar.Skeleton != null && cadetAvatar.Skeleton.RootBone != null)
-                        cadetAvatar.Skeleton.ComputeBonePositions(cadetAvatar.Skeleton.RootBone, Matrix.Identity);
+
+                    // CRITICAL: ReloadSkeleton() recomputes bone matrices AND refreshes SkelBones for the GPU skinning shader!
+                    cadetAvatar.ReloadSkeleton();
                 }
 
                 // 4. Render unified 3D world + SimAvatar into our RenderTarget2D with full Depth24 Z-buffering
@@ -669,6 +717,7 @@ namespace Simitone.Conversations
             try
             {
                 lastAvatarErr = null;
+                boundUniformTag = "civilian";
                 var content = Content.Get();
                 if (content == null || content.AvatarSkeletons == null) return;
 
@@ -677,15 +726,28 @@ namespace Simitone.Conversations
 
                 var sim = new SimAvatar(baseSkel.Clone());
 
-                // Prefer the player's actual active Sim appearance (head + body + hands) so Bob/Betty run the course!
+                // 1. Keep the player's actual active Sim head (face + hair) so Bob/Betty is unmistakable!
                 if (sourceSim != null && sourceSim.Avatar != null)
                 {
                     try { if (sourceSim.Avatar.Head != null) sim.Head = sourceSim.Avatar.Head; } catch { }
+                }
+
+                // 2. Dress the Sim in the authentic Sims 1 Law Enforcement Cadet Career Uniform (from work.iff)!
+                string uniformTag;
+                var uniformOutfit = ResolveLawEnforcementUniform(content, sourceSim, out uniformTag);
+                if (uniformOutfit != null)
+                {
+                    sim.Body = uniformOutfit;
+                    sim.Handgroup = uniformOutfit;
+                    boundUniformTag = uniformTag;
+                }
+                else if (sourceSim != null && sourceSim.Avatar != null)
+                {
                     try { if (sourceSim.Avatar.Body != null) sim.Body = sourceSim.Avatar.Body; } catch { }
                     try { if (sourceSim.Avatar.Handgroup != null) sim.Handgroup = sourceSim.Avatar.Handgroup; } catch { }
                 }
 
-                // Fallback to authentic TS1 adult rig with valid TS1 handgroup if any slot wasn't populated
+                // 3. Fallback to authentic TS1 adult rig with valid TS1 handgroup if any slot wasn't populated
                 if (sim.Head == null)
                     sim.Head = new Outfit { TS1AppearanceID = "c_pizzaguy.apr", TS1TextureID = "pizzaguyface" };
                 if (sim.Body == null)
@@ -710,9 +772,30 @@ namespace Simitone.Conversations
                     "a2o-walking-loop.anim",
                     "a2o-run-loop.anim",
                 });
-                walkAnim = PickAnimation(content, new[] { "a2o-walking-loop.anim", "a2o-idle1.anim" });
-                idleAnim = PickAnimation(content, new[] { "a2o-stand-breathe.anim", "a2o-idle1.anim", "a2o-walking-loop.anim" });
-                cheerAnim = PickAnimation(content, new[] { "a2o-cheer.anim", "a2o-clap-loop.anim", "a2o-idle1.anim" });
+                walkAnim = PickAnimation(content, new[] { "a2o-walking-loop.anim", "a2o-walking-frantic-loop.anim" });
+                jumpAnim = PickAnimation(content, new[]
+                {
+                    "a2o-pool-divingboard-dive.anim",
+                    "a2o-divingboard-dive.anim",
+                    "a2o-exercise-jumpingjacks-loop.anim",
+                    "a2o-walking-frantic-loop.anim",
+                    "a2o-walking-loop.anim",
+                });
+                idleAnim = PickAnimation(content, new[]
+                {
+                    "a2o-stand-breathe.anim",
+                    "a2o-idle1.anim",
+                    "a2o-stand-fidget.anim",
+                    "a2o-walking-loop.anim",
+                });
+                cheerAnim = PickAnimation(content, new[]
+                {
+                    "a2o-cheer.anim",
+                    "a2o-clap-loop.anim",
+                    "a2o-happy-loop.anim",
+                    "a2o-stand-breathe.anim",
+                    "a2o-walking-loop.anim",
+                });
 
                 if (avatarScene != null)
                 {
@@ -722,13 +805,152 @@ namespace Simitone.Conversations
 
                 cadetAvatar = sim;
                 boundSimKey = key;
-                Boot.Log("cadet3d avatar ready for " + key + " (run=" + (runAnim != null ? runAnim.Name : "none") + ")");
+                Boot.Log("cadet3d avatar ready for " + key +
+                         " uniform=" + boundUniformTag +
+                         " (run=" + (runAnim != null ? runAnim.Name : "none") +
+                         " jump=" + (jumpAnim != null ? jumpAnim.Name : "none") +
+                         " idle=" + (idleAnim != null ? idleAnim.Name : "none") +
+                         " cheer=" + (cheerAnim != null ? cheerAnim.Name : "none") + ")");
             }
             catch (Exception e)
             {
                 lastAvatarErr = e.GetType().Name + ":" + e.Message;
                 Boot.Log("cadet3d avatar error: " + e.Message);
             }
+        }
+
+        // Mirrors VMSuitProvider.GetPersonSuitTS1 (case 3: Work Outfit) to dress any Sim
+        // (matching their exact gender, fit/fat/skn build, and lgt/med/drk skin tone)
+        // in the authentic Sims 1 Law Enforcement Cadet / Police uniform from work.iff.
+        static Outfit ResolveLawEnforcementUniform(Content content, VMAvatar sourceSim, out string tag)
+        {
+            tag = "fallback";
+            try
+            {
+                if (content == null || content.Jobs == null || content.Jobs.JobResource == null)
+                    return null;
+
+                var careers = content.Jobs.JobResource.List<CARR>();
+                if (careers == null) return null;
+
+                CARR lawCareer = careers.FirstOrDefault(c =>
+                    c != null &&
+                    ((c.Name ?? "").IndexOf("Law", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                     (c.Name ?? "").IndexOf("Police", StringComparison.OrdinalIgnoreCase) >= 0));
+
+                if (lawCareer == null)
+                {
+                    lawCareer = careers.FirstOrDefault(c =>
+                        c != null && c.JobLevels != null &&
+                        c.JobLevels.Any(l => l != null &&
+                            ((l.JobName ?? "").IndexOf("Cadet", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                             (l.JobName ?? "").IndexOf("Security Guard", StringComparison.OrdinalIgnoreCase) >= 0)));
+                }
+                if (lawCareer == null || lawCareer.JobLevels == null || lawCareer.JobLevels.Length == 0)
+                    return null;
+
+                // Determine Sim gender, body build (fit/fat/skn), skin tone (lgt/med/drk), and hands
+                bool isMale = true;
+                string build = "fit";
+                string skinTone = "lgt";
+                HandGroup hands = null;
+
+                if (sourceSim != null)
+                {
+                    try { isMale = sourceSim.GetPersonData(VMPersonDataVariable.Gender) == 0; } catch { }
+                    try
+                    {
+                        var bodyStr = sourceSim.Object?.Resource?.Get<STR>(sourceSim.Object.OBJ.BodyStringID);
+                        if (bodyStr != null)
+                        {
+                            string s14 = (bodyStr.GetString(14) ?? "").Trim().ToLowerInvariant();
+                            if (s14 == "lgt" || s14 == "med" || s14 == "drk") skinTone = s14;
+                            string s1 = (bodyStr.GetString(1) ?? "").ToLowerInvariant();
+                            if (s1.Contains("fat")) build = "fat";
+                            else if (s1.Contains("skn")) build = "skn";
+                        }
+                    }
+                    catch { }
+                    try { hands = sourceSim.DefaultSuits?.Daywear?.OftData?.LiteralHandgroup; } catch { }
+                }
+
+                if (hands == null) hands = BuildAdultHands(skinTone);
+
+                string gChar = isMale ? "m" : "f";
+                // Prefer Level 2 (Cadet = index 1); if Cadet has an empty uniform string in work.iff,
+                // fall back to Patrol Officer [2], Security Guard [0], Desk Sergeant [3] — all authentic Law Enforcement uniforms!
+                int[] levelOrder = { 1, 2, 0, 3, 4 };
+                for (int i = 0; i < levelOrder.Length; i++)
+                {
+                    int idx = levelOrder[i];
+                    if (idx < 0 || idx >= lawCareer.JobLevels.Length) continue;
+                    var lvl = lawCareer.JobLevels[idx];
+                    if (lvl == null) continue;
+
+                    string mesh = isMale ? lvl.MaleUniformMesh : (!string.IsNullOrEmpty(lvl.FemaleUniformMesh) ? lvl.FemaleUniformMesh : lvl.MaleUniformMesh);
+                    string skin = lvl.UniformSkin;
+                    if (string.IsNullOrWhiteSpace(mesh) || string.IsNullOrWhiteSpace(skin)) continue;
+
+                    mesh = mesh.Trim().ToLowerInvariant()
+                        .Replace("$g", gChar)
+                        .Replace("$b", build)
+                        .Replace("$c", skinTone);
+                    skin = skin.Trim().ToLowerInvariant()
+                        .Replace("$g", gChar)
+                        .Replace("$b", build)
+                        .Replace("$c", skinTone);
+
+                    var outfitRef = new VMOutfitReference(mesh + ",BODY=" + skin, false);
+                    if (outfitRef.OftData != null)
+                    {
+                        outfitRef.OftData.LiteralHandgroup = hands;
+                        // Verify the appearance actually resolves in TS1 content before committing
+                        var apr = content.AvatarAppearances?.Get(outfitRef.OftData.TS1AppearanceID);
+                        if (apr != null)
+                        {
+                            tag = (lvl.JobName ?? ("L" + (idx + 1))).Replace(" ", "") + ":" + mesh + "/" + skin;
+                            return outfitRef.OftData;
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Boot.Log("cadet3d uniform lookup error: " + e.Message);
+            }
+            return null;
+        }
+
+        static void ResetSkeletonToBase(SimAvatar sim)
+        {
+            if (sim == null || sim.Skeleton == null || sim.BaseSkeleton == null) return;
+            var dst = sim.Skeleton.Bones;
+            var src = sim.BaseSkeleton.Bones;
+            if (dst == null || src == null) return;
+            int n = Math.Min(dst.Length, src.Length);
+            for (int i = 0; i < n; i++)
+            {
+                dst[i].Translation = src[i].Translation;
+                dst[i].Rotation = src[i].Rotation;
+            }
+        }
+
+        static void ApplyTargetAimPose(SimAvatar sim, float recoil)
+        {
+            if (sim == null || sim.Skeleton == null) return;
+            // Raise right & left arms forward into a steady two-handed police range stance, with recoil kick on shot!
+            var rUpper = sim.Skeleton.GetBone("R_UPPERARM");
+            if (rUpper != null)
+                rUpper.Rotation = Quaternion.CreateFromYawPitchRoll(-0.22f, -1.28f - recoil, 0.15f);
+            var rFore = sim.Skeleton.GetBone("R_FOREARM");
+            if (rFore != null)
+                rFore.Rotation = Quaternion.CreateFromYawPitchRoll(-0.18f, -0.18f, 0f);
+            var lUpper = sim.Skeleton.GetBone("L_UPPERARM");
+            if (lUpper != null)
+                lUpper.Rotation = Quaternion.CreateFromYawPitchRoll(0.45f, -1.18f - recoil * 0.8f, -0.18f);
+            var lFore = sim.Skeleton.GetBone("L_FOREARM");
+            if (lFore != null)
+                lFore.Rotation = Quaternion.CreateFromYawPitchRoll(0.48f, -0.22f, 0f);
         }
 
         static HandGroup BuildAdultHands(string skinTone)

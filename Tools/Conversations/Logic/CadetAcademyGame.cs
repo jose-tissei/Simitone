@@ -71,6 +71,7 @@ namespace Simitone.Conversations
                 return Math.Max(0f, Math.Min(1f, 1f - ResolutionTimer / ResolutionBeatSeconds));
             }
         }
+        public bool IsBriefing { get; private set; }
         public bool IsFinished { get; private set; }
         public float ElapsedSeconds { get; private set; }
         public float StageElapsedSeconds { get; private set; }
@@ -101,7 +102,7 @@ namespace Simitone.Conversations
             return ComputePerfectZoneWidth(bodySkillLevel) + 0.18f;
         }
 
-        public CadetAcademyGame(string simName, int bodySkillLevel = 0, int? seed = null)
+        public CadetAcademyGame(string simName, int bodySkillLevel = 0, int? seed = null, bool startInBriefing = true)
         {
             SimName = string.IsNullOrWhiteSpace(simName) ? "Sim" : simName.Trim();
             BodySkillLevel = Math.Max(0, Math.Min(10, bodySkillLevel));
@@ -150,11 +151,28 @@ namespace Simitone.Conversations
                 },
             };
 
+            IsBriefing = startInBriefing;
             CurrentStageIndex = 0;
+            MarkerPosition = 0.08f;
+            MarkerDirection = 1f;
+            LastCallout = startInBriefing
+                ? "Cadet " + SimName + " reported to the Police Academy yard — review the drill briefing."
+                : "Academy whistle blown — lock in your sprint stride!";
+            LastRating = CadetHitRating.None;
+        }
+
+        public bool BeginDrill()
+        {
+            if (!IsBriefing || IsFinished) return false;
+            IsBriefing = false;
+            CurrentStageIndex = 0;
+            StageElapsedSeconds = 0f;
             MarkerPosition = 0.08f;
             MarkerDirection = 1f;
             LastCallout = "Academy whistle blown — lock in your sprint stride!";
             LastRating = CadetHitRating.None;
+            SoundCueSequence++;
+            return true;
         }
 
         float RandomCenter(float min, float max)
@@ -167,6 +185,8 @@ namespace Simitone.Conversations
             if (IsFinished || deltaSeconds <= 0f) return;
 
             ElapsedSeconds += deltaSeconds;
+            if (IsBriefing) return;
+
             StageElapsedSeconds += deltaSeconds;
 
             if (IsResolvingStage)
@@ -213,7 +233,7 @@ namespace Simitone.Conversations
 
         public CadetHitRating LockIn()
         {
-            if (IsFinished || IsResolvingStage) return CadetHitRating.None;
+            if (IsBriefing || IsFinished || IsResolvingStage) return CadetHitRating.None;
             var st = ActiveStage;
             if (st == null) return CadetHitRating.None;
 
@@ -269,6 +289,7 @@ namespace Simitone.Conversations
 
         public void AutoCompleteRemainingPerfect()
         {
+            if (IsBriefing) BeginDrill();
             while (!IsFinished)
             {
                 if (!IsResolvingStage && ActiveStage != null)

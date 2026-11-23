@@ -170,8 +170,8 @@ namespace Simitone.Conversations
                 // Crisp IR night-vision illumination on the 3D mesh; phosphor tint is applied during 2D composite
                 rig.Avatar.AmbientLight = new Vector4(1.45f, 1.52f, 1.45f, 1.0f);
 
-                if (rig.Avatar.Skeleton != null && rig.Avatar.Skeleton.RootBone != null)
-                    rig.Avatar.Skeleton.ComputeBonePositions(rig.Avatar.Skeleton.RootBone, Matrix.Identity);
+                // CRITICAL: ReloadSkeleton() recomputes bone matrices AND refreshes SkelBones for the GPU skinning shader!
+                rig.Avatar.ReloadSkeleton();
 
                 // Overhead ~34 deg security-cam pitch calibrated to match the 2x zoomed Sims 1 lot proportions:
                 //   Humans ~38-42% of monitor height (matching doors/fences); Pets ~16-19% of monitor height.

@@ -67,9 +67,35 @@ namespace Conversations.Tests
         }
 
         [Fact]
+        public void CadetBriefing_HoldsMarkerAndIgnoresLock_UntilBeginDrill()
+        {
+            var g = new CadetAcademyGame("Bob", bodySkillLevel: 3, seed: 21);
+            Assert.True(g.IsBriefing);
+            Assert.False(g.IsFinished);
+            float initialMarker = g.MarkerPosition;
+
+            // Ticking during briefing advances ElapsedSeconds (live 3D camera/warm-up)
+            // without moving the timing needle or accepting accidental LockIn calls.
+            g.Tick(0.5f);
+            Assert.True(g.ElapsedSeconds >= 0.49f);
+            Assert.Equal(initialMarker, g.MarkerPosition);
+            Assert.Equal(CadetHitRating.None, g.LockIn());
+            Assert.False(g.IsResolvingStage);
+
+            // BeginDrill transitions cleanly into Stage 1 (Sprint)
+            Assert.True(g.BeginDrill());
+            Assert.False(g.IsBriefing);
+            Assert.False(g.BeginDrill()); // idempotent
+            g.Tick(0.25f);
+            Assert.NotEqual(initialMarker, g.MarkerPosition);
+        }
+
+        [Fact]
         public void CadetDrill_ThreeStageFlow_ScoresPerfectGoodMiss_AndAwardsBodyXp()
         {
             var g = new CadetAcademyGame("Bob", bodySkillLevel: 4, seed: 12);
+            Assert.True(g.IsBriefing);
+            Assert.True(g.BeginDrill());
             Assert.Equal(CadetDrillStageKind.Sprint, g.ActiveStage.Kind);
             Assert.False(g.IsFinished);
 
@@ -118,6 +144,7 @@ namespace Conversations.Tests
         {
             var g = new CadetAcademyGame("Betty", bodySkillLevel: 6, seed: 7);
             g.AutoCompleteRemainingPerfect();
+            Assert.False(g.IsBriefing);
             Assert.True(g.IsFinished);
 
             var o = g.ComputeOutcome();
