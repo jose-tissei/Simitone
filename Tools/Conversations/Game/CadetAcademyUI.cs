@@ -44,6 +44,9 @@ namespace Simitone.Conversations
         readonly TextStyle badgeStyle;
         readonly TextStyle cyanStyle;
         readonly TextStyle mintStyle;
+        readonly TextStyle briefBodyStyle;
+        readonly TextStyle briefCyanStyle;
+        readonly TextStyle briefMintStyle;
         readonly TextStyle gradeStyle;
 
         public static bool IsOpen { get { return isOpen && instance != null && instance.Parent != null; } }
@@ -57,6 +60,9 @@ namespace Simitone.Conversations
             badgeStyle = SimUiTokens.MakeStyle(12, Color.White, true);
             cyanStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Cyan, true);
             mintStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Mint, true);
+            briefBodyStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextPrimary, true);
+            briefCyanStyle = SimUiTokens.MakeStyle(12, SimUiTokens.Cyan, true);
+            briefMintStyle = SimUiTokens.MakeStyle(12, SimUiTokens.Mint, true);
             gradeStyle = SimUiTokens.MakeStyle(42, Color.White, true);
         }
 
@@ -151,7 +157,8 @@ namespace Simitone.Conversations
                        " bodyLvl=" + game.BodySkillLevel +
                        " bodyXp=" + o.Reward.BodyXpDelta +
                        " bonus=$" + o.Reward.BonusSimoleons +
-                       " perf=" + o.Reward.JobPerformanceDelta;
+                       " perf=" + o.Reward.JobPerformanceDelta +
+                       " " + sceneRenderer.DiagnosticSummary();
             }
             var st = game.ActiveStage;
             return "game=CadetAcademy open=" + IsOpen +
@@ -383,7 +390,7 @@ namespace Simitone.Conversations
             float vpY = headerBar.Bottom + 72f;
             float vpW = panel.Width - pad * 2f;
             float vpH = game.IsBriefing
-                ? Math.Min(270f, Math.Max(188f, panel.Height - 372f))
+                ? Math.Min(200f, Math.Max(150f, panel.Height - 460f))
                 : Math.Min(346f, Math.Max(220f, panel.Height - 280f));
             var viewport = new SimRect(panel.X + pad, vpY, vpW, vpH);
             DrawLive3DViewport(batch, viewport);
@@ -455,9 +462,30 @@ namespace Simitone.Conversations
             if (sceneRenderer.HasLiveFrame && sceneRenderer.TargetTexture != null)
             {
                 var tex = sceneRenderer.TargetTexture;
-                DrawLocalTexture(batch, tex, null,
+                // Preserve exact 1:1 3D aspect ratio via centered cover-crop (prevents stretching on wider Briefing viewport!)
+                float targetAspect = inner.Width / Math.Max(1f, inner.Height);
+                float texAspect = (float)tex.Width / Math.Max(1, tex.Height);
+                Rectangle srcRect;
+                if (targetAspect > texAspect + 0.01f)
+                {
+                    int srcH = Math.Max(1, Math.Min(tex.Height, (int)Math.Round(tex.Width / targetAspect)));
+                    int srcY = Math.Max(0, Math.Min(tex.Height - srcH, (tex.Height - srcH) / 2));
+                    srcRect = new Rectangle(0, srcY, tex.Width, srcH);
+                }
+                else if (targetAspect < texAspect - 0.01f)
+                {
+                    int srcW = Math.Max(1, Math.Min(tex.Width, (int)Math.Round(tex.Height * targetAspect)));
+                    int srcX = Math.Max(0, (tex.Width - srcW) / 2);
+                    srcRect = new Rectangle(srcX, 0, srcW, tex.Height);
+                }
+                else
+                {
+                    srcRect = new Rectangle(0, 0, tex.Width, tex.Height);
+                }
+
+                DrawLocalTexture(batch, tex, srcRect,
                     new Vector2(inner.X, inner.Y),
-                    new Vector2(inner.Width / tex.Width, inner.Height / tex.Height),
+                    new Vector2(inner.Width / srcRect.Width, inner.Height / srcRect.Height),
                     Color.White);
             }
             else
@@ -472,9 +500,9 @@ namespace Simitone.Conversations
             string camTag = game.IsBriefing
                 ? "ACADEMY BRIEFING  •  READY ON THE LINE"
                 : (st != null ? "LIVE 3D COURSE  •  " + st.Title : "LIVE 3D COURSE  •  DRILL COMPLETE");
-            var tagRect = new SimRect(inner.X + 10f, inner.Y + 10f, Math.Min(360f, inner.Width - 165f), 26f);
+            var tagRect = new SimRect(inner.X + 10f, inner.Y + 10f, Math.Min(430f, inner.Width - 158f), 26f);
             FillRoundedRect(batch, tagRect, SimUiTokens.RadiusControl, new Color(8, 18, 30, 205));
-            DrawFittedLine(batch, camTag, new SimRect(tagRect.X + 10f, tagRect.Y + 5f, tagRect.Width - 20f, 16f), cyanStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, camTag, new SimRect(tagRect.X + 10f, tagRect.Y + 5f, tagRect.Width - 20f, 16f), briefCyanStyle, SimTextAlign.Left);
 
             // Top-right Body skill pill
             var bodyPill = new SimRect(inner.Right - 134f, inner.Y + 10f, 124f, 26f);
@@ -498,65 +526,82 @@ namespace Simitone.Conversations
 
         void DrawBriefingDeck(UISpriteBatch batch, Texture2D px, SimRect panel, SimRect viewport, float pad)
         {
-            float topY = viewport.Bottom + 14f;
-            float availH = Math.Max(160f, panel.Bottom - topY - 14f);
+            float topY = viewport.Bottom + 10f;
+            float availH = Math.Max(200f, panel.Bottom - topY - 12f);
             float btnH = 42f;
-            float cardH = Math.Max(112f, availH - btnH - 14f);
+            float cardH = Math.Max(160f, availH - btnH - 10f);
             float gap = 12f;
             float colW = (panel.Width - pad * 2f - gap) * 0.5f;
 
             var leftCard = new SimRect(panel.X + pad, topY, colW, cardH);
             var rightCard = new SimRect(leftCard.Right + gap, topY, colW, cardH);
 
-            // Left card: WHAT WILL HAPPEN
+            // Left card: WHAT WILL HAPPEN (wrapped multi-line layout — zero cut-off text!)
             FillRoundedRect(batch, leftCard, SimUiTokens.RadiusCard, SimUiTokens.CardBgAlt);
             DrawRoundedBorder(batch, leftCard, SimUiTokens.RadiusCard, SimUiTokens.OuterBorder * 0.85f, 1);
 
             float lx = leftCard.X + 14f;
             float lw = leftCard.Width - 28f;
-            float ly = leftCard.Y + 12f;
-            DrawFittedLine(batch, "WHAT WILL HAPPEN  (3-STAGE COURSE)", new SimRect(lx, ly, lw, 20f), cyanStyle, SimTextAlign.Left);
-            FillRect(batch, px, lx, ly + 23f, lw, 1f, SimUiTokens.Divider);
+            float lBot = leftCard.Bottom - 8f;
+            float ly = leftCard.Y + 9f;
+            DrawFittedLine(batch, "WHAT WILL HAPPEN  (3 STAGES)", new SimRect(lx, ly, lw, 18f), briefCyanStyle, SimTextAlign.Left);
+            ly += 20f;
+            FillRect(batch, px, lx, ly, lw, 1f, SimUiTokens.Divider);
+            ly += 7f;
 
-            int sweetPct = (int)Math.Round(CadetAcademyGame.ComputePerfectZoneWidth(game.BodySkillLevel) * 100f);
-            DrawFittedLine(batch, "1. Sprint Dash — Burst off the starting line at peak stride.",
-                new SimRect(lx, ly + 32f, lw, 20f), bodyStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "2. Hurdle Vault — Time your leap cleanly over the rail.",
-                new SimRect(lx, ly + 56f, lw, 20f), bodyStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "3. Target Drill — Hold steady and hit the bullseye.",
-                new SimRect(lx, ly + 80f, lw, 20f), bodyStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "Body Skill Lv." + game.BodySkillLevel + " sets your Green Sweet Spot to " + sweetPct + "%.",
-                new SimRect(lx, ly + 108f, lw, 20f), mintStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "Green = Perfect (+100)  •  Gold = Good (+65)  •  Miss (+15)",
-                new SimRect(lx, ly + 132f, lw, 18f), smallStyle, SimTextAlign.Left);
+            ly = DrawFittedWrapped(batch, "1. Sprint Dash: Burst down the track and clear the hurdles.",
+                new SimRect(lx, ly, lw, Math.Max(0f, lBot - ly)), briefBodyStyle, 2) + 4f;
+            ly = DrawFittedWrapped(batch, "2. Hurdle Vault: Time your leap cleanly over the academy wall.",
+                new SimRect(lx, ly, lw, Math.Max(0f, lBot - ly)), briefBodyStyle, 2) + 4f;
+            ly = DrawFittedWrapped(batch, "3. Target Drill: Hold steady and strike the red bullseye.",
+                new SimRect(lx, ly, lw, Math.Max(0f, lBot - ly)), briefBodyStyle, 2) + 5f;
 
-            // Right card: CONTROLS & REWARDS
+            if (ly + 32f <= lBot)
+            {
+                FillRect(batch, px, lx, ly, lw, 1f, SimUiTokens.Divider);
+                ly += 5f;
+                int sweetPct = (int)Math.Round(CadetAcademyGame.ComputePerfectZoneWidth(game.BodySkillLevel) * 100f);
+                ly = DrawFittedWrapped(batch, "Body Lv." + game.BodySkillLevel + " sets Green Perfect zone to " + sweetPct + "%.",
+                    new SimRect(lx, ly, lw, Math.Max(0f, lBot - ly)), briefMintStyle, 2) + 2f;
+                DrawFittedWrapped(batch, "Green = Perfect (+100)  •  Gold = Good (+65)  •  Miss (+15)",
+                    new SimRect(lx, ly, lw, Math.Max(0f, lBot - ly)), smallStyle, 2);
+            }
+
+            // Right card: CONTROLS & REWARDS (wrapped multi-line layout — zero cut-off text!)
             FillRoundedRect(batch, rightCard, SimUiTokens.RadiusCard, SimUiTokens.CardBgAlt);
             DrawRoundedBorder(batch, rightCard, SimUiTokens.RadiusCard, SimUiTokens.OuterBorder * 0.85f, 1);
 
             float rx = rightCard.X + 14f;
             float rw = rightCard.Width - 28f;
-            float ry = rightCard.Y + 12f;
-            DrawFittedLine(batch, "CONTROLS & REWARDS", new SimRect(rx, ry, rw, 20f), cyanStyle, SimTextAlign.Left);
-            FillRect(batch, px, rx, ry + 23f, rw, 1f, SimUiTokens.Divider);
+            float rBot = rightCard.Bottom - 8f;
+            float ry = rightCard.Y + 9f;
+            DrawFittedLine(batch, "CONTROLS & REWARDS", new SimRect(rx, ry, rw, 18f), briefCyanStyle, SimTextAlign.Left);
+            ry += 20f;
+            FillRect(batch, px, rx, ry, rw, 1f, SimUiTokens.Divider);
+            ry += 7f;
 
-            DrawFittedLine(batch, "[SPACE] / [ENTER] / CLICK — Lock marker in green zone",
-                new SimRect(rx, ry + 32f, rw, 20f), bodyStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "[ESC] or SKIP — Skip today's drill with zero penalty",
-                new SimRect(rx, ry + 56f, rw, 20f), subStyle, SimTextAlign.Left);
-            FillRect(batch, px, rx, ry + 84f, rw, 1f, SimUiTokens.Divider);
-            DrawFittedLine(batch, "Rewards (up to S-Rank / 300 pts):",
-                new SimRect(rx, ry + 92f, rw, 20f), mintStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "+Body Skill XP  •  +Job Performance  •  +Fun  •  Bonus $",
-                new SimRect(rx, ry + 116f, rw, 20f), bodyStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "The lot stays safely paused until you finish or skip.",
-                new SimRect(rx, ry + 138f, rw, 18f), smallStyle, SimTextAlign.Left);
+            ry = DrawFittedWrapped(batch, "Lock Timing: Press SPACE, ENTER, or click the bar when the needle hits green.",
+                new SimRect(rx, ry, rw, Math.Max(0f, rBot - ry)), briefBodyStyle, 3) + 5f;
+            ry = DrawFittedWrapped(batch, "Skip Drill: Press ESC or click SKIP below to return with zero penalty.",
+                new SimRect(rx, ry, rw, Math.Max(0f, rBot - ry)), subStyle, 2) + 6f;
+
+            if (ry + 32f <= rBot)
+            {
+                FillRect(batch, px, rx, ry, rw, 1f, SimUiTokens.Divider);
+                ry += 5f;
+                ry = DrawFittedWrapped(batch, "Rewards (up to S-Rank / 300 pts):",
+                    new SimRect(rx, ry, rw, Math.Max(0f, rBot - ry)), briefMintStyle, 1) + 2f;
+                ry = DrawFittedWrapped(batch, "+Body Skill XP, +Job Performance, +Fun & Bonus Simoleons.",
+                    new SimRect(rx, ry, rw, Math.Max(0f, rBot - ry)), briefBodyStyle, 2) + 2f;
+                DrawFittedWrapped(batch, "Your lot stays safely paused until you finish or skip.",
+                    new SimRect(rx, ry, rw, Math.Max(0f, rBot - ry)), smallStyle, 2);
+            }
 
             // Action button row: START DRILL + SKIP MINIGAME
-            float btnY = leftCard.Bottom + 14f;
-            float startW = 248f;
-            float skipW = 210f;
-            float btnGap = 16f;
+            float btnY = leftCard.Bottom + 10f;
+            float startW = 256f;
+            float skipW = 256f;
+            float btnGap = 18f;
             float totalBtnW = startW + skipW + btnGap;
             float startX = panel.X + (panel.Width - totalBtnW) * 0.5f;
 

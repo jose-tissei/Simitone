@@ -37,10 +37,12 @@ namespace Simitone.Conversations
         SimAvatar cadetAvatar;
         string boundSimKey;
         string boundUniformTag = "none";
+        string lastActiveAnimName = "none";
         Animation runAnim;
         Animation walkAnim;
         Animation idleAnim;
         Animation jumpAnim;
+        Animation shootAnim;
         Animation cheerAnim;
 
         bool initialized;
@@ -83,7 +85,11 @@ namespace Simitone.Conversations
                    " sim=" + (cadetAvatar != null) +
                    " key=" + (boundSimKey ?? "none") +
                    " uniform=" + boundUniformTag +
-                   " anim=" + (runAnim != null ? runAnim.Name : "none") +
+                   " anim=" + lastActiveAnimName +
+                   " run=" + (runAnim != null ? runAnim.Name : "none") +
+                   " idle=" + (idleAnim != null ? idleAnim.Name : "none") +
+                   " jump=" + (jumpAnim != null ? jumpAnim.Name : "none") +
+                   " cheer=" + (cheerAnim != null ? cheerAnim.Name : "none") +
                    (string.IsNullOrEmpty(lastAvatarErr) ? "" : " err=" + lastAvatarErr);
         }
 
@@ -99,9 +105,11 @@ namespace Simitone.Conversations
             try
             {
                 var st = game.ActiveStage;
-                var kind = game.IsBriefing
+                // Briefing & Victory Scorecard both render on the open sunlit Sprint track so the camera
+                // always has an unobstructed heroic view (never behind TargetDrill's sand backstop berm!).
+                var kind = (game.IsBriefing || game.IsFinished)
                     ? CadetDrillStageKind.Sprint
-                    : (st != null ? st.Kind : CadetDrillStageKind.TargetDrill);
+                    : (st != null ? st.Kind : CadetDrillStageKind.Sprint);
                 float t = game.ElapsedSeconds;
                 float resP = game.ResolutionProgress;
                 bool resolving = game.IsResolvingStage;
@@ -112,47 +120,50 @@ namespace Simitone.Conversations
                 float simYaw;
                 float simPitch = 0f;
                 Animation activeAnim = runAnim ?? walkAnim ?? idleAnim;
-                float animSpeed = 1.45f;
+                float animSpeed = 1.15f;
+                float animTime = t;
                 float targetKnockAngle = 0f;
                 bool showShotFlash = false;
-                bool applyAimPose = false;
-                float aimRecoil = 0f;
                 Vector3 shotImpactPos = new Vector3(0f, 1.75f, 7.45f);
 
                 if (game.IsBriefing)
                 {
-                    // Pre-drill establishing shot: Cadet stands proudly on the track in full Police Cadet uniform
-                    // doing a brisk warm-up stride/idle while the 3D camera gently sweeps around the academy yard.
-                    simPos = new Vector3(0f, 0f, -4.2f);
-                    simYaw = 0.25f + (float)Math.Sin(t * 0.7f) * 0.14f;
+                    // Pre-drill establishing shot: Cadet stands sharp at the starting line (z = -7.8)
+                    // in full Police Cadet uniform; camera orbits cleanly at distance ~9.9 units
+                    // (clear of hurdle 1 at z = +2.0) so Bob fits head-to-boots inside the wide Briefing strip.
+                    simPos = new Vector3(0f, 0f, -7.8f);
+                    simYaw = 0.24f + (float)Math.Sin(t * 0.65f) * 0.12f;
                     activeAnim = idleAnim ?? walkAnim ?? runAnim;
-                    animSpeed = 0.95f;
-                    float orbit = (float)Math.Sin(t * 0.42f) * 1.45f;
-                    camera.Position = new Vector3(3.15f + orbit, 2.85f, 1.25f);
-                    camera.Target = new Vector3(0f, 1.65f, -3.6f);
+                    animSpeed = 0.85f;
+                    float orbit = (float)Math.Sin(t * 0.45f) * 0.90f;
+                    camera.Position = new Vector3(3.6f + orbit, 2.85f, 1.35f);
+                    camera.Target = new Vector3(0f, 1.56f, -7.8f);
                 }
                 else if (game.IsFinished)
                 {
-                    // Victory showcase in front of the Police Academy finish gantry
-                    simPos = new Vector3(0f, 0f, 7.2f);
-                    simYaw = 0.2f + (float)Math.Sin(t * 1.2f) * 0.18f;
-                    activeAnim = cheerAnim ?? idleAnim ?? walkAnim ?? runAnim;
-                    animSpeed = 1.15f;
-                    camera.Position = new Vector3(3.4f, 2.95f, 12.6f);
-                    camera.Target = new Vector3(0f, 1.70f, 7.5f);
+                    // Victory showcase right past the Police Academy Finish Gantry (arch at z = 10.0)
+                    // with unobstructed sunlit track in front of the Cadet (camera at z = 18.2 looking toward -Z).
+                    simPos = new Vector3(0f, 0f, 11.4f);
+                    simYaw = 0.18f + (float)Math.Sin(t * 0.85f) * 0.12f;
+                    activeAnim = cheerAnim ?? idleAnim ?? walkAnim;
+                    animSpeed = 0.95f;
+                    float sway = (float)Math.Sin(t * 0.50f) * 0.85f;
+                    camera.Position = new Vector3(2.8f + sway, 2.75f, 18.2f);
+                    camera.Target = new Vector3(0f, 1.72f, 10.8f);
                 }
                 else if (kind == CadetDrillStageKind.Sprint)
                 {
                     if (!resolving)
                     {
                         // Continuous athletic sprint along the terracotta track, looping cleanly with hurdle hops
-                        float cycle = (t * 6.2f) % 18f;
+                        float cycle = (t * 6.0f) % 15.5f;
                         float z = -8.5f + cycle;
-                        float hop = ComputeHurdleHop(z, -1.5f) + ComputeHurdleHop(z, 4.5f);
+                        float hop = ComputeHurdleHop(z, 2.0f) + ComputeHurdleHop(z, 6.2f);
                         simPos = new Vector3(0f, hop, z);
                         simYaw = 0f;
-                        activeAnim = runAnim ?? walkAnim ?? idleAnim;
-                        animSpeed = 1.65f;
+                        simPitch = hop > 0.25f ? 0.14f : 0.08f;
+                        activeAnim = hop > 0.35f ? (jumpAnim ?? runAnim ?? walkAnim) : (runAnim ?? walkAnim ?? idleAnim);
+                        animSpeed = hop > 0.35f ? 1.15f : 1.75f;
                     }
                     else
                     {
@@ -160,20 +171,21 @@ namespace Simitone.Conversations
                         float z = 1.5f + resP * burst;
                         float hop = rating == CadetHitRating.Miss
                             ? (resP < 0.35f ? (float)Math.Sin(resP / 0.35f * Math.PI) * 0.25f : 0f)
-                            : ComputeHurdleHop(z, 4.5f);
+                            : ComputeHurdleHop(z, 6.2f);
                         simPos = new Vector3(0f, hop, Math.Min(13.5f, z));
                         simYaw = 0f;
                         activeAnim = (resP > 0.72f && rating == CadetHitRating.Perfect && cheerAnim != null)
                             ? cheerAnim
-                            : (runAnim ?? walkAnim ?? idleAnim);
-                        animSpeed = rating == CadetHitRating.Perfect ? 2.15f : (rating == CadetHitRating.Good ? 1.65f : 0.9f);
-                        if (rating == CadetHitRating.Miss && resP < 0.45f)
-                            simPitch = 0.22f * (float)Math.Sin(resP / 0.45f * Math.PI);
+                            : (hop > 0.35f ? (jumpAnim ?? runAnim ?? walkAnim) : (runAnim ?? walkAnim ?? idleAnim));
+                        animSpeed = rating == CadetHitRating.Perfect ? 2.05f : (rating == CadetHitRating.Good ? 1.70f : 1.15f);
+                        simPitch = (rating == CadetHitRating.Miss && resP < 0.45f)
+                            ? 0.24f * (float)Math.Sin(resP / 0.45f * Math.PI)
+                            : ((resP > 0.72f && rating == CadetHitRating.Perfect) ? 0f : 0.10f);
                     }
 
                     // Dynamic 3/4 side-front tracking camera glides smoothly beside the sprinter
-                    camera.Position = new Vector3(simPos.X + 6.8f, 3.65f, simPos.Z + 5.8f);
-                    camera.Target = new Vector3(simPos.X, 1.55f, simPos.Z + 1.3f);
+                    camera.Position = new Vector3(simPos.X + 6.4f, 3.55f, simPos.Z + 5.2f);
+                    camera.Target = new Vector3(simPos.X, 1.55f, simPos.Z + 1.2f);
                 }
                 else if (kind == CadetDrillStageKind.Vault)
                 {
@@ -184,8 +196,9 @@ namespace Simitone.Conversations
                         float z = -6.8f + cycle;
                         simPos = new Vector3(0f, 0f, z);
                         simYaw = 0f;
+                        simPitch = 0.08f;
                         activeAnim = runAnim ?? walkAnim ?? idleAnim;
-                        animSpeed = 1.55f;
+                        animSpeed = 1.70f;
                     }
                     else if (rating == CadetHitRating.Miss)
                     {
@@ -220,14 +233,17 @@ namespace Simitone.Conversations
                         activeAnim = airborne
                             ? (jumpAnim ?? runAnim ?? walkAnim)
                             : ((resP > 0.84f && rating == CadetHitRating.Perfect && cheerAnim != null) ? cheerAnim : (runAnim ?? walkAnim));
-                        animSpeed = airborne ? 1.15f : 1.55f;
+                        animSpeed = airborne ? 1.0f : 1.25f;
                         if (airborne)
-                            simPitch = 0.34f * (float)Math.Cos(((resP - 0.12f) / 0.72f) * Math.PI);
+                        {
+                            animTime = (resP - 0.12f) * 1.15f;
+                            simPitch = 0.30f * (float)Math.Cos(((resP - 0.12f) / 0.72f) * Math.PI);
+                        }
                     }
 
                     // Heroic side-quarter vault camera with generous headroom above the timber wall
-                    camera.Position = new Vector3(8.2f, 3.85f, 2.2f);
-                    camera.Target = new Vector3(0f, 2.05f, 1.8f);
+                    camera.Position = new Vector3(9.2f, 4.05f, 2.4f);
+                    camera.Target = new Vector3(0f, 2.25f, 1.9f);
                 }
                 else // TargetDrill
                 {
@@ -235,12 +251,23 @@ namespace Simitone.Conversations
                     // Subtle aim sweep linked directly to the live timing marker!
                     float aimOffset = (game.MarkerPosition - 0.5f) * 0.45f;
                     simYaw = resolving ? 0f : aimOffset;
-                    bool cheerNow = resolving && resP > 0.55f && rating == CadetHitRating.Perfect && cheerAnim != null;
-                    activeAnim = cheerNow ? cheerAnim : (idleAnim ?? walkAnim ?? runAnim);
-                    animSpeed = cheerNow ? 1.15f : 0.75f;
-                    applyAimPose = !cheerNow;
-                    if (resolving && resP < 0.25f)
-                        aimRecoil = (float)Math.Sin((resP / 0.25f) * Math.PI) * 0.38f;
+
+                    if (resolving && resP < 0.48f && shootAnim != null)
+                    {
+                        activeAnim = shootAnim;
+                        animSpeed = 1.45f;
+                        animTime = resP * 1.35f;
+                    }
+                    else if (resolving && resP >= 0.48f && rating == CadetHitRating.Perfect && cheerAnim != null)
+                    {
+                        activeAnim = cheerAnim;
+                        animSpeed = 1.0f;
+                    }
+                    else
+                    {
+                        activeAnim = idleAnim ?? walkAnim ?? runAnim;
+                        animSpeed = 0.80f;
+                    }
 
                     if (resolving)
                     {
@@ -265,8 +292,8 @@ namespace Simitone.Conversations
                     }
 
                     // Over-the-shoulder academy firing range view framing both Cadet and all 3 steel targets
-                    camera.Position = new Vector3(3.9f, 3.25f, -6.9f);
-                    camera.Target = new Vector3(0f, 1.60f, 5.2f);
+                    camera.Position = new Vector3(4.3f, 3.35f, -7.6f);
+                    camera.Target = new Vector3(0f, 1.62f, 5.2f);
                 }
 
                 // 2. Build all 3D Academy Training Yard meshes for this frame
@@ -278,16 +305,15 @@ namespace Simitone.Conversations
                 if (cadetAvatar != null)
                 {
                     ResetSkeletonToBase(cadetAvatar);
+                    lastActiveAnimName = activeAnim != null ? activeAnim.Name : "none";
                     if (activeAnim != null)
                     {
                         float fps = activeAnim.FramesPerSecond > 0 ? activeAnim.FramesPerSecond : 30f;
                         int numFrames = Math.Max(1, activeAnim.NumFrames);
-                        float exact = (t * fps * animSpeed) % numFrames;
+                        float exact = (Math.Max(0f, animTime) * fps * animSpeed) % numFrames;
                         int frame = (int)exact;
                         Animator.RenderFrame(cadetAvatar, activeAnim, frame, exact - frame, 1.0f);
                     }
-                    if (applyAimPose)
-                        ApplyTargetAimPose(cadetAvatar, aimRecoil);
 
                     cadetAvatar.Scale = Vector3.One * SimScale;
                     cadetAvatar.Position = simPos;
@@ -452,9 +478,9 @@ namespace Simitone.Conversations
             // 4. Stage-specific interactive 3D obstacles & props!
             if (kind == CadetDrillStageKind.Sprint)
             {
-                // Two track hurdles
-                AddHurdle(-1.5f);
-                AddHurdle(4.5f);
+                // Two track hurdles (leaving z = -8.5 .. +1.5 completely clear for Briefing & Sprint takeoff)
+                AddHurdle(2.0f);
+                AddHurdle(6.2f);
 
                 // Checkered finish line + Police Academy finish gantry arch at z = 10.0
                 for (int sq = -4; sq < 4; sq++)
@@ -468,6 +494,7 @@ namespace Simitone.Conversations
                 AddBox(new Vector3(4.5f, 2.3f, 10.0f), new Vector3(0.35f, 4.6f, 0.35f), new Color(36, 74, 134));
                 AddBox(new Vector3(0f, 4.35f, 10.0f), new Vector3(9.6f, 0.85f, 0.42f), new Color(28, 62, 118));
                 AddBox(new Vector3(0f, 4.35f, 9.75f), new Vector3(8.6f, 0.16f, 0.08f), new Color(242, 198, 68));
+                AddBox(new Vector3(0f, 4.35f, 10.25f), new Vector3(8.6f, 0.16f, 0.08f), new Color(242, 198, 68));
             }
             else if (kind == CadetDrillStageKind.Vault)
             {
@@ -766,35 +793,43 @@ namespace Simitone.Conversations
                     sim.Handgroup = new Outfit { LiteralHandgroup = BuildAdultHands("lgt") };
                 }
 
+                // Verified authentic Sims 1 Animation.far names:
+                // Use a2o-walking-fast-loop (natural swinging arms down by sides!) rather than
+                // a2o-running-loop / a2o-walking-frantic-loop which hold/wave both arms up in TS1 fire-panic!
                 runAnim = PickAnimation(content, new[]
                 {
-                    "a2o-walking-frantic-loop.anim",
+                    "a2o-walking-fast-loop.anim",
                     "a2o-walking-loop.anim",
-                    "a2o-run-loop.anim",
                 });
-                walkAnim = PickAnimation(content, new[] { "a2o-walking-loop.anim", "a2o-walking-frantic-loop.anim" });
+                walkAnim = PickAnimation(content, new[]
+                {
+                    "a2o-walking-loop.anim",
+                    "a2o-walking-fast-loop.anim",
+                });
                 jumpAnim = PickAnimation(content, new[]
                 {
-                    "a2o-pool-divingboard-dive.anim",
-                    "a2o-divingboard-dive.anim",
-                    "a2o-exercise-jumpingjacks-loop.anim",
-                    "a2o-walking-frantic-loop.anim",
-                    "a2o-walking-loop.anim",
+                    "a2o-pool-dive-jumpin.anim",
+                    "a2o-walking-fast-loop.anim",
                 });
                 idleAnim = PickAnimation(content, new[]
                 {
-                    "a2o-stand-breathe.anim",
+                    "a2o-standing-loop.anim",
+                    "a2o-idle-armsdown-fidget.anim",
+                    "a2o-idle-handships-shiftside.anim",
                     "a2o-idle1.anim",
-                    "a2o-stand-fidget.anim",
                     "a2o-walking-loop.anim",
+                });
+                shootAnim = PickAnimation(content, new[]
+                {
+                    "a2o-bball-shoot.anim",
+                    "a2o-standing-loop.anim",
                 });
                 cheerAnim = PickAnimation(content, new[]
                 {
-                    "a2o-cheer.anim",
-                    "a2o-clap-loop.anim",
-                    "a2o-happy-loop.anim",
-                    "a2o-stand-breathe.anim",
-                    "a2o-walking-loop.anim",
+                    "a2o-greet-salute-heroic.anim",
+                    "a2a-cheerer-loop.anim",
+                    "a2o-happy-clap.anim",
+                    "a2o-standing-loop.anim",
                 });
 
                 if (avatarScene != null)
@@ -810,6 +845,7 @@ namespace Simitone.Conversations
                          " (run=" + (runAnim != null ? runAnim.Name : "none") +
                          " jump=" + (jumpAnim != null ? jumpAnim.Name : "none") +
                          " idle=" + (idleAnim != null ? idleAnim.Name : "none") +
+                         " shoot=" + (shootAnim != null ? shootAnim.Name : "none") +
                          " cheer=" + (cheerAnim != null ? cheerAnim.Name : "none") + ")");
             }
             catch (Exception e)
@@ -933,24 +969,6 @@ namespace Simitone.Conversations
                 dst[i].Translation = src[i].Translation;
                 dst[i].Rotation = src[i].Rotation;
             }
-        }
-
-        static void ApplyTargetAimPose(SimAvatar sim, float recoil)
-        {
-            if (sim == null || sim.Skeleton == null) return;
-            // Raise right & left arms forward into a steady two-handed police range stance, with recoil kick on shot!
-            var rUpper = sim.Skeleton.GetBone("R_UPPERARM");
-            if (rUpper != null)
-                rUpper.Rotation = Quaternion.CreateFromYawPitchRoll(-0.22f, -1.28f - recoil, 0.15f);
-            var rFore = sim.Skeleton.GetBone("R_FOREARM");
-            if (rFore != null)
-                rFore.Rotation = Quaternion.CreateFromYawPitchRoll(-0.18f, -0.18f, 0f);
-            var lUpper = sim.Skeleton.GetBone("L_UPPERARM");
-            if (lUpper != null)
-                lUpper.Rotation = Quaternion.CreateFromYawPitchRoll(0.45f, -1.18f - recoil * 0.8f, -0.18f);
-            var lFore = sim.Skeleton.GetBone("L_FOREARM");
-            if (lFore != null)
-                lFore.Rotation = Quaternion.CreateFromYawPitchRoll(0.48f, -0.22f, 0f);
         }
 
         static HandGroup BuildAdultHands(string skinTone)
