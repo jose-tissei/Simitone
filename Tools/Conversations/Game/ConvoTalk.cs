@@ -196,7 +196,9 @@ namespace Simitone.Conversations
             var line = DialogueBank.Fill(Boot.Bank.SpeakerLine("talk", tone, rng), p.SpeakerProfile.Name, p.ListenerProfile.Name, p.ListenerProfile.JobTitle, s.Title);
             var reply = DialogueBank.Fill(Boot.Bank.ReplyLine("talk", quality, temper, rng), p.SpeakerProfile.Name, p.ListenerProfile.Name, p.ListenerProfile.JobTitle, s.Title);
 
-            Boot.Memory.Record(p.Speaker, p.Listener, "talk", tone, s.Id, quality, s.Interest, s.Skill);
+            Boot.Memory.Record(p.Speaker, p.Listener, "talk", tone, s.Id, quality, s.Interest, s.Skill, s.Title, temper);
+            Boot.Memory.RecordReciprocal(p.Listener, p.Speaker, "talk", quality, s.Interest, s.Skill, s.Id, s.Title);
+            Boot.SaveMemoryAsync();
             Boot.LastDecision = "talk about " + s.Title + " listener-interest=" + p.Listener.Interests[s.Interest] + " liking=" + liking + " quality=" + quality + " temperament=" + temper +
                                 " (" + p.SpeakerProfile.Name + " -> " + p.ListenerProfile.Name + ")";
             Boot.Log("decision: " + Boot.LastDecision + " | \"" + line + "\" / \"" + reply + "\"");

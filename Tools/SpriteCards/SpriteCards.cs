@@ -119,6 +119,12 @@ public static class SpriteCards
         Refresh();
     }
 
+    public static void MenuSimMemory()
+    {
+        ConvoLoader.ToggleMemoryMenu();
+        Refresh();
+    }
+
     static void SetMode(ModeDef m)
     {
         Current = m; profileLoaded = true;
@@ -137,8 +143,9 @@ public static class SpriteCards
     }
 
     // ---------------------------------------------------------------- Options menu
-    // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list, 5 AI conversations (toggle)
-    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null, null, null, null };
+    // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list,
+    //          5 AI conversations (toggle), 8 Sim memory (overlay), 6 Anti-aliasing, 7 Dynamic lighting
+    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null, null, null, null, null };
     static object menuPanel; // the Options subpanel currently shown
 
     public static void Menu2D() { SetMode(Modes[0]); Refresh(); }
@@ -152,6 +159,7 @@ public static class SpriteCards
         if (id == 5) return "AI conversations";
         if (id == 6) return "Anti-aliasing: " + RenderLoader.Label;
         if (id == 7) return "Dynamic lighting: " + RenderLoader.LightLabel;
+        if (id == 8) return "Sim memory";
         return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 
@@ -184,10 +192,10 @@ public static class SpriteCards
                 }
                 if (k.GetType().Name != "UICatButton") continue;
                 int entry = i - 3; // after Save, Neighborhood, Quit
-                // entries 5 (conversations), 6 (anti-aliasing) and 7 (lighting) exist only when their libraries are installed, in that order
-                if (entry >= 5 && !ConvoLoader.Installed) entry++;
+                // order when installed: 5=AI conversations, 6=Sim memory, 7=Anti-aliasing, 8=Dynamic lighting
+                if (entry >= 5 && !ConvoLoader.Installed) entry += 2;
                 var sel = k.GetType().GetProperty("Selected");
-                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? RenderLoader.AaOn : entry == 7 ? RenderLoader.LightOn : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
+                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? ConvoLoader.MemoryMenuOpen : entry == 7 ? RenderLoader.AaOn : entry == 8 ? RenderLoader.LightOn : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
                 i++;
             }
         }

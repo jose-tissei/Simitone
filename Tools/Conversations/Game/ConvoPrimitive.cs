@@ -219,7 +219,10 @@ namespace Simitone.Conversations
             var line = p.SpeakerLines[(int)p.Tone];
 
             var topLsSkills = p.RawListener != null ? p.RawListener.TopSkills(300) : new SkillKind[0];
-            Boot.Memory.Record(p.RawSpeaker, p.RawListener, p.Key, p.Tone, null, quality, -1, topLsSkills.Length > 0 ? topLsSkills[0] : SkillKind.None);
+            var topSpSkills = p.RawSpeaker != null ? p.RawSpeaker.TopSkills(300) : new SkillKind[0];
+            Boot.Memory.Record(p.RawSpeaker, p.RawListener, p.Key, p.Tone, null, quality, -1, topLsSkills.Length > 0 ? topLsSkills[0] : SkillKind.None, null, temper);
+            Boot.Memory.RecordReciprocal(p.RawListener, p.RawSpeaker, p.Key, quality, -1, topSpSkills.Length > 0 ? topSpSkills[0] : SkillKind.None);
+            Boot.SaveMemoryAsync();
 
             Boot.LastDecision = p.Key + " " + Names.Label(p.Tone) + " script=" + script + " final=" + outcome + " temperament=" + temper +
                                 " (" + p.Speaker.Name + " -> " + p.Listener.Name + ") laya=" + (Boot.Laya.Available ? "up" : "down") + " failures=" + Boot.Laya.Failures + " err=" + Boot.Laya.LastError + " cached=" + Boot.Laya.HasTemperament(p.Listener) + " [" + p.Listener.Summary + "]";

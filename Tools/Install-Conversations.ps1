@@ -45,7 +45,7 @@ foreach ($f in $files) {
 }
 Copy-Item "$Tools\SpriteCards\out\SpriteCards.dll" $App -Force
 if ($WithSimTestHook) { Copy-Item "$Tools\SimTestHook\out\SimTestHook.dll" $App -Force }
-Copy-Item "$Tools\SpriteCards\icons\opt_convo.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
+Copy-Item "$Tools\SpriteCards\icons\opt_convo.png", "$Tools\SpriteCards\icons\opt_memory.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
 Copy-Item "$Tools\SpriteCards\icons\opt_aa.png", "$Tools\SpriteCards\icons\opt_light.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
 # Directional sprite shading is experimental and NOT installed: it needs Render/Shaders/World2D.xnb copied over Content/DX/Effects/2DWorldBatch.xnb
 # (see Render/README.md). When measured it changed almost nothing visible, so the installer leaves the game's own effect file alone.

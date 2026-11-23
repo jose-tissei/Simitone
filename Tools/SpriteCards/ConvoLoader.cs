@@ -55,4 +55,17 @@ static class ConvoLoader
     {
         try { Look(); if (boot != null) boot.GetProperty("Enabled").SetValue(null, !Enabled, null); } catch { }
     }
+
+    public static bool MemoryMenuOpen
+    {
+        get
+        {
+            try { Look(); return boot != null && (bool)boot.GetProperty("MemoryMenuOpen").GetValue(null, null); } catch { return false; }
+        }
+    }
+
+    public static void ToggleMemoryMenu()
+    {
+        try { Look(); if (boot != null) boot.GetMethod("ToggleMemoryMenu").Invoke(null, null); } catch { }
+    }
 }

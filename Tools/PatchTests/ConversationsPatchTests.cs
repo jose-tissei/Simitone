@@ -175,7 +175,7 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
     }
 
     [SkippableFact]
-    public void OptionsMenu_GetsSixNewEntries_IncludingTheConversationsToggle()
+    public void OptionsMenu_GetsConversationsAndSimMemoryEntries()
     {
         NeedsRelease();
         using (var m = Open("Simitone.Client.dll"))
@@ -184,6 +184,8 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
             var sw = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
             Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_convo.png");
             Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "MenuConversations");
+            Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_memory.png");
+            Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "MenuSimMemory");
         }
     }
 

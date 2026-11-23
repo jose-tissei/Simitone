@@ -54,3 +54,12 @@ New-Icon 'opt_light.png' { param($g, $pen)
     $g.DrawEllipse($pen, 22, 16, 21, 21)
     $g.DrawLine($pen, (P 27 43), (P 38 43)); $g.DrawLine($pen, (P 28 50), (P 37 50))
     foreach ($a in -60, -30, 0, 30, 60) { $r = [math]::PI * ($a - 90) / 180; $g.DrawLine($pen, (P (32.5 + 19 * [math]::Cos($r)) (26 + 19 * [math]::Sin($r))), (P (32.5 + 25 * [math]::Cos($r)) (26 + 25 * [math]::Sin($r)))) } }
+
+# Sim memory: open dossier / profile journal card
+New-Icon 'opt_memory.png' { param($g, $pen)
+    $g.DrawRectangle($pen, 11, 10, 43, 45)
+    $g.DrawEllipse($pen, 18, 17, 12, 12)
+    $g.DrawLine($pen, (P 35 21), (P 47 21))
+    $g.DrawLine($pen, (P 35 29), (P 47 29))
+    $g.DrawLine($pen, (P 18 39), (P 47 39))
+    $g.DrawLine($pen, (P 18 47), (P 40 47)) }

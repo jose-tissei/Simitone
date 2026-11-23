@@ -128,6 +128,14 @@ namespace Simitone.Conversations
             return ConvoPieMenu.Filter(raw, target, vm, caller);
         }
 
+        public static bool MemoryMenuOpen { get { return SimMemoryMenu.IsOpen; } }
+
+        public static void ToggleMemoryMenu()
+        {
+            try { SimMemoryMenu.Toggle(); }
+            catch (Exception e) { Log("memory menu error: " + e.Message); }
+        }
+
         public static void Log(string msg)
         {
             try { File.AppendAllText(Path.Combine(GameDir, "Content", "conversations.log"), DateTime.Now.ToString("HH:mm:ss") + " " + msg + Environment.NewLine); }
@@ -144,7 +152,8 @@ namespace Simitone.Conversations
                     return "enabled=" + enabled + " laya=" + (Laya.Available ? "up" : (Laya.Configured ? "paused" : "off")) +
                            " bank=" + (Bank.Loaded ? "loaded" : "builtin") + " subjects=" + Subjects.Count +
                            " menu=" + (FullMenu ? "full" : "talk+romance") + " parallel=" + ParallelSocialDriver.TotalExchanges +
-                           " memPairs=" + Memory.PairCount + " force=" + ForceOutcome + " autotone=" + AutoTone +
+                           " memPairs=" + Memory.PairCount + " memUi=" + (SimMemoryMenu.IsOpen ? "open" : "closed") +
+                           " force=" + ForceOutcome + " autotone=" + AutoTone +
                            " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount +
                            " balloons=" + ConvoOverlay.LastPlacement + " last=[" + LastDecision + "]";
                 case "on": Enabled = true; return "enabled=true";
@@ -155,10 +164,19 @@ namespace Simitone.Conversations
                 case "menu": FullMenu = a.Length > 1 && a[1] == "full"; return "menu=" + (FullMenu ? "full" : "talk+romance");
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
+                case "memory-ui":
+                {
+                    var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "open";
+                    if (sub == "close" || sub == "off") return SimMemoryMenu.Close();
+                    if (sub == "status") return SimMemoryMenu.Status();
+                    if (sub == "select") return SimMemoryMenu.SelectKnown(a.Length > 2 ? string.Join(" ", a.Skip(2)) : "");
+                    if (sub == "toggle") { SimMemoryMenu.Toggle(); return SimMemoryMenu.Status(); }
+                    return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
+                }
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
-                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|trigger A B|last|log");
+                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|select|status]|trigger A B|last|log");
             }
         }
     }

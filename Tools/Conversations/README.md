@@ -3,7 +3,8 @@
 Makes The Sims 1 social interactions livelier and autonomous:
 - **Autonomous parallel room conversations:** awake adult Sims in the same room (or within 8 tiles outdoors) automatically talk to each other **in parallel with their ongoing activities** (without interrupting their interaction queue) whenever a Sim's Social motive is at or below **60%** (`<= +20` on `-100..+100`).
 - **Laya-driven interaction & AI topic selection:** Laya (`/v1/systemone`) chooses both the verbal interaction (`talk`, `compliment`, `joke`, `brag`, `cheerup`, `apologize`, `flirt`, `tease`) and the AI talk subject, modulated by the speaker's **knowledge** of the listener (LTR/STR + observed history), both Sims' **skills** (Charisma reading/tact + Cooking/Mechanical/Creativity/Logic/Body topic resonance), and both Sims' **moods**.
-- **Social memory & anti-negative-loop learning:** per-pair memory (`Documents\Simitone\conversations.memory.json`) records outcomes for both manual and autonomous exchanges, penalizes recently failed interactions/tones/topics, engages de-escalation at `NegativeStreak >= 2`, enforces cool-down backoff at `NegativeStreak >= 3`, and resets on positive outcomes.
+- **Social memory, learned Sim dossiers & anti-negative-loop learning:** per-pair memory (`Documents\Simitone\conversations.memory.json`) records outcomes and structured facts each Sim learns about every Sim they talk with (traits revealed progressively, observed temperament, career, liked/neutral/disliked interests with 0–10 ratings, discovered skills with levels, what interactions/tones work vs. avoid, and AI topics discussed), penalizes recently failed interactions/tones/topics, engages de-escalation at `NegativeStreak >= 2`, enforces cool-down backoff at `NegativeStreak >= 3`, and resets on positive outcomes.
+- **In-game Sim Memory Menu:** open **Options -> Sim memory** (or `simtool convo memory-ui open`) to browse each Sim's learned dossier for every Sim they know, switch between household/known Sims via top tabs, and see familiarity %, traits, temperament, career, color-coded likes/dislikes, skills, and conversation lessons.
 - **Simplified manual pie menu (Talk & Romance only):** clicking another adult Sim shows only **Talk** and **Romance** (children, pets, self, ungreeted visitors, non-social NPCs, and feature-off keep the unmodified menu).
 - **100% AI Talk subjects:** both manual Talk dialogs and autonomous parallel Talk draw exclusively from the AI Subject Bank (`bank.json` `subjects` + 48 curated built-in AI subjects) ranked by Laya—never raw hardcoded Sims 1 interest labels (`"Travel and Toys"`, `"Sixties and School"`, etc.).
 
@@ -12,7 +13,9 @@ Makes The Sims 1 social interactions livelier and autonomous:
 - **Manual Sim pie menu:** only two top-level bubbles appear on adult human Sims: **Talk** and **Romance** (Flirt, Kiss, Romantic/Intimate/Leap-Into-Arms Hug, Back Rub, Slow/Romantic Dance, Propose).
 - **Manual Talk:** a dialog `"Choose an AI conversation subject with Betty:"` with three AI-generated subjects ranked by Laya for the two Sims. Choosing one maps cleanly to its underlying Sims 1 interest slot (`0..7`), updates `SocialMemory`, and displays both spoken lines.
 - **Manual Romance / scripted socials:** a dialog `"What do you say to Betty?"` with three lines (Gentle / Playful / Bold). After the choice, the game plays the social, `OutcomeResolver` shifts the outcome by at most one step using Laya's temperament classification, `SocialMemory` records the result, and balloons show both lines.
-- **Options menu:** an "AI conversations" button (speech-bubble icon) switches the whole feature on and off; green = on. When off, parallel chatter stops and the full unmodified Sims 1 pie menu returns. Saved in `Documents\Simitone\conversations.profile`.
+- **Options menu:**
+  - **"AI conversations"** (speech-bubble icon) switches the whole feature on and off; green = on. When off, parallel chatter stops and the full unmodified Sims 1 pie menu returns. Saved in `Documents\Simitone\conversations.profile`.
+  - **"Sim memory"** (dossier/notebook icon) opens the interactive **Sim Memory Menu** overlay showing everything the active Sim (or any tab-selected Sim) has learned about each Sim they know. Press `Esc`, click `[X]`, or click outside the card to close.
 - Children, pets, self, ungreeted visitors, and anything the feature does not recognise keep the game's original behaviour.
 
 ## How autonomous & manual choices are decided
@@ -55,10 +58,10 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
 ## Layout
 | Path | What |
 |---|---|
-| `Logic/` | Pure `net461`/`net9.0` logic, zero game types, unit tested: `Traits`, `OutcomeResolver`, `DialogueBank`, `LayaClient`, `LayaHost`, `TopicLogic`, `AiSubjectBank`, `SocialMemory`, `SocialIntelligence`, `ParallelSocialPlanner`, `PieMenuLogic`, `BalloonLayout` |
-| `Game/` | Game runtime: `Boot`, `ParallelSocialDriver`, `ConvoPieMenu`, `ConvoPrimitive`, `ConvoTalk`, `ConvoOverlay` |
+| `Logic/` | Pure `net461`/`net9.0` logic, zero game types, unit tested: `Traits`, `OutcomeResolver`, `DialogueBank`, `LayaClient`, `LayaHost`, `TopicLogic`, `AiSubjectBank`, `SocialMemory`, `SimMemoryViewModel`, `SocialIntelligence`, `ParallelSocialPlanner`, `PieMenuLogic`, `BalloonLayout` |
+| `Game/` | Game runtime: `Boot`, `ParallelSocialDriver`, `ConvoPieMenu`, `ConvoPrimitive`, `ConvoTalk`, `ConvoOverlay`, `SimMemoryMenu` |
 | `bank/` | `bank.json` (built dialogue lines + 48 AI Talk subjects) and review sheets |
-| `../Conversations.Tests` | 235 unit tests |
+| `../Conversations.Tests` | 239 unit tests |
 | `../Package-Laya.ps1` | Builds the bundled Laya |
 | `../ConvoBank` | Offline dialogue & AI subject builder (Ollama) |
 | `../Install-Conversations.ps1` | Patches a pristine release and installs into a game folder |
@@ -69,10 +72,11 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
 and make sure Python with `laya` is available (or a bundled `laya\python`).
 
 ## Try it without clicking (simtool)
-    simtool convo status             enabled, Laya up, bank/subjects count, menu mode, parallel count, memory pairs, last decision
-    simtool convo parallel           total parallel exchanges and last parallel decision
-    simtool convo memory             per-pair social memory summary
-    simtool convo trigger A B        immediately dispatch a parallel exchange from Sim A to Sim B
+    simtool convo status                  enabled, Laya up, bank/subjects count, menu mode, parallel count, memory pairs, memory UI state, last decision
+    simtool convo parallel                total parallel exchanges and last parallel decision
+    simtool convo memory                  per-pair social memory summary
+    simtool convo memory-ui open [Sim]    open the in-game Sim Memory Menu (optionally focused on Sim); also `close`, `select <Sim>`, `toggle`, `status`
+    simtool convo trigger A B             immediately dispatch a parallel exchange from Sim A to Sim B
     simtool convo menu full|simple   temporarily show full legacy pie menu or Talk+Romance menu
     simtool convo auto on|off        treat every Sim as not player-controlled (tests the autonomous path)
     simtool convo tone 1             skip the dialog and use tone 1 (0 Gentle, 1 Playful, 2 Bold)

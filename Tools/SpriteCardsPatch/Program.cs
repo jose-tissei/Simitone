@@ -135,8 +135,12 @@ int total = 0;
             (3, "opt_cam_free.png", "MenuFull3D"),
             (4, "opt_cam_reload.png", "MenuReload"),
         };
-        // the AI conversations on/off entry only exists when the conversations library is being installed
-        if (conversationsPath != null) entryList.Add((5, "opt_convo.png", "MenuConversations"));
+        // the AI conversations toggle and Sim memory viewer only exist when the conversations library is being installed
+        if (conversationsPath != null)
+        {
+            entryList.Add((5, "opt_convo.png", "MenuConversations"));
+            entryList.Add((8, "opt_memory.png", "MenuSimMemory"));
+        }
         // likewise the anti-aliasing button, which exists only with the render library
         if (renderPath != null) { entryList.Add((6, "opt_aa.png", "MenuAntiAlias")); entryList.Add((7, "opt_light.png", "MenuLighting")); }
         var entries = entryList.ToArray();

@@ -240,10 +240,16 @@ namespace Simitone.Conversations
             AddRelationship(vm, speaker, listener, plan.SpeakerStrDelta, plan.SpeakerLtrDelta);
             AddRelationship(vm, listener, speaker, plan.ListenerStrDelta, plan.ListenerLtrDelta);
 
-            // Record outcome in SocialMemory so both Sims learn from successes and failures
+            // Record outcome in SocialMemory so both Sims learn about each other and remember successes/failures
             int interestIdx = plan.Subject != null ? plan.Subject.Interest : -1;
             string subjId = plan.Subject != null ? plan.Subject.Id : null;
-            Boot.Memory.Record(ex.SpeakerRaw, ex.ListenerRaw, plan.Interaction, plan.Tone, subjId, plan.Quality, interestIdx, plan.DiscoveredSkill);
+            string subjTitle = plan.Subject != null ? plan.Subject.Title : null;
+            // Refresh STR/LTR on raw snapshots after applying deltas so memory displays up-to-date relationship values
+            ReadRelationship(vm, speaker, listener, out ex.SpeakerRaw.StrToTarget, out ex.SpeakerRaw.LtrToTarget);
+            ReadRelationship(vm, listener, speaker, out ex.ListenerRaw.StrToTarget, out ex.ListenerRaw.LtrToTarget);
+            Boot.Memory.Record(ex.SpeakerRaw, ex.ListenerRaw, plan.Interaction, plan.Tone, subjId, plan.Quality, interestIdx, plan.DiscoveredSkill, subjTitle, plan.ListenerTemperament);
+            var speakerSkill = plan.Subject != null && plan.Subject.Skill != SkillKind.None ? plan.Subject.Skill : SkillKind.None;
+            Boot.Memory.RecordReciprocal(ex.ListenerRaw, ex.SpeakerRaw, plan.Interaction, plan.Quality, interestIdx, speakerSkill, subjId, subjTitle);
 
             Interlocked.Increment(ref totalExchanges);
             LastParallelDecision = plan.Summary(ex.SpeakerRaw.Name, ex.ListenerRaw.Name);
@@ -252,7 +258,7 @@ namespace Simitone.Conversations
 
             ConvoOverlay.Show(vm, speaker, ex.SpeakerRaw.Name, plan.SpeakerLine, listener, ex.ListenerRaw.Name, plan.ReplyLine);
 
-            if (++savesPending >= 4)
+            if (++savesPending >= 2)
             {
                 savesPending = 0;
                 Boot.SaveMemoryAsync();
