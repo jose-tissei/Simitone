@@ -201,7 +201,7 @@ namespace Simitone.Conversations
                     CareerDispatchToast.Close();
                     int seedVal = 42;
                     int rounds = SecurityWatchGame.DefaultTotalRounds;
-                    float scanPause = 1.4f;
+                    float scanPause = 3.6f;
                     string simArg = null;
 
                     if (args.Length > 1)
@@ -466,7 +466,7 @@ namespace Simitone.Conversations
             VMAvatar av,
             int? seed,
             int totalRounds = SecurityWatchGame.DefaultTotalRounds,
-            float scanPauseSeconds = 1.4f,
+            float scanPauseSeconds = 3.6f,
             bool quietNight = false)
         {
             try

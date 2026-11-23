@@ -105,7 +105,7 @@ namespace Conversations.Tests
             Assert.False(g.SipCoffee());
 
             // Drain alertness all the way to 0 -> DozedOff
-            for (int i = 0; i < 60 && g.DozedOffMistakes == 0 && !g.IsFinished; i++)
+            for (int i = 0; i < 100 && g.DozedOffMistakes == 0 && !g.IsFinished; i++)
                 g.Tick(0.5f);
 
             Assert.True(g.DozedOffMistakes >= 1);
@@ -130,9 +130,9 @@ namespace Conversations.Tests
         }
 
         [Fact]
-        public void DefaultShift_IsShortThreeRounds_AndIncludesPizzaDeliveryFalseAlarm()
+        public void DefaultShift_IsFiveRounds_AndIncludesPizzaDeliveryFalseAlarm()
         {
-            Assert.Equal(3, SecurityWatchGame.DefaultTotalRounds);
+            Assert.Equal(5, SecurityWatchGame.DefaultTotalRounds);
             Assert.False(SecurityWatchGame.IsThreatKind(SecurityEventKind.PizzaDelivery));
             Assert.Equal("Pizza Delivery", SecurityWatchGame.LabelOf(SecurityEventKind.PizzaDelivery));
 

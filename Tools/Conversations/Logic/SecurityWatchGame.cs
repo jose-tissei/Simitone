@@ -134,15 +134,15 @@ namespace Simitone.Conversations
     }
 
     // Pure state machine for Law Enforcement Level 1 ("Security Guard"): CCTV Night Watch.
-    // Short punchy shifts (default 3 rounds, ~20-25s) on a 4-camera grid: spot real threats
-    // (Burglar, Vandal, Prowler) and Sound Alarm, dismiss false alarms (Raccoon, Stray Cat,
-    // Tree Shadow, Pizza Delivery) with All Clear, and sip coffee to stay awake.
+    // Atmospheric ~45-60s shifts (default 5 sightings with eerie quiet-scan pauses) on a 4-camera
+    // grid: spot real threats (Burglar, Vandal, Prowler) and Sound Alarm, dismiss false alarms
+    // (Raccoon, Stray Cat, Tree Shadow, Pizza Delivery) with All Clear, and sip coffee to stay awake.
     // Also supports "Quiet Night Patrol" shifts where all 4 monitors remain calm.
     public class SecurityWatchGame
     {
         public const int CameraCount = 4;
-        public const int DefaultTotalRounds = 3;
-        public const float DefaultQuietShiftSeconds = 8.5f;
+        public const int DefaultTotalRounds = 5;
+        public const float DefaultQuietShiftSeconds = 18.0f;
 
         public static readonly string[] CameraLabels =
         {
@@ -198,7 +198,7 @@ namespace Simitone.Conversations
         {
             SimName = string.IsNullOrWhiteSpace(simName) ? "Sim" : simName.Trim();
             rng = seed.HasValue ? new Random(seed.Value) : new Random();
-            this.scanPauseSeconds = Math.Max(0f, Math.Min(4.0f, scanPauseSeconds));
+            this.scanPauseSeconds = Math.Max(0f, Math.Min(6.0f, scanPauseSeconds));
             IsQuietShift = quietNight;
 
             // Higher Sim Energy gives a stronger starting Alertness on the graveyard shift
@@ -294,10 +294,10 @@ namespace Simitone.Conversations
             if (scanPauseSeconds > 0.01f)
             {
                 ActiveEvent = null;
-                // First scan is full suspense beat; subsequent gaps are snappy ~0.85s beats
+                // First scan is a full eerie watch beat; subsequent gaps hold steady tension (~2.5s)
                 ScanRemainingSeconds = CurrentRoundIndex == 0
                     ? scanPauseSeconds
-                    : Math.Max(0.65f, scanPauseSeconds * 0.62f);
+                    : Math.Max(0.8f, scanPauseSeconds * 0.68f);
                 return;
             }
 
@@ -315,8 +315,8 @@ namespace Simitone.Conversations
 
             var kind = schedule[CurrentRoundIndex];
             int cam = rng.Next(CameraCount);
-            // Slightly tighter window each round (8.2s -> 6.2s) so shifts stay punchy (~20-25s total)
-            float dur = Math.Max(6.0f, 8.2f - CurrentRoundIndex * 0.50f);
+            // Comfortable inspection window (9.0s -> 7.0s) across 5 rounds (~45-60s full shift)
+            float dur = Math.Max(7.0f, 9.0f - CurrentRoundIndex * 0.45f);
 
             ActiveEvent = new SecurityEvent
             {
@@ -420,8 +420,8 @@ namespace Simitone.Conversations
             ElapsedSeconds += deltaSeconds;
             if (FeedbackTimer > 0f) FeedbackTimer = Math.Max(0f, FeedbackTimer - deltaSeconds);
 
-            // Alertness drains slowly during the midnight shift (~4.2% per second)
-            Alertness = Math.Max(0f, Alertness - deltaSeconds * 4.2f);
+            // Alertness drains steadily during the ~1-minute graveyard shift (~2.8% per second; coffee keeps you sharp)
+            Alertness = Math.Max(0f, Alertness - deltaSeconds * 2.8f);
 
             if (IsQuietShift)
             {
