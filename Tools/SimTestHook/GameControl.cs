@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -38,7 +38,7 @@ public static class GameControl
             jobs.Enqueue(() =>
             {
                 try { result = Execute(p); }
-                catch (Exception e) { result = "err " + e.GetType().Name + ": " + e.Message; }
+                catch (Exception e) { var inner = e is System.Reflection.TargetInvocationException && e.InnerException != null ? e.InnerException : e; result = "err " + inner.GetType().Name + ": " + inner.Message + " @ " + (inner.StackTrace ?? "").Split((char)10).FirstOrDefault(); }
                 done.Set();
             });
         // the game thread only runs when the game window is updating
@@ -100,6 +100,29 @@ public static class GameControl
                     world.GetType().GetMethod("ChangeAAMode").Invoke(world, new object[] { FSO.Client.GameFacade.GraphicsDevice });
                 }
                 return "ok ssaa=" + ppx.GetField("SSAA").GetValue(null) + " msaa=" + ppx.GetField("MSAA").GetValue(null);
+            case "gotolot":
+            {
+                // gotolot <house number>: the same lot switch the Hole in the Ground (and other travel objects) cause: the game screen's VMLotSwitch(lotId)
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                var any = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+                var fam = screen.GetType().GetField("ActiveFamily", any)?.GetValue(screen);
+                if (fam == null)
+                {
+                    // no family lives on this lot (a vacant lot), and the game's own switch assumes one: do what it does for a lot downtown instead
+                    // (mark it as downtown, then clean up the old world and load the new one through InitializeLot, which clears the texture cache)
+                    var contentType = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+                    var content = contentType.GetMethod("Get", Type.EmptyTypes).Invoke(null, null);
+                    var neigh = contentType.GetField("Neighborhood").GetValue(content);
+                    var path = (string)neigh.GetType().GetMethod("GetHousePath").Invoke(neigh, new object[] { int.Parse(p[1]) });
+                    screen.GetType().GetField("Downtown").SetValue(screen, true);
+                    screen.GetType().GetMethod("InitializeLot", new[] { typeof(string), typeof(bool) }).Invoke(screen, new object[] { path, false });
+                    return "ok loaded lot " + p[1] + " directly: " + path;
+                }
+                var m = screen.GetType().GetMethod("VMLotSwitch", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                if (m == null) throw new Exception("this screen has no VMLotSwitch");
+                m.Invoke(screen, new object[] { uint.Parse(p[1]) });
+                return "ok lot switch requested: " + p[1];
+            }
             case "time":
                 // time [hours [minutes]]: read the clock, or set it (the light follows on the next simulation ticks)
                 if (p.Length > 1) { vm.Context.Clock.Hours = int.Parse(p[1]); vm.Context.Clock.Minutes = p.Length > 2 ? int.Parse(p[2]) : 0; }
