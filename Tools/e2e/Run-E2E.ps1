@@ -72,6 +72,11 @@ $backup = @{}
 $configFile = Join-Path $Docs 'config.ini'            # the game saves the graphics mode here when a mode is chosen in the menu
 $renderFile = Join-Path $Docs 'render.profile'
 foreach ($f in $profileFile, $userFile, $configFile, $renderFile) { $backup[$f] = if (Test-Path $f) { Get-Content $f -Raw } else { $null } }
+# The test plays the real game, and the game saves the neighbourhood and the lot into the player's own save folder. Keep a copy of the save and put it
+# back at the end, so running the tests never changes anyone's saved game.
+$saveDir = Join-Path $Docs 'UserData'
+$saveCopy = Join-Path ([IO.Path]::GetTempPath()) ('simitone-save-' + [Guid]::NewGuid().ToString('N'))
+if (Test-Path $saveDir) { Copy-Item $saveDir $saveCopy -Recurse -Force; Write-Host "save folder copied to $saveCopy (restored when the test ends)" -ForegroundColor DarkGray }
 Set-Content $profileFile 'list' -Encoding ascii
 if (Test-Path $configFile) { (Get-Content $configFile -Raw) -replace 'GlobalGraphicsMode=\d', 'GlobalGraphicsMode=1' | Set-Content $configFile -NoNewline -Encoding ascii }
 Set-Content $renderFile 'aa=off' -Encoding ascii
@@ -304,6 +309,8 @@ try {
 }
 finally {
     & $SimTool disable | Out-Null
+    & $SimTool kill | Out-Null
+    if (Test-Path $saveCopy) { Start-Sleep 2; Copy-Item (Join-Path $saveCopy '*') $saveDir -Recurse -Force; Remove-Item $saveCopy -Recurse -Force; Write-Host 'saved game restored' -ForegroundColor DarkGray }
     foreach ($f in $backup.Keys) { if ($null -ne $backup[$f]) { Set-Content $f $backup[$f] -NoNewline -Encoding ascii } else { Remove-Item $f -ErrorAction SilentlyContinue } }
 }
 
