@@ -371,9 +371,9 @@ namespace Simitone.Conversations
                     rowRects.Add(ToXnaRect(r));
 
                     Color rowBg = sel ? SimUiTokens.RowSelectedBg : (hov ? SimUiTokens.CardBgAlt : SimUiTokens.RowBg);
-                    FillRect(batch, px, r, rowBg);
-                    DrawBorder(batch, px, r, sel ? SimUiTokens.Mint * 0.75f : SimUiTokens.InnerBorder * 0.6f, 1f);
-                    if (sel) FillRect(batch, px, r.X, r.Y, 4f, r.Height, SimUiTokens.Mint);
+                    FillRoundedRect(batch, r, SimUiTokens.RadiusControl, rowBg);
+                    DrawRoundedBorder(batch, r, SimUiTokens.RadiusControl, sel ? SimUiTokens.Mint * 0.75f : SimUiTokens.InnerBorder * 0.6f, 1);
+                    if (sel) FillRoundedRect(batch, new SimRect(r.X + 3f, r.Y + 7f, 4f, Math.Max(8f, r.Height - 14f)), 2, SimUiTokens.Mint);
 
                     var nameRect = new SimRect(r.X + 12f, r.Y + 5f, r.Width - 20f, 20f);
                     var metaRect = new SimRect(r.X + 12f, r.Y + 25f, r.Width - 20f, 18f);
@@ -419,8 +419,8 @@ namespace Simitone.Conversations
             if (card.IsTense && cy + 28f <= maxY)
             {
                 var tenseRect = new SimRect(cx, cy, cw, 24f);
-                FillRect(batch, px, tenseRect, SimUiTokens.DangerBg);
-                DrawBorder(batch, px, tenseRect, SimUiTokens.Danger * 0.7f, 1f);
+                FillRoundedRect(batch, tenseRect, SimUiTokens.RadiusControl, SimUiTokens.DangerBg);
+                DrawRoundedBorder(batch, tenseRect, SimUiTokens.RadiusControl, SimUiTokens.Danger * 0.7f, 1);
                 DrawFittedLine(batch, "Recent exchanges were tense — favoring gentle or apologetic approaches.",
                     new SimRect(cx + 8f, cy, cw - 16f, 24f), redStyle, SimTextAlign.Left);
                 cy += 30f;

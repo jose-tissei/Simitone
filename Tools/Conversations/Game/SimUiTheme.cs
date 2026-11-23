@@ -70,6 +70,14 @@ namespace Simitone.Conversations
         public static readonly Color WarnBtnTint = new Color(246, 186, 62);
         public static readonly Color WarnBtnHover = new Color(255, 208, 96);
 
+        // Corner Radius Tokens (consistent rounded geometry across all Simitone overlays)
+        public const int RadiusModal = 16;
+        public const int RadiusToast = 14;
+        public const int RadiusCard = 12;
+        public const int RadiusCamera = 10;
+        public const int RadiusControl = 8;
+        public const int RadiusSmall = 5;
+
         // ALWAYS clone TextStyle.DefaultLabel — never construct new TextStyle directly (VFont requirement).
         public static TextStyle MakeStyle(int size, Color color, bool shadow = true)
         {
@@ -81,7 +89,7 @@ namespace Simitone.Conversations
         }
     }
 
-    // Lazy cache of Simitone's native Content/uigraphics textures, with safe white-pixel fallback.
+    // Lazy cache of Simitone's native Content/uigraphics textures + procedural anti-aliased SDF rounded primitives.
     internal sealed class SimUiAssets
     {
         static GraphicsDevice cachedDevice;
@@ -95,6 +103,10 @@ namespace Simitone.Conversations
         public Texture2D MoneyBg;
         public Texture2D Diag;
         public Texture2D Circle10;
+
+        readonly Dictionary<int, Texture2D> roundedFills = new Dictionary<int, Texture2D>();
+        readonly Dictionary<int, Texture2D> roundedBorders = new Dictionary<int, Texture2D>();
+        readonly Dictionary<int, Texture2D> roundedTopGrads = new Dictionary<int, Texture2D>();
 
         public static SimUiAssets Get(GraphicsDevice gd)
         {
@@ -125,6 +137,177 @@ namespace Simitone.Conversations
                 return item != null ? item.Get(gd) : null;
             }
             catch { return null; }
+        }
+
+        // Generates a pure-white premultiplied-alpha 9-slice rounded-rect fill texture (size = 2*r + 4, corner = r + 1).
+        public Texture2D GetRoundedFill(GraphicsDevice gd, int radius)
+        {
+            int r = Math.Max(2, Math.Min(32, radius));
+            if (roundedFills.TryGetValue(r, out var existing) && existing != null && !existing.IsDisposed)
+                return existing;
+
+            int size = r * 2 + 4;
+            float half = size * 0.5f;
+            float inner = half - r;
+            var data = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                float py = y + 0.5f;
+                float dy = Math.Abs(py - half) - inner;
+                for (int x = 0; x < size; x++)
+                {
+                    float px = x + 0.5f;
+                    float dx = Math.Abs(px - half) - inner;
+                    float dist = (float)Math.Sqrt(Math.Max(dx, 0f) * Math.Max(dx, 0f) + Math.Max(dy, 0f) * Math.Max(dy, 0f))
+                                 + Math.Min(Math.Max(dx, dy), 0f) - r;
+                    float cov = SimLayout.Clamp(0.5f - dist, 0f, 1f);
+                    byte v = (byte)Math.Round(cov * 255f);
+                    data[y * size + x] = new Color(v, v, v, v);
+                }
+            }
+
+            var tex = new Texture2D(gd, size, size);
+            tex.SetData(data);
+            roundedFills[r] = tex;
+            return tex;
+        }
+
+        // Generates a pure-white premultiplied-alpha 9-slice hollow rounded border ring texture.
+        public Texture2D GetRoundedBorder(GraphicsDevice gd, int radius, int thickness)
+        {
+            int r = Math.Max(2, Math.Min(32, radius));
+            int t = Math.Max(1, Math.Min(4, thickness));
+            int key = (r << 4) | t;
+            if (roundedBorders.TryGetValue(key, out var existing) && existing != null && !existing.IsDisposed)
+                return existing;
+
+            int size = r * 2 + 4;
+            float half = size * 0.5f;
+            float inner = half - r;
+            var data = new Color[size * size];
+
+            for (int y = 0; y < size; y++)
+            {
+                float py = y + 0.5f;
+                float dy = Math.Abs(py - half) - inner;
+                for (int x = 0; x < size; x++)
+                {
+                    float px = x + 0.5f;
+                    float dx = Math.Abs(px - half) - inner;
+                    float dist = (float)Math.Sqrt(Math.Max(dx, 0f) * Math.Max(dx, 0f) + Math.Max(dy, 0f) * Math.Max(dy, 0f))
+                                 + Math.Min(Math.Max(dx, dy), 0f) - r;
+                    float outerCov = SimLayout.Clamp(0.5f - dist, 0f, 1f);
+                    float innerCov = SimLayout.Clamp(0.5f - (dist + t), 0f, 1f);
+                    float cov = SimLayout.Clamp(outerCov - innerCov, 0f, 1f);
+                    byte v = (byte)Math.Round(cov * 255f);
+                    data[y * size + x] = new Color(v, v, v, v);
+                }
+            }
+
+            var tex = new Texture2D(gd, size, size);
+            tex.SetData(data);
+            roundedBorders[key] = tex;
+            return tex;
+        }
+
+        // Generates a 6-slice (top-left, top-mid, top-right + flat bottom row) Simitone gradient header texture
+        // whose top-left and top-right corners match the dialog's exact circular corner radius without distortion.
+        public Texture2D GetRoundedTopTitleGrad(GraphicsDevice gd, int radius)
+        {
+            int r = Math.Max(4, Math.Min(28, radius));
+            if (roundedTopGrads.TryGetValue(r, out var existing) && existing != null && !existing.IsDisposed)
+                return existing;
+
+            int cap = r + 1;
+            int midW = 128;
+            int w = cap * 2 + midW;
+            int h = cap + 4; // top row = cap (1:1 corners), bottom row = 4px (stretches cleanly vertically)
+
+            Color[] ramp = SampleTitleGradientRamp();
+            var data = new Color[w * h];
+
+            for (int y = 0; y < h; y++)
+            {
+                float py = y + 0.5f;
+                for (int x = 0; x < w; x++)
+                {
+                    float px = x + 0.5f;
+                    // Map x to [0, 1] along Simitone's signature horizontal mint -> teal -> ocean gradient
+                    float u;
+                    if (x < cap) u = 0.04f * (x / (float)cap);
+                    else if (x >= cap + midW) u = 0.96f + 0.04f * ((x - (cap + midW)) / (float)cap);
+                    else u = 0.04f + 0.92f * ((x - cap) / (float)midW);
+
+                    Color c = SampleRamp(ramp, u);
+
+                    // Apply circular SDF mask strictly on the top-left and top-right corners
+                    float cov = 1f;
+                    if (py < r)
+                    {
+                        if (px < r)
+                        {
+                            float dx = r - px;
+                            float dy = r - py;
+                            float dist = (float)Math.Sqrt(dx * dx + dy * dy) - r;
+                            cov = SimLayout.Clamp(0.5f - dist, 0f, 1f);
+                        }
+                        else if (px > w - r)
+                        {
+                            float dx = px - (w - r);
+                            float dy = r - py;
+                            float dist = (float)Math.Sqrt(dx * dx + dy * dy) - r;
+                            cov = SimLayout.Clamp(0.5f - dist, 0f, 1f);
+                        }
+                    }
+
+                    // Premultiplied alpha output
+                    float a = (c.A / 255f) * cov;
+                    data[y * w + x] = new Color(
+                        (byte)Math.Round(c.R * cov),
+                        (byte)Math.Round(c.G * cov),
+                        (byte)Math.Round(c.B * cov),
+                        (byte)Math.Round(a * 255f));
+                }
+            }
+
+            var tex = new Texture2D(gd, w, h);
+            tex.SetData(data);
+            roundedTopGrads[r] = tex;
+            return tex;
+        }
+
+        Color[] SampleTitleGradientRamp()
+        {
+            if (TitleGrad != null && !TitleGrad.IsDisposed && TitleGrad.Width > 1)
+            {
+                try
+                {
+                    var row = new Color[TitleGrad.Width];
+                    TitleGrad.GetData(0, new Rectangle(0, Math.Min(TitleGrad.Height - 1, TitleGrad.Height / 2), TitleGrad.Width, 1), row, 0, TitleGrad.Width);
+                    return row;
+                }
+                catch { }
+            }
+            // Faithful fallback matching native dialog_title_grad.png (mint -> teal -> deep ocean)
+            var fallback = new Color[64];
+            var c0 = new Color(0, 218, 111);
+            var c1 = new Color(0, 152, 134);
+            var c2 = new Color(12, 47, 56);
+            for (int i = 0; i < fallback.Length; i++)
+            {
+                float t = i / (float)(fallback.Length - 1);
+                fallback[i] = t < 0.5f ? Color.Lerp(c0, c1, t * 2f) : Color.Lerp(c1, c2, (t - 0.5f) * 2f);
+            }
+            return fallback;
+        }
+
+        static Color SampleRamp(Color[] ramp, float u)
+        {
+            float pos = SimLayout.Clamp(u, 0f, 1f) * (ramp.Length - 1);
+            int i0 = (int)pos;
+            int i1 = Math.Min(ramp.Length - 1, i0 + 1);
+            return Color.Lerp(ramp[i0], ramp[i1], pos - i0);
         }
     }
 
@@ -187,8 +370,97 @@ namespace Simitone.Conversations
             FillRect(batch, px, r.Right - thickness, r.Y, thickness, r.Height, color);
         }
 
-        // Draws a Simitone-styled translucent dark glass modal with optional Sims ocean-blue veil and diagonal edge flair.
-        protected void DrawDialogShell(UISpriteBatch batch, SimRect panel, bool drawVeil, float screenW, float screenH)
+        // Anti-aliased 9-slice rounded rectangle fill (clamped safely for small rects).
+        protected void FillRoundedRect(UISpriteBatch batch, SimRect rect, int radius, Color color)
+        {
+            if (rect.Width <= 0.5f || rect.Height <= 0.5f) return;
+            int r = Math.Min(radius, (int)Math.Floor(Math.Min(rect.Width, rect.Height) * 0.5f));
+            var assets = SimUiAssets.Get(batch.GraphicsDevice);
+            if (r < 2)
+            {
+                FillRect(batch, assets.WhitePx, rect, color);
+                return;
+            }
+            var tex = assets.GetRoundedFill(batch.GraphicsDevice, r);
+            DrawNineSlice(batch, tex, r + 1, rect, color);
+        }
+
+        // Anti-aliased top-corners-rounded fill (flat bottom edge, fits flush inside rounded containers).
+        protected void FillRoundedTopRect(UISpriteBatch batch, SimRect rect, int radius, Color color)
+        {
+            if (rect.Width <= 0.5f || rect.Height <= 0.5f) return;
+            int r = Math.Min(radius, (int)Math.Floor(Math.Min(rect.Width * 0.5f, rect.Height - 1f)));
+            var assets = SimUiAssets.Get(batch.GraphicsDevice);
+            if (r < 2)
+            {
+                FillRect(batch, assets.WhitePx, rect, color);
+                return;
+            }
+            var tex = assets.GetRoundedFill(batch.GraphicsDevice, r);
+            int c = r + 1;
+            int mw = tex.Width - c * 2;
+            int mh = tex.Height - c * 2;
+            float innerW = Math.Max(0f, rect.Width - c * 2f);
+            float sx = mw > 0 ? innerW / mw : 1f;
+            float topH = Math.Min(c, rect.Height);
+            float remH = Math.Max(0f, rect.Height - topH);
+
+            DrawLocalTexture(batch, tex, new Rectangle(0, 0, c, c), new Vector2(rect.X, rect.Y), new Vector2(1f, topH / c), color);
+            if (innerW > 0.5f)
+                DrawLocalTexture(batch, tex, new Rectangle(c, 0, mw, c), new Vector2(rect.X + c, rect.Y), new Vector2(sx, topH / c), color);
+            DrawLocalTexture(batch, tex, new Rectangle(c + mw, 0, c, c), new Vector2(rect.Right - c, rect.Y), new Vector2(1f, topH / c), color);
+
+            if (remH > 0.5f)
+                FillRect(batch, assets.WhitePx, rect.X, rect.Y + topH, rect.Width, remH, color);
+        }
+
+        // Anti-aliased bottom-corners-rounded fill (flat top edge, fits flush inside rounded monitors/cards).
+        protected void FillRoundedBottomRect(UISpriteBatch batch, SimRect rect, int radius, Color color)
+        {
+            if (rect.Width <= 0.5f || rect.Height <= 0.5f) return;
+            int r = Math.Min(radius, (int)Math.Floor(Math.Min(rect.Width * 0.5f, rect.Height - 1f)));
+            var assets = SimUiAssets.Get(batch.GraphicsDevice);
+            if (r < 2)
+            {
+                FillRect(batch, assets.WhitePx, rect, color);
+                return;
+            }
+            var tex = assets.GetRoundedFill(batch.GraphicsDevice, r);
+            int c = r + 1;
+            int mw = tex.Width - c * 2;
+            int mh = tex.Height - c * 2;
+            float innerW = Math.Max(0f, rect.Width - c * 2f);
+            float sx = mw > 0 ? innerW / mw : 1f;
+            float botH = Math.Min(c, rect.Height);
+            float topH = Math.Max(0f, rect.Height - botH);
+
+            if (topH > 0.5f)
+                FillRect(batch, assets.WhitePx, rect.X, rect.Y, rect.Width, topH, color);
+
+            float by = rect.Bottom - botH;
+            DrawLocalTexture(batch, tex, new Rectangle(0, c + mh, c, c), new Vector2(rect.X, by), new Vector2(1f, botH / c), color);
+            if (innerW > 0.5f)
+                DrawLocalTexture(batch, tex, new Rectangle(c, c + mh, mw, c), new Vector2(rect.X + c, by), new Vector2(sx, botH / c), color);
+            DrawLocalTexture(batch, tex, new Rectangle(c + mw, c + mh, c, c), new Vector2(rect.Right - c, by), new Vector2(1f, botH / c), color);
+        }
+
+        // Anti-aliased 9-slice rounded rectangle outline border.
+        protected void DrawRoundedBorder(UISpriteBatch batch, SimRect rect, int radius, Color color, int thickness = 1)
+        {
+            if (rect.Width <= 1f || rect.Height <= 1f) return;
+            int r = Math.Min(radius, (int)Math.Floor(Math.Min(rect.Width, rect.Height) * 0.5f));
+            var assets = SimUiAssets.Get(batch.GraphicsDevice);
+            if (r < 2)
+            {
+                DrawBorder(batch, assets.WhitePx, rect, color, thickness);
+                return;
+            }
+            var tex = assets.GetRoundedBorder(batch.GraphicsDevice, r, thickness);
+            DrawNineSlice(batch, tex, r + 1, rect, color);
+        }
+
+        // Draws a Simitone-styled rounded translucent dark glass modal with optional Sims ocean-blue veil.
+        protected void DrawDialogShell(UISpriteBatch batch, SimRect panel, bool drawVeil, float screenW, float screenH, int cornerRadius = SimUiTokens.RadiusModal)
         {
             var assets = SimUiAssets.Get(batch.GraphicsDevice);
             var px = assets.WhitePx;
@@ -206,16 +478,11 @@ namespace Simitone.Conversations
                 }
             }
 
-            // Soft outer drop shadow + crisp Sims teal/mint rim + dark glass body
-            FillRect(batch, px, panel.X - 4, panel.Y + 4, panel.Width + 8, panel.Height + 6, Color.Black * 0.36f);
-            FillRect(batch, px, panel.X - 1, panel.Y - 1, panel.Width + 2, panel.Height + 2, SimUiTokens.OuterBorder);
-            FillRect(batch, px, panel, SimUiTokens.DialogBg);
-
-            // Signature subtle Simitone diagonal trim on right outer edge
-            if (assets.Diag != null)
-            {
-                DrawDiagonalEdge(batch, assets.Diag, panel.Right, panel.Y, panel.Height, SimUiTokens.DialogBg * 0.55f);
-            }
+            // Soft rounded outer drop shadow + translucent dark glass body + crisp Sims teal/mint rounded rim
+            var shadowRect = new SimRect(panel.X - 4f, panel.Y + 4f, panel.Width + 8f, panel.Height + 6f);
+            FillRoundedRect(batch, shadowRect, cornerRadius + 3, Color.Black * 0.36f);
+            FillRoundedRect(batch, panel, cornerRadius, SimUiTokens.DialogBg);
+            DrawRoundedBorder(batch, new SimRect(panel.X - 1f, panel.Y - 1f, panel.Width + 2f, panel.Height + 2f), cornerRadius + 1, SimUiTokens.OuterBorder, 2);
         }
 
         void DrawDiagonalEdge(UISpriteBatch batch, Texture2D diag, float x, float y, float height, Color color)
@@ -228,13 +495,40 @@ namespace Simitone.Conversations
                 DrawLocalTexture(batch, diag, new Rectangle(0, 0, 32, Math.Min(64, (int)Math.Ceiling(rem))), new Vector2(x, y + fullTiles * 64f), Vector2.One, color);
         }
 
-        // Draws Simitone's signature mint-to-teal-to-blue gradient header bar with crisp black title text.
-        protected void DrawTitleBar(UISpriteBatch batch, SimRect headerBar, SimRect titleRect, string title, TextStyle titleStyle)
+        // Draws Simitone's signature mint-to-teal-to-blue gradient header bar with matching rounded top corners.
+        protected void DrawTitleBar(UISpriteBatch batch, SimRect headerBar, SimRect titleRect, string title, TextStyle titleStyle, int cornerRadius = SimUiTokens.RadiusModal)
         {
             var assets = SimUiAssets.Get(batch.GraphicsDevice);
             var px = assets.WhitePx;
+            int r = Math.Min(cornerRadius, (int)Math.Floor(Math.Min(headerBar.Width * 0.45f, headerBar.Height - 2f)));
 
-            if (assets.TitleGrad != null)
+            if (r >= 4)
+            {
+                var grad = assets.GetRoundedTopTitleGrad(batch.GraphicsDevice, r);
+                int cap = r + 1;
+                int midSrcW = grad.Width - cap * 2;
+                int botSrcH = grad.Height - cap;
+                float innerW = Math.Max(0f, headerBar.Width - cap * 2f);
+                float sxMid = midSrcW > 0 ? innerW / midSrcW : 1f;
+                float botDstH = Math.Max(0f, headerBar.Height - cap);
+                float syBot = botSrcH > 0 ? botDstH / botSrcH : 1f;
+
+                // Top rounded row (1:1 aspect ratio corners!)
+                DrawLocalTexture(batch, grad, new Rectangle(0, 0, cap, cap), new Vector2(headerBar.X, headerBar.Y), Vector2.One, Color.White);
+                if (innerW > 0.5f)
+                    DrawLocalTexture(batch, grad, new Rectangle(cap, 0, midSrcW, cap), new Vector2(headerBar.X + cap, headerBar.Y), new Vector2(sxMid, 1f), Color.White);
+                DrawLocalTexture(batch, grad, new Rectangle(cap + midSrcW, 0, cap, cap), new Vector2(headerBar.Right - cap, headerBar.Y), Vector2.One, Color.White);
+
+                // Flat lower band matching exact horizontal gradient
+                if (botDstH > 0.5f)
+                {
+                    DrawLocalTexture(batch, grad, new Rectangle(0, cap, cap, botSrcH), new Vector2(headerBar.X, headerBar.Y + cap), new Vector2(1f, syBot), Color.White);
+                    if (innerW > 0.5f)
+                        DrawLocalTexture(batch, grad, new Rectangle(cap, cap, midSrcW, botSrcH), new Vector2(headerBar.X + cap, headerBar.Y + cap), new Vector2(sxMid, syBot), Color.White);
+                    DrawLocalTexture(batch, grad, new Rectangle(cap + midSrcW, cap, cap, botSrcH), new Vector2(headerBar.Right - cap, headerBar.Y + cap), new Vector2(1f, syBot), Color.White);
+                }
+            }
+            else if (assets.TitleGrad != null)
             {
                 DrawLocalTexture(batch, assets.TitleGrad, null,
                     new Vector2(headerBar.X, headerBar.Y),
@@ -243,34 +537,29 @@ namespace Simitone.Conversations
             }
             else
             {
-                FillRect(batch, px, headerBar, SimUiTokens.TealHighlight);
+                FillRoundedTopRect(batch, headerBar, Math.Max(2, r), SimUiTokens.TealHighlight);
             }
 
             // Crisp Sims mint sheen along bottom of header bar
-            FillRect(batch, px, headerBar.X, headerBar.Bottom - 2f, headerBar.Width, 2f, SimUiTokens.Mint * 0.65f);
+            FillRect(batch, px, headerBar.X + 1f, headerBar.Bottom - 2f, Math.Max(0f, headerBar.Width - 2f), 2f, SimUiTokens.Mint * 0.65f);
 
             if (!string.IsNullOrEmpty(title))
                 DrawFittedLine(batch, title, titleRect, titleStyle, SimTextAlign.Left);
         }
 
-        // Draws a Simitone translucent glass sub-card with crisp border and optional Sims accent top edge.
-        protected void DrawGlassCard(UISpriteBatch batch, SimRect rect, Color fillColor, Color? accentTop = null)
+        // Draws a Simitone translucent rounded glass sub-card with matching rounded border and inset Sims top accent.
+        protected void DrawGlassCard(UISpriteBatch batch, SimRect rect, Color fillColor, Color? accentTop = null, int cornerRadius = SimUiTokens.RadiusCard)
         {
             var assets = SimUiAssets.Get(batch.GraphicsDevice);
             var px = assets.WhitePx;
 
-            if (assets.Circle10 != null && fillColor.R == 0 && fillColor.G == 0 && fillColor.B == 0 && rect.Width >= 24f && rect.Height >= 24f)
-            {
-                DrawNineSlice(batch, assets.Circle10, 10, rect, Color.White * (fillColor.A / 255f));
-            }
-            else
-            {
-                FillRect(batch, px, rect, fillColor);
-            }
-
-            DrawBorder(batch, px, rect, SimUiTokens.InnerBorder, 1f);
+            FillRoundedRect(batch, rect, cornerRadius, fillColor);
+            DrawRoundedBorder(batch, rect, cornerRadius, SimUiTokens.InnerBorder, 1);
             if (accentTop.HasValue)
-                FillRect(batch, px, rect.X + 1f, rect.Y, Math.Max(0f, rect.Width - 2f), 2f, accentTop.Value);
+            {
+                float inset = Math.Min(cornerRadius * 0.75f, rect.Width * 0.2f);
+                FillRect(batch, px, rect.X + inset, rect.Y + 1f, Math.Max(0f, rect.Width - inset * 2f), 2f, accentTop.Value);
+            }
         }
 
         void DrawNineSlice(UISpriteBatch batch, Texture2D tex, int corner, SimRect rect, Color color)
@@ -278,25 +567,33 @@ namespace Simitone.Conversations
             int c = corner;
             int mw = tex.Width - c * 2;
             int mh = tex.Height - c * 2;
-            float innerW = Math.Max(0f, rect.Width - c * 2f);
-            float innerH = Math.Max(0f, rect.Height - c * 2f);
+            float dstC = Math.Min(c, Math.Min(rect.Width, rect.Height) * 0.5f);
+            float sc = dstC / c;
+            float innerW = Math.Max(0f, rect.Width - dstC * 2f);
+            float innerH = Math.Max(0f, rect.Height - dstC * 2f);
             float sx = mw > 0 ? innerW / mw : 1f;
             float sy = mh > 0 ? innerH / mh : 1f;
 
             // Top row
-            DrawLocalTexture(batch, tex, new Rectangle(0, 0, c, c), new Vector2(rect.X, rect.Y), Vector2.One, color);
-            DrawLocalTexture(batch, tex, new Rectangle(c, 0, mw, c), new Vector2(rect.X + c, rect.Y), new Vector2(sx, 1f), color);
-            DrawLocalTexture(batch, tex, new Rectangle(c + mw, 0, c, c), new Vector2(rect.Right - c, rect.Y), Vector2.One, color);
+            DrawLocalTexture(batch, tex, new Rectangle(0, 0, c, c), new Vector2(rect.X, rect.Y), new Vector2(sc, sc), color);
+            if (innerW > 0.25f)
+                DrawLocalTexture(batch, tex, new Rectangle(c, 0, mw, c), new Vector2(rect.X + dstC, rect.Y), new Vector2(sx, sc), color);
+            DrawLocalTexture(batch, tex, new Rectangle(c + mw, 0, c, c), new Vector2(rect.Right - dstC, rect.Y), new Vector2(sc, sc), color);
 
             // Middle row
-            DrawLocalTexture(batch, tex, new Rectangle(0, c, c, mh), new Vector2(rect.X, rect.Y + c), new Vector2(1f, sy), color);
-            DrawLocalTexture(batch, tex, new Rectangle(c, c, mw, mh), new Vector2(rect.X + c, rect.Y + c), new Vector2(sx, sy), color);
-            DrawLocalTexture(batch, tex, new Rectangle(c + mw, c, c, mh), new Vector2(rect.Right - c, rect.Y + c), new Vector2(1f, sy), color);
+            if (innerH > 0.25f)
+            {
+                DrawLocalTexture(batch, tex, new Rectangle(0, c, c, mh), new Vector2(rect.X, rect.Y + dstC), new Vector2(sc, sy), color);
+                if (innerW > 0.25f)
+                    DrawLocalTexture(batch, tex, new Rectangle(c, c, mw, mh), new Vector2(rect.X + dstC, rect.Y + dstC), new Vector2(sx, sy), color);
+                DrawLocalTexture(batch, tex, new Rectangle(c + mw, c, c, mh), new Vector2(rect.Right - dstC, rect.Y + dstC), new Vector2(sc, sy), color);
+            }
 
             // Bottom row
-            DrawLocalTexture(batch, tex, new Rectangle(0, c + mh, c, c), new Vector2(rect.X, rect.Bottom - c), Vector2.One, color);
-            DrawLocalTexture(batch, tex, new Rectangle(c, c + mh, mw, c), new Vector2(rect.X + c, rect.Bottom - c), new Vector2(sx, 1f), color);
-            DrawLocalTexture(batch, tex, new Rectangle(c + mw, c + mh, c, c), new Vector2(rect.Right - c, rect.Bottom - c), Vector2.One, color);
+            DrawLocalTexture(batch, tex, new Rectangle(0, c + mh, c, c), new Vector2(rect.X, rect.Bottom - dstC), new Vector2(sc, sc), color);
+            if (innerW > 0.25f)
+                DrawLocalTexture(batch, tex, new Rectangle(c, c + mh, mw, c), new Vector2(rect.X + dstC, rect.Bottom - dstC), new Vector2(sx, sc), color);
+            DrawLocalTexture(batch, tex, new Rectangle(c + mw, c + mh, c, c), new Vector2(rect.Right - dstC, rect.Bottom - dstC), new Vector2(sc, sc), color);
         }
 
         // Draws a native 3-slice Simitone pill button using greenbutton.png or button.png (600x100 = 4 states of 150x100).

@@ -340,17 +340,17 @@ namespace Simitone.Conversations
 
             float pulse = 0.5f + 0.5f * (float)Math.Sin(pulseTime * 6.0f);
 
-            // 1. Translucent Simitone dark glass toast shell + gradient header bar
-            DrawDialogShell(batch, layout.Panel, false, screenW, screenH);
-            DrawTitleBar(batch, layout.HeaderBar, layout.ChannelTextRect, "RADIO DISPATCH • CH-04", channelStyle);
+            // 1. Translucent rounded Simitone dark glass toast shell + top-rounded gradient header bar
+            DrawDialogShell(batch, layout.Panel, false, screenW, screenH, SimUiTokens.RadiusToast);
+            DrawTitleBar(batch, layout.HeaderBar, layout.ChannelTextRect, "RADIO DISPATCH • CH-04", channelStyle, SimUiTokens.RadiusToast);
 
-            // Pulsing radio LED inside reserved left header slot
+            // Pulsing circular radio LED inside reserved left header slot
             Color ledBg = Color.Black * 0.55f;
-            FillRect(batch, px, layout.LedRect.X - 1, layout.LedRect.Y - 1, layout.LedRect.Width + 2, layout.LedRect.Height + 2, ledBg);
-            FillRect(batch, px, layout.LedRect, pulse > 0.45f ? SimUiTokens.Mint : new Color(0, 110, 68, 220));
+            FillRoundedRect(batch, new SimRect(layout.LedRect.X - 1f, layout.LedRect.Y - 1f, layout.LedRect.Width + 2f, layout.LedRect.Height + 2f), 6, ledBg);
+            FillRoundedRect(batch, layout.LedRect, 5, pulse > 0.45f ? SimUiTokens.Mint : new Color(0, 110, 68, 220));
 
-            // Animated signal bars inside reserved right header slot (never overlaps title!)
-            FillRect(batch, px, layout.SignalBarsRect, Color.Black * 0.48f);
+            // Animated signal bars inside rounded right header slot (never overlaps title!)
+            FillRoundedRect(batch, layout.SignalBarsRect, SimUiTokens.RadiusSmall, Color.Black * 0.48f);
             for (int b = 0; b < 4; b++)
             {
                 float bh = 4f + b * 3f;
@@ -724,23 +724,22 @@ namespace Simitone.Conversations
             bool activeMotion = ev != null;
             float blink = (float)Math.Sin(game.ElapsedSeconds * 7.5f);
 
-            // Crisp Sims-styled outer border
+            // Crisp Sims-styled outer border color
             Color border = activeMotion
                 ? (blink > 0 ? SimUiTokens.Danger : SimUiTokens.Amber)
                 : (selected ? SimUiTokens.Mint : (hovered ? SimUiTokens.Cyan : SimUiTokens.InnerBorder));
-            FillRect(batch, px, r.X - 2f, r.Y - 2f, r.Width + 4f, r.Height + 4f, border);
 
-            // Night-vision CRT phosphor screen
+            // Night-vision rounded CRT phosphor screen
             float dimFactor = game.Alertness < 20f ? 0.55f : 1f;
             var bg = new Color((int)(8 * dimFactor), (int)(26 * dimFactor), (int)(22 * dimFactor), 245);
-            FillRect(batch, px, r, bg);
+            FillRoundedRect(batch, r, SimUiTokens.RadiusCamera, bg);
 
-            // Responsive architectural horizon & backdrop scaled proportionally to camera height
+            // Responsive architectural horizon & backdrop fitted cleanly inside rounded bottom corners
             float hudH = 24f;
             float floorH = SimLayout.Clamp(r.Height * 0.24f, 22f, 44f);
             float horizonY = r.Bottom - floorH;
-            FillRect(batch, px, r.X, horizonY, r.Width, floorH, new Color(14, 40, 32, 220));
-            FillRect(batch, px, r.X, horizonY, r.Width, 2f, new Color(36, 108, 80, 170));
+            FillRoundedBottomRect(batch, new SimRect(r.X, horizonY, r.Width, floorH), SimUiTokens.RadiusCamera, new Color(14, 40, 32, 220));
+            FillRect(batch, px, r.X + 2f, horizonY, Math.Max(0f, r.Width - 4f), 2f, new Color(36, 108, 80, 170));
 
             float archTop = r.Y + hudH + 14f;
             float archH = Math.Max(14f, horizonY - archTop);
@@ -782,32 +781,35 @@ namespace Simitone.Conversations
                 DrawFittedLine(batch, "ALL QUIET", quietRect, quietStyle, SimTextAlign.Center);
             }
 
-            // Subtle CRT scanlines
-            for (float sy = r.Y + hudH + 2f; sy < r.Bottom; sy += 4f)
-                FillRect(batch, px, r.X, sy, r.Width, 1f, new Color(0, 0, 0, 38));
+            // Subtle CRT scanlines inset cleanly inside the rounded bezel
+            for (float sy = r.Y + hudH + 2f; sy < r.Bottom - 4f; sy += 4f)
+                FillRect(batch, px, r.X + 3f, sy, Math.Max(0f, r.Width - 6f), 1f, new Color(0, 0, 0, 38));
 
-            // Top HUD bar inside camera monitor (strictly split: left label, right status pill)
-            FillRect(batch, px, r.X, r.Y, r.Width, hudH, Color.Black * 0.72f);
+            // Top-rounded HUD bar inside camera monitor (strictly split: left label, right status pill)
+            FillRoundedTopRect(batch, new SimRect(r.X, r.Y, r.Width, hudH), SimUiTokens.RadiusCamera, Color.Black * 0.72f);
 
             float statusW = activeMotion ? 86f : 56f;
-            var labelRect = new SimRect(r.X + 8f, r.Y, Math.Max(40f, r.Width - statusW - 18f), hudH);
+            var labelRect = new SimRect(r.X + 10f, r.Y, Math.Max(40f, r.Width - statusW - 20f), hudH);
             DrawFittedLine(batch, "[" + (camIdx + 1) + "] " + SecurityWatchGame.CameraLabels[camIdx], labelRect, camStyle, SimTextAlign.Left);
 
             if (activeMotion)
             {
                 if (blink > -0.2f)
                 {
-                    var motionRect = new SimRect(r.Right - statusW - 6f, r.Y + 3f, statusW, hudH - 6f);
+                    var motionRect = new SimRect(r.Right - statusW - 8f, r.Y + 3f, statusW, hudH - 6f);
                     DrawPillBadge(batch, motionRect, "! MOTION", SimUiTokens.DangerBtnTint, badgeTextStyle);
                 }
             }
             else
             {
                 float dotX = r.Right - statusW - 4f;
-                FillRect(batch, px, dotX, r.Y + (hudH - 7f) * 0.5f, 7f, 7f,
+                FillRoundedRect(batch, new SimRect(dotX, r.Y + (hudH - 7f) * 0.5f, 7f, 7f), 3,
                     blink > 0 ? SimUiTokens.Danger : new Color(96, 36, 36, 180));
                 DrawFittedLine(batch, "REC", new SimRect(dotX + 11f, r.Y, statusW - 14f, hudH), mutedStyle, SimTextAlign.Left);
             }
+
+            // Rounded glowing monitor border drawn on top for crisp silhouette
+            DrawRoundedBorder(batch, new SimRect(r.X - 1f, r.Y - 1f, r.Width + 2f, r.Height + 2f), SimUiTokens.RadiusCamera + 1, border, 2);
         }
 
         void DrawSilhouette(UISpriteBatch batch, Texture2D px, SimRect r, float floorY, float hudH, SecurityEvent ev)
@@ -917,7 +919,7 @@ namespace Simitone.Conversations
             Color gradeAccent = o.Grade == "S" ? SimUiTokens.Mint
                               : (o.Grade == "A" ? SimUiTokens.Cyan
                               : (o.Grade == "B" ? SimUiTokens.Amber : SimUiTokens.Danger));
-            DrawGlassCard(batch, layout.GradeBadge, gradeBg, gradeAccent);
+            DrawGlassCard(batch, layout.GradeBadge, gradeBg, gradeAccent, SimUiTokens.RadiusModal);
             DrawFittedLine(batch, o.Grade, layout.GradeBadge, gradeStyle, SimTextAlign.Center);
             DrawFittedLine(batch, "SHIFT GRADE", layout.GradeCaptionRect, mutedStyle, SimTextAlign.Center);
 

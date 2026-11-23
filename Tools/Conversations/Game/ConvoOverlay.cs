@@ -17,7 +17,7 @@ namespace Simitone.Conversations
     // The Simitone client's own balloons only show pictures, so this is a screen-space element added to the current screen.
     // The balloon follows the Sim (same screen mapping the game's chat balloons use). When a Sim's position cannot be
     // worked out (no lot view, a Sim that left the lot) that line falls back to a small strip at the bottom of the screen.
-    public class ConvoOverlay : UIElement
+    public class ConvoOverlay : SimUiElement
     {
         class Entry { public string Who, Text; public VMEntity Entity; public VM Vm; public double Born; }
 
@@ -36,7 +36,10 @@ namespace Simitone.Conversations
                 var screen = UIScreen.Current;
                 if (screen == null) return;
                 LastPlacement = "none";   // set again when the balloons are drawn
-                if (instance == null || instance.Parent == null) { instance = new ConvoOverlay(); screen.Add(instance); }
+                if (instance == null) instance = new ConvoOverlay();
+                if (instance.Parent != null && instance.Parent != screen)
+                    instance.Parent.Remove(instance);
+                screen.Add(instance);
                 instance.Add(vm, speaker, speakerName, line, listener, listenerName, reply);
             }
             catch (Exception e) { Boot.Log("overlay: " + e.Message); }
@@ -96,18 +99,7 @@ namespace Simitone.Conversations
             if (lines.Count == 0) return;
             var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
             float screenW, screenH;
-            var cur = UIScreen.Current;
-            if (cur != null && cur.ScreenWidth > 0 && cur.ScreenHeight > 0)
-            {
-                screenW = cur.ScreenWidth;
-                screenH = cur.ScreenHeight;
-            }
-            else
-            {
-                float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
-                screenW = batch.GraphicsDevice.Viewport.Width / scale;
-                screenH = batch.GraphicsDevice.Viewport.Height / scale;
-            }
+            GetScreenSize(batch, out screenW, out screenH);
 
             var placed = new List<BalloonLayout.Box>();
             float stripY = screenH - 24;
@@ -137,13 +129,14 @@ namespace Simitone.Conversations
                 placed.Add(box);
                 LastPlacement = over ? "over-heads" : "strip";
 
-                DrawLocalTexture(batch, px, null, new Vector2(box.X - 1, box.Y - 1), new Vector2(box.W + 2, box.H + 2), SimUiTokens.InnerBorder);
-                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, box.H), SimUiTokens.DialogBg);
-                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, 2), SimUiTokens.Mint);   // Sims plumbob mint accent edge
+                var boxRect = new SimRect(box.X, box.Y, box.W, box.H);
+                FillRoundedRect(batch, boxRect, SimUiTokens.RadiusCamera, SimUiTokens.DialogBg);
+                DrawRoundedBorder(batch, boxRect, SimUiTokens.RadiusCamera, SimUiTokens.InnerBorder, 1);
+                FillRect(batch, px, box.X + 8f, box.Y + 1f, Math.Max(0f, box.W - 16f), 2f, SimUiTokens.Mint);   // inset Sims mint accent
                 if (over)
                 {
                     // a small tail pointing down at the Sim
-                    float cx = Math.Max(box.X + 10, Math.Min(anchor.Value.X, box.X + box.W - 10));
+                    float cx = Math.Max(box.X + 14, Math.Min(anchor.Value.X, box.X + box.W - 14));
                     for (int i = 0; i < 6; i++)
                         DrawLocalTexture(batch, px, null, new Vector2(cx - (6 - i), box.Y + box.H + i), new Vector2((6 - i) * 2, 1), SimUiTokens.DialogBg);
                 }
