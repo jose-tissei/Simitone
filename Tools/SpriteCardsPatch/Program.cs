@@ -1,5 +1,6 @@
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Cecil.Rocks;
 
 // Usage: SpriteCardsPatch <appDir> <SpriteCards.dll> <outDir>
 // Patches (copies written to outDir, originals untouched; each patch is idempotent):
@@ -268,6 +269,63 @@ if (conversationsPath != null)
         il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_2));   // the routine number
         il.InsertBefore(firstIns, il.Create(OpCodes.Call, onSubRef));
         Console.WriteLine("patched " + exec.FullName + ": ConvoTalkPrimitive.OnSubRoutine(frame, opcode) first");
+        changed = true;
+    }
+    // (c) VM.InternalTick(uint): call Boot.OnTick(this) before every return so autonomous parallel room conversations run on simulation ticks
+    var onTick = boot.Methods.First(m => m.Name == "OnTick" && m.Parameters.Count == 1);
+    var vmType = mod.GetType("FSO.SimAntics.VM");
+    var tick = vmType.Methods.First(m => m.Name == "InternalTick" && m.Parameters.Count == 1 && m.Parameters[0].ParameterType.Name == "UInt32");
+    if (tick.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "OnTick"))
+        Console.WriteLine("conversations parallel tick hook already installed");
+    else
+    {
+        tick.Body.SimplifyMacros();
+        var onTickRef = mod.ImportReference(onTick);
+        var il = tick.Body.GetILProcessor();
+        foreach (var ret in tick.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList())
+        {
+            var first = il.Create(OpCodes.Ldarg_0);
+            il.InsertBefore(ret, first);
+            il.InsertBefore(ret, il.Create(OpCodes.Call, onTickRef));
+            foreach (var other in tick.Body.Instructions.ToList())
+            {
+                if (other.Operand == ret) other.Operand = first;
+                else if (other.Operand is Instruction[] targets)
+                    for (int k = 0; k < targets.Length; k++) if (targets[k] == ret) targets[k] = first;
+            }
+        }
+        tick.Body.OptimizeMacros();
+        Console.WriteLine("patched " + tick.FullName + ": Boot.OnTick(this) before every return");
+        changed = true;
+    }
+    // (d) VMEntity.GetPieMenu(VM, VMEntity, bool, bool): filter the returned List<VMPieMenuInteraction> via Boot.FilterPieMenu before every return
+    var filterMenu = boot.Methods.First(m => m.Name == "FilterPieMenu" && m.Parameters.Count == 4);
+    var entType = mod.GetType("FSO.SimAntics.VMEntity");
+    var getPie = entType.Methods.First(m => m.Name == "GetPieMenu" && m.Parameters.Count == 4);
+    if (getPie.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "FilterPieMenu"))
+        Console.WriteLine("conversations pie menu hook already installed");
+    else
+    {
+        getPie.Body.SimplifyMacros();
+        var filterRef = mod.ImportReference(filterMenu);
+        var il = getPie.Body.GetILProcessor();
+        foreach (var ret in getPie.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList())
+        {
+            // return value List<VMPieMenuInteraction> is already on top of the stack; push (this, vm, caller) and call Boot.FilterPieMenu
+            var first = il.Create(OpCodes.Ldarg_0);
+            il.InsertBefore(ret, first);
+            il.InsertBefore(ret, il.Create(OpCodes.Ldarg_1));
+            il.InsertBefore(ret, il.Create(OpCodes.Ldarg_2));
+            il.InsertBefore(ret, il.Create(OpCodes.Call, filterRef));
+            foreach (var other in getPie.Body.Instructions.ToList())
+            {
+                if (other.Operand == ret) other.Operand = first;
+                else if (other.Operand is Instruction[] targets)
+                    for (int k = 0; k < targets.Length; k++) if (targets[k] == ret) targets[k] = first;
+            }
+        }
+        getPie.Body.OptimizeMacros();
+        Console.WriteLine("patched " + getPie.FullName + ": Boot.FilterPieMenu(list, this, vm, caller) before every return");
         changed = true;
     }
     if (changed) { mod.Write(Path.Combine(outDir, "FSO.SimAntics.dll")); total++; }

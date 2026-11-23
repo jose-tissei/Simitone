@@ -111,6 +111,56 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
     }
 
     [SkippableFact]
+    public void VMInternalTick_CallsBootOnTick_BeforeEveryReturn()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.SimAntics.dll"))
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Conversations.dll")))
+        {
+            var tick = m.GetType("FSO.SimAntics.VM").Methods.Single(x => x.Name == "InternalTick" && x.Parameters.Count == 1);
+            var rets = tick.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList();
+            Assert.NotEmpty(rets);
+            foreach (var ret in rets)
+            {
+                var call = ret.Previous;
+                Assert.True(call.Operand is MethodReference r && r.Name == "OnTick" && r.DeclaringType.Name == "Boot", "no OnTick hook call before a return");
+                Assert.Equal(OpCodes.Ldarg_0, call.Previous.OpCode);
+            }
+            var real = lib.GetType("Simitone.Conversations.Boot").Methods.Single(x => x.Name == "OnTick");
+            Assert.True(real.IsStatic && real.IsPublic);
+            Assert.Single(real.Parameters);
+            Assert.Equal("VM", real.Parameters[0].ParameterType.Name);
+        }
+    }
+
+    [SkippableFact]
+    public void VMEntityGetPieMenu_CallsBootFilterPieMenu_BeforeEveryReturn()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.SimAntics.dll"))
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Conversations.dll")))
+        {
+            var pie = m.GetType("FSO.SimAntics.VMEntity").Methods.Single(x => x.Name == "GetPieMenu" && x.Parameters.Count == 4);
+            var rets = pie.Body.Instructions.Where(i => i.OpCode == OpCodes.Ret).ToList();
+            Assert.NotEmpty(rets);
+            foreach (var ret in rets)
+            {
+                var call = ret.Previous;
+                Assert.True(call.Operand is MethodReference r && r.Name == "FilterPieMenu" && r.DeclaringType.Name == "Boot", "no FilterPieMenu hook call before a return");
+                Assert.Equal(OpCodes.Ldarg_2, call.Previous.OpCode);
+                Assert.Equal(OpCodes.Ldarg_1, call.Previous.Previous.OpCode);
+                Assert.Equal(OpCodes.Ldarg_0, call.Previous.Previous.Previous.OpCode);
+            }
+            var real = lib.GetType("Simitone.Conversations.Boot").Methods.Single(x => x.Name == "FilterPieMenu");
+            Assert.True(real.IsStatic && real.IsPublic);
+            Assert.Equal(4, real.Parameters.Count);
+            Assert.Equal("VMEntity", real.Parameters[1].ParameterType.Name);
+            Assert.Equal("VM", real.Parameters[2].ParameterType.Name);
+            Assert.Equal("VMEntity", real.Parameters[3].ParameterType.Name);
+        }
+    }
+
+    [SkippableFact]
     public void EarlyStartupClass_MentionsNoGameTypes()
     {
         NeedsRelease();
