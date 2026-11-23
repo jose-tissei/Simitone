@@ -121,6 +121,8 @@ namespace Simitone.Conversations
         {
             try { ParallelSocialDriver.OnTick(vm); }
             catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
+            try { CareerDispatchDriver.OnTick(vm); }
+            catch (Exception e) { Log("dispatch tick error: " + e.GetType().Name + ": " + e.Message); }
         }
 
         public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
@@ -196,6 +198,7 @@ namespace Simitone.Conversations
                            " bank=" + (Bank.Loaded ? "loaded" : "builtin") + " subjects=" + Subjects.Count +
                            " menu=" + (FullMenu ? "full" : "talk+romance") + " parallel=" + ParallelSocialDriver.TotalExchanges +
                            " memPairs=" + Memory.PairCount + " memUi=" + (SimMemoryMenu.IsOpen ? "open" : "closed") +
+                           " dispatch=" + (CareerDispatchDriver.GameOpen ? "game" : (CareerDispatchDriver.ToastVisible ? "toast" : "idle")) +
                            " force=" + ForceOutcome + " autotone=" + AutoTone +
                            " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount +
                            " balloons=" + ConvoOverlay.LastPlacement + " last=[" + LastDecision + "]";
@@ -218,10 +221,11 @@ namespace Simitone.Conversations
                     if (sub == "toggle") { SimMemoryMenu.Toggle(); return SimMemoryMenu.Status(); }
                     return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
                 }
+                case "dispatch": return CareerDispatchDriver.Command(a.Skip(1).ToArray());
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
-                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|trigger A B|last|log");
+                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|dispatch [status|toast|start|answer|action|finish|close]|trigger A B|last|log");
             }
         }
     }
