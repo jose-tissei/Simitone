@@ -11,7 +11,7 @@ param(
 $ErrorActionPreference = 'Stop'
 New-Item -ItemType Directory -Force $Shots | Out-Null
 $docs = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Simitone'
-$files = @('UserData', 'config.ini', 'render.profile', 'spritecards.profile', 'conversations.profile')
+$files = @('UserData', 'config.ini', 'render.profile', 'spritecards.profile', 'conversations.profile', 'conversations.memory.json', 'conversations.menu')
 $backup = Join-Path ([IO.Path]::GetTempPath()) ('simitone-magic-save-' + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Force $backup | Out-Null
 foreach ($f in $files) { $src = Join-Path $docs $f; if (Test-Path $src) { Copy-Item $src (Join-Path $backup $f) -Recurse -Force } }

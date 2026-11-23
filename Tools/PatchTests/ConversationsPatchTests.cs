@@ -174,6 +174,36 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
         }
     }
 
+    // the pie menu mode button needs both libraries (its slot follows the anti-aliasing and lighting buttons), so this one patches with both
+    [SkippableFact]
+    public void OptionsMenu_WithBothLibraries_HasThePieMenuModeButton()
+    {
+        NeedsRelease();
+        var render = Environment.GetEnvironmentVariable("RENDER_DLL");
+        Skip.If(string.IsNullOrEmpty(render) || !File.Exists(render), "RENDER_DLL is not set");
+        var outDir = Path.Combine(Path.GetTempPath(), "convo-render-patch-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+            var psi = new ProcessStartInfo("dotnet", $"\"{f.Patcher}\" \"{f.App}\" \"{f.Hook}\" \"{outDir}\" \"{f.Convo}\" \"{render}\"")
+            { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+            using (var p = Process.Start(psi))
+            {
+                var text = p.StandardOutput.ReadToEnd() + p.StandardError.ReadToEnd();
+                p.WaitForExit();
+                Assert.True(p.ExitCode == 0, text);
+            }
+            using (var m = ModuleDefinition.ReadModule(Path.Combine(outDir, "Simitone.Client.dll")))
+            {
+                var panel = m.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UIMainPanel");
+                var sw = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
+                foreach (var h in new[] { "MenuConversations", "MenuAntiAlias", "MenuLighting", "MenuPieMode" })
+                    Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == h);
+                Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_pie.png");
+            }
+        }
+        finally { try { Directory.Delete(outDir, true); } catch { } }
+    }
+
     [SkippableFact]
     public void OptionsMenu_AndLiveSimPanel_GetConversationsAndSimMemoryHooks()
     {

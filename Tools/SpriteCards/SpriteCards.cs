@@ -122,6 +122,14 @@ public static class SpriteCards
         Refresh();
     }
 
+    public static void MenuPieMode()
+    {
+        ConvoLoader.TogglePieMenu();
+        Refresh();
+    }
+
+    static string PieLabel { get { return "Pie menu: " + (ConvoLoader.SimpleMenu ? "Simplified" : "Full"); } }
+
     // ---------------------------------------------------------------- Live Sim panel (Sim Memory tab alongside Needs, Career, Personality, Relationships, Inventory)
     public static void InitLiveCategories(List<UICategory> categories)
     {
@@ -198,6 +206,7 @@ public static class SpriteCards
         if (id == 5) return "AI conversations";
         if (id == 6) return "Anti-aliasing: " + RenderLoader.Label;
         if (id == 7) return "Dynamic lighting: " + RenderLoader.LightLabel;
+        if (id == 8) return PieLabel;
         return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 
@@ -226,13 +235,14 @@ public static class SpriteCards
                     var text = cap?.GetValue(k, null) as string;
                     if (text != null && text.StartsWith("Anti-aliasing")) cap.SetValue(k, "Anti-aliasing: " + RenderLoader.Label, null);
                     if (text != null && text.StartsWith("Dynamic lighting")) cap.SetValue(k, "Dynamic lighting: " + RenderLoader.LightLabel, null);
+                    if (text != null && text.StartsWith("Pie menu")) cap.SetValue(k, PieLabel, null);
                     continue;
                 }
                 if (k.GetType().Name != "UICatButton") continue;
                 int entry = i - 3; // after Save, Neighborhood, Quit
                 if (entry >= 5 && !ConvoLoader.Installed) entry++; // skip the AI conversations slot when it was not patched in
                 var sel = k.GetType().GetProperty("Selected");
-                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? RenderLoader.AaOn : entry == 7 ? RenderLoader.LightOn : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
+                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? RenderLoader.AaOn : entry == 7 ? RenderLoader.LightOn : entry == 8 ? ConvoLoader.SimpleMenu : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
                 i++;
             }
         }

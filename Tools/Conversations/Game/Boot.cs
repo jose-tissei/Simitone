@@ -27,13 +27,22 @@ namespace Simitone.Conversations
         public static int ForceOutcome;          // test aid: when 1..3 the outcome is forced (simtool convo force N)
         public static int AutoTone = -1;         // test aid: when 0..2 the dialog is skipped and this tone is used
         public static bool TreatAsAutonomous;    // test aid: every Sim counts as not player-controlled
-        public static bool FullMenu;             // test aid: bypass Talk/Romance pie menu filter (simtool convo menu full)
+        // true = the game's own pie menu, false = the simplified one (one Talk bubble, romantic actions under Romance, everything else as before).
+        // The Options button changes it and remembers it (conversations.menu); `simtool convo menu full|simple` changes it for this run only.
+        public static bool FullMenu;
+        public static bool SimpleMenu { get { return !FullMenu; } }
+        public static void SetFullMenu(bool full, bool remember)
+        {
+            FullMenu = full;
+            if (remember) { try { File.WriteAllText(MenuPath, full ? "full" : "simple"); } catch { } }
+        }
         static bool enabled = true;
         static bool started;
 
         // same folder the game uses for its settings (Documents\Simitone); no game types here because this runs before MonoGame is linked
         static string UserDir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone"); } }
         static string ProfilePath { get { return Path.Combine(UserDir, "conversations.profile"); } }
+        static string MenuPath { get { return Path.Combine(UserDir, "conversations.menu"); } }
         static string MemoryPath { get { return Path.Combine(UserDir, "conversations.memory.json"); } }
 
         public static bool Enabled
@@ -55,6 +64,7 @@ namespace Simitone.Conversations
             {
                 GameDir = string.IsNullOrEmpty(gameDir) ? "." : gameDir;
                 try { enabled = !(File.Exists(ProfilePath) && File.ReadAllText(ProfilePath).Trim().ToLowerInvariant() == "off"); } catch { }
+                try { FullMenu = File.Exists(MenuPath) && File.ReadAllText(MenuPath).Trim().ToLowerInvariant() == "full"; } catch { }
                 Bank = DialogueBank.Load(Path.Combine(GameDir, "Content", "conversations", "bank.json"));
                 Subjects = AiSubjectBank.FromBank(Bank);
                 Memory = SocialMemory.Load(MemoryPath);
@@ -194,7 +204,7 @@ namespace Simitone.Conversations
                 case "status":
                     return "enabled=" + enabled + " laya=" + (Laya.Available ? "up" : (Laya.Configured ? "paused" : "off")) +
                            " bank=" + (Bank.Loaded ? "loaded" : "builtin") + " subjects=" + Subjects.Count +
-                           " menu=" + (FullMenu ? "full" : "talk+romance") + " parallel=" + ParallelSocialDriver.TotalExchanges +
+                           " menu=" + (FullMenu ? "full" : "simplified") + " parallel=" + ParallelSocialDriver.TotalExchanges +
                            " memPairs=" + Memory.PairCount + " memUi=" + (SimMemoryMenu.IsOpen ? "open" : "closed") +
                            " force=" + ForceOutcome + " autotone=" + AutoTone +
                            " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount +
@@ -204,7 +214,7 @@ namespace Simitone.Conversations
                 case "force": ForceOutcome = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : 0; return "force=" + ForceOutcome;
                 case "tone": AutoTone = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : -1; return "autotone=" + AutoTone;
                 case "auto": TreatAsAutonomous = a.Length > 1 && a[1] == "on"; return "autonomous=" + TreatAsAutonomous;
-                case "menu": FullMenu = a.Length > 1 && a[1] == "full"; return "menu=" + (FullMenu ? "full" : "talk+romance");
+                case "menu": SetFullMenu(a.Length > 1 && a[1] == "full", false); return "menu=" + (FullMenu ? "full" : "simplified");
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
                 case "memory-ui":
