@@ -22,6 +22,38 @@ On modern operating systems, The Sims has a few nagging issues that make it less
 - Custom lighting - directional lights with smooth falloffs and shadows using generated 3D meshes.
 - *Volcanic*, a program which allows you to examine, modify and create new game objects. (from FreeSO)
 
+# AI Conversations & Sim Memory Mod
+
+This fork includes an optional **AI Conversations & Sim Memory** mod (`Tools/Conversations`) powered by a bundled local [Laya](https://github.com/laya-ai) model (runs offline on CPU, no live LLM at play time):
+
+- **Autonomous parallel room conversations:** awake adult Sims in the same room automatically chat with each other **without interrupting their ongoing activities** whenever their Social need drops to `<= 60%`.
+- **Laya-driven social intelligence:** chooses verbal interactions and AI talk subjects based on each Sim's knowledge of the listener, skills (Charisma, Cooking, Mechanical, Creativity, Logic, Body), moods, and past social history.
+- **Per-Sim Social Memory & floating dossier window:** every conversation records what a Sim has learned about each Sim they know — **Daily / Lifetime** relationship, familiarity %, revealed personality traits, observed temperament, career, liked/disliked interests, discovered skills, and discussed topics — accessible from the **Sim Memory** button in the selected Sim's Live-mode panel (right alongside Needs, Career, Personality, Relationships, and Inventory).
+- **Simplified manual pie menu & 100% AI Talk subjects:** clicking another adult Sim shows **Talk** and **Romance** only; Talk presents 3 Laya-ranked AI subjects rather than raw legacy interest labels.
+- **Easy toggle:** enable or disable the entire mod anytime via **Options -> AI conversations** (green = on).
+
+See [Tools/Conversations/README.md](Tools/Conversations/README.md) for architecture, Laya bundling, and installation instructions (`pwsh Tools/Install-Conversations.ps1`).
+
+## Screenshots
+
+### 1. Simplified Manual Pie Menu (Talk & Romance)
+![Simplified Manual Pie Menu](docs/conversations/screenshots/01-pie-menu-talk-romance.jpg)
+
+### 2. AI Talk Subject Chooser
+![AI Talk Subject Chooser](docs/conversations/screenshots/02-ai-talk-subjects-dialog.jpg)
+
+### 3. Live Over-Head Speech Balloons
+![Live Speech Balloons](docs/conversations/screenshots/03-ai-talk-speech-balloons.jpg)
+
+### 4. Autonomous Parallel Room Conversations
+![Autonomous Parallel Room Conversations](docs/conversations/screenshots/04-parallel-autonomous-conversations.jpg)
+
+### 5. Selected Sim Live Panel — Sim Memory Button
+![Selected Sim Live Switcher](docs/conversations/screenshots/05-live-sim-memory-switcher.jpg)
+
+### 6. Floating Sim Memory Dossier Window
+![Floating Sim Memory Dossier Window](docs/conversations/screenshots/06-sim-memory-dossier-window.jpg)
+
 # Why is it called Simitone?
 
 Simitone -> Semitone -> musical term -> C# -> a note

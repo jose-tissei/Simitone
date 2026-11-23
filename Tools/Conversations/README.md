@@ -17,6 +17,17 @@ Makes The Sims 1 social interactions livelier and autonomous:
 - **Options menu:** an **"AI conversations"** button (speech-bubble icon) switches the whole feature on and off; green = on. When off, parallel chatter stops and the full unmodified Sims 1 pie menu returns. Saved in `Documents\Simitone\conversations.profile`.
 - Children, pets, self, ungreeted visitors, and anything the feature does not recognise keep the game's original behaviour.
 
+## Screenshots
+
+| Feature | Preview |
+|---|---|
+| **Simplified Pie Menu** (Talk + Romance) | ![Simplified Manual Pie Menu](../../docs/conversations/screenshots/01-pie-menu-talk-romance.jpg) |
+| **AI Talk Subject Chooser** | ![AI Talk Subject Chooser](../../docs/conversations/screenshots/02-ai-talk-subjects-dialog.jpg) |
+| **Over-Head Speech Balloons** | ![Live Speech Balloons](../../docs/conversations/screenshots/03-ai-talk-speech-balloons.jpg) |
+| **Autonomous Parallel Room Chat** | ![Autonomous Parallel Room Conversations](../../docs/conversations/screenshots/04-parallel-autonomous-conversations.jpg) |
+| **Selected Sim Live Switcher** (`Sim Memory`) | ![Selected Sim Live Switcher](../../docs/conversations/screenshots/05-live-sim-memory-switcher.jpg) |
+| **Floating Sim Memory Dossier** | ![Floating Sim Memory Dossier Window](../../docs/conversations/screenshots/06-sim-memory-dossier-window.jpg) |
+
 ## How autonomous & manual choices are decided
 1. **Manual socials (policy B):** Laya reads a short description of the receiver and classifies temperament (`easily_offended`, `thick_skinned`, `cold`, `receptive`). `OutcomeResolver` shifts the game's outcome by `-1`, `0`, or `+1`. Unknown temperament or Laya down = no shift.
 2. **Autonomous parallel room chatter (`ParallelSocialPlanner` + `SocialIntelligence`):**
