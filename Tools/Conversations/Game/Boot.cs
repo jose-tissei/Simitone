@@ -1,19 +1,23 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using FSO.SimAntics;
 
 namespace Simitone.Conversations
 {
     // Entry points called from the patched game (see Tools/SpriteCardsPatch):
-    //   Boot.Startup(gameDir)   from the game's Main via SpriteCards.Startup: loads settings and the bank, starts Laya in the background
-    //   Boot.OnLotReady(vm)     at the end of VMTS1Activator.LoadFromIff: installs the conversation step into the lot's scripts
+    //   Boot.StartupCore(gameDir)           from the game's Main via Early.Startup: loads settings, bank, AI subjects, memory, starts Laya
+    //   Boot.OnContextReady(ctx)            at the end of VMContext..ctor: installs conversation primitives into the lot's scripts
+    //   Boot.OnTick(vm)                     at the end of VM.InternalTick: drives autonomous parallel room conversations (Social <= 60%)
+    //   Boot.FilterPieMenu(list,t,vm,c)     before VMEntity.GetPieMenu returns: restricts adult Sim pie menus to Talk & Romance
     // Nothing here may stop the game from running: every entry point swallows its own errors.
     public static class Boot
     {
         public static DialogueBank Bank = new DialogueBank();
+        public static AiSubjectBank Subjects = AiSubjectBank.Builtin();
+        public static SocialMemory Memory = new SocialMemory();
         public static readonly LayaClient Laya = new LayaClient(new HttpLayaTransport());
         // requests run on a worker thread, never on the game thread, so they may take longer than the 150 ms planning figure
         static Boot() { Laya.TimeoutMs = 3000; }
@@ -22,12 +26,15 @@ namespace Simitone.Conversations
         public static string LastDecision = "";
         public static int ForceOutcome;          // test aid: when 1..3 the outcome is forced (simtool convo force N)
         public static int AutoTone = -1;         // test aid: when 0..2 the dialog is skipped and this tone is used
-        public static bool TreatAsAutonomous;    // test aid: every Sim counts as not player-controlled (the game's command checks stop tests from queueing for the other Sim)
+        public static bool TreatAsAutonomous;    // test aid: every Sim counts as not player-controlled
+        public static bool FullMenu;             // test aid: bypass Talk/Romance pie menu filter (simtool convo menu full)
         static bool enabled = true;
         static bool started;
 
-        // same folder the game uses for its settings (DocumentsSimitone); no game types here because this runs before MonoGame is linked
-        static string ProfilePath { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone", "conversations.profile"); } }
+        // same folder the game uses for its settings (Documents\Simitone); no game types here because this runs before MonoGame is linked
+        static string UserDir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone"); } }
+        static string ProfilePath { get { return Path.Combine(UserDir, "conversations.profile"); } }
+        static string MemoryPath { get { return Path.Combine(UserDir, "conversations.memory.json"); } }
 
         public static bool Enabled
         {
@@ -49,12 +56,21 @@ namespace Simitone.Conversations
                 GameDir = string.IsNullOrEmpty(gameDir) ? "." : gameDir;
                 try { enabled = !(File.Exists(ProfilePath) && File.ReadAllText(ProfilePath).Trim().ToLowerInvariant() == "off"); } catch { }
                 Bank = DialogueBank.Load(Path.Combine(GameDir, "Content", "conversations", "bank.json"));
-                Log("startup: enabled=" + enabled + ", bank " + (Bank.Loaded ? "loaded" : "built-in lines only"));
+                Subjects = AiSubjectBank.FromBank(Bank);
+                Memory = SocialMemory.Load(MemoryPath);
+                Log("startup: enabled=" + enabled + ", bank " + (Bank.Loaded ? "loaded" : "built-in lines only") +
+                    ", subjects=" + Subjects.Count + (Subjects.LoadedFromBank ? " (bank)" : " (builtin)") +
+                    ", memoryPairs=" + Memory.PairCount);
                 AppDomain.CurrentDomain.FirstChanceException += (s, e) => { try { var st = e.Exception.StackTrace ?? ""; if (st.Contains("Conversations") || (e.Exception.Message ?? "").Contains("Conversations")) Log("first-chance: " + e.Exception.GetType().Name + ": " + e.Exception.Message + " @ " + st.Split((char)10)[0].Trim()); } catch { } };
-                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } try { WriteMisses(); } catch { } };
+                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } try { Memory.Save(MemoryPath); } catch { } try { WriteMisses(); } catch { } };
                 if (enabled) EnsureLaya();
             }
             catch (Exception e) { Log("startup failed: " + e.Message); }
+        }
+
+        public static void SaveMemoryAsync()
+        {
+            ThreadPool.QueueUserWorkItem(_ => { try { Memory.Save(MemoryPath); } catch { } });
         }
 
         // lines the bank lacked during this run, for `convobank` to fill later (offline; nothing is generated while playing)
@@ -101,6 +117,17 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("install failed: " + e.Message); }
         }
 
+        public static void OnTick(VM vm)
+        {
+            try { ParallelSocialDriver.OnTick(vm); }
+            catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
+        }
+
+        public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
+        {
+            return ConvoPieMenu.Filter(raw, target, vm, caller);
+        }
+
         public static void Log(string msg)
         {
             try { File.AppendAllText(Path.Combine(GameDir, "Content", "conversations.log"), DateTime.Now.ToString("HH:mm:ss") + " " + msg + Environment.NewLine); }
@@ -114,16 +141,24 @@ namespace Simitone.Conversations
             switch (cmd)
             {
                 case "status":
-                    return "enabled=" + enabled + " laya=" + (Laya.Available ? "up" : (Laya.Configured ? "paused" : "off")) + " bank=" + (Bank.Loaded ? "loaded" : "builtin") +
-                           " force=" + ForceOutcome + " autotone=" + AutoTone + " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount + " balloons=" + ConvoOverlay.LastPlacement + " last=[" + LastDecision + "]";
+                    return "enabled=" + enabled + " laya=" + (Laya.Available ? "up" : (Laya.Configured ? "paused" : "off")) +
+                           " bank=" + (Bank.Loaded ? "loaded" : "builtin") + " subjects=" + Subjects.Count +
+                           " menu=" + (FullMenu ? "full" : "talk+romance") + " parallel=" + ParallelSocialDriver.TotalExchanges +
+                           " memPairs=" + Memory.PairCount + " force=" + ForceOutcome + " autotone=" + AutoTone +
+                           " autonomous=" + TreatAsAutonomous + " installed=" + ConvoPrimitive.InstalledCount +
+                           " balloons=" + ConvoOverlay.LastPlacement + " last=[" + LastDecision + "]";
                 case "on": Enabled = true; return "enabled=true";
                 case "off": Enabled = false; return "enabled=false";
                 case "force": ForceOutcome = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : 0; return "force=" + ForceOutcome;
                 case "tone": AutoTone = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : -1; return "autotone=" + AutoTone;
                 case "auto": TreatAsAutonomous = a.Length > 1 && a[1] == "on"; return "autonomous=" + TreatAsAutonomous;
+                case "menu": FullMenu = a.Length > 1 && a[1] == "full"; return "menu=" + (FullMenu ? "full" : "talk+romance");
+                case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
+                case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
+                case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
-                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|last|log");
+                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|trigger A B|last|log");
             }
         }
     }

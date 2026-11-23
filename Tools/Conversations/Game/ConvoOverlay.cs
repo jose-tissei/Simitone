@@ -48,9 +48,15 @@ namespace Simitone.Conversations
             text = TextStyle.DefaultLabel.Clone(); text.Size = 16; text.Color = Color.White; text.Shadow = true;
         }
 
+        const int MaxLines = 4;
+
         void Add(VM vm, VMEntity speaker, string speakerName, string line, VMEntity listener, string listenerName, string reply)
         {
-            lines.Clear();
+            lines.RemoveAll(e =>
+                (speaker != null && ReferenceEquals(e.Entity, speaker))
+                || (listener != null && ReferenceEquals(e.Entity, listener))
+                || clock - e.Born > Seconds);
+            while (lines.Count > MaxLines - 2) lines.RemoveAt(0);
             lines.Add(new Entry { Who = speakerName, Text = "“" + line + "”", Entity = speaker, Vm = vm, Born = clock });
             // the answer appears a moment later, as in a real exchange
             lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.6 });
@@ -61,7 +67,7 @@ namespace Simitone.Conversations
             base.Update(state);
             clock += 1.0 / 60.0;
             if (lines.Count == 0) return;
-            if (clock - lines[lines.Count - 1].Born > Seconds) lines.Clear();
+            lines.RemoveAll(e => clock - e.Born > Seconds);
         }
 
         // the point just above a Sim's head, in UI coordinates (the mapping the game's own chat balloons use); null when unknown

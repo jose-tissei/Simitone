@@ -124,7 +124,7 @@ namespace Simitone.Conversations
                 var key = OutcomeResolver.KeyFromScriptName(ScriptLabel(thread));
                 if (key == null) return VMPrimitiveExitCode.GOTO_FALSE;
 
-                var rs = Read(speaker); var rl = Read(listener);
+                var rs = Read(speaker, listener, vm); var rl = Read(listener, speaker, vm);
                 var ps = TraitProfile.From(rs); var pl = TraitProfile.From(rl);
                 if (ps.IsChild || pl.IsChild) return VMPrimitiveExitCode.GOTO_FALSE;   // children keep the original behaviour
                 Boot.Laya.Prefetch(pl);   // by the time the player has chosen, the answer is usually ready
@@ -217,6 +217,9 @@ namespace Simitone.Conversations
             int quality = OutcomeResolver.Quality(outcome < 1 ? 2 : outcome, p.Key);
             var reply = DialogueBank.Fill(Boot.Bank.ReplyLine(p.Key, quality, temper, rng), p.Speaker.Name, p.Listener.Name, p.Listener.JobTitle);
             var line = p.SpeakerLines[(int)p.Tone];
+
+            var topLsSkills = p.RawListener != null ? p.RawListener.TopSkills(300) : new SkillKind[0];
+            Boot.Memory.Record(p.RawSpeaker, p.RawListener, p.Key, p.Tone, null, quality, -1, topLsSkills.Length > 0 ? topLsSkills[0] : SkillKind.None);
 
             Boot.LastDecision = p.Key + " " + Names.Label(p.Tone) + " script=" + script + " final=" + outcome + " temperament=" + temper +
                                 " (" + p.Speaker.Name + " -> " + p.Listener.Name + ") laya=" + (Boot.Laya.Available ? "up" : "down") + " failures=" + Boot.Laya.Failures + " err=" + Boot.Laya.LastError + " cached=" + Boot.Laya.HasTemperament(p.Listener) + " [" + p.Listener.Summary + "]";
@@ -317,18 +320,33 @@ namespace Simitone.Conversations
         }
 
         // ---- reading a Sim from the game ----
-        public static RawSim Read(VMAvatar a)
+        public static RawSim Read(VMAvatar a) { return Read(a, null, null); }
+
+        public static RawSim Read(VMAvatar a, VMAvatar target, VM vm)
         {
             var s = new RawSim { Name = a.Name };
+            s.NeighborId = a.GetPersonData(VMPersonDataVariable.NeighborId);
             s.Nice = a.GetPersonData(VMPersonDataVariable.NicePersonality);
             s.Active = a.GetPersonData(VMPersonDataVariable.ActivePersonality);
             s.Generous = a.GetPersonData(VMPersonDataVariable.GenerousPersonality);
             s.Playful = a.GetPersonData(VMPersonDataVariable.PlayfulPersonality);
             s.Outgoing = a.GetPersonData(VMPersonDataVariable.OutgoingPersonality);
             s.Neat = a.GetPersonData(VMPersonDataVariable.NeatPersonality);
+            s.Cooking = a.GetPersonData(VMPersonDataVariable.CookingSkill);
+            s.Charisma = a.GetPersonData(VMPersonDataVariable.CharismaSkill);
+            s.Mechanical = a.GetPersonData(VMPersonDataVariable.MechanicalSkill);
+            s.Creativity = a.GetPersonData(VMPersonDataVariable.CreativitySkill);
+            s.Body = a.GetPersonData(VMPersonDataVariable.BodySkill);
+            s.Logic = a.GetPersonData(VMPersonDataVariable.LogicSkill);
             s.Age = a.GetPersonData(VMPersonDataVariable.PersonsAge);
             s.Female = a.GetPersonData(VMPersonDataVariable.Gender) != 0;
             s.Mood = a.GetMotiveData(VMMotive.Mood);
+            s.Social = a.GetMotiveData(VMMotive.Social);
+            if (target != null && vm != null)
+            {
+                ParallelSocialDriver.ReadRelationship(vm, a, target, out s.StrToTarget, out s.LtrToTarget);
+                ParallelSocialDriver.ReadRelationship(vm, target, a, out s.TargetStrToMe, out s.TargetLtrToMe);
+            }
             for (int i = 0; i < 8; i++) s.Interests[i] = a.GetPersonData((VMPersonDataVariable)((int)VMPersonDataVariable.Interest_TravelToys + i));
             try
             {
