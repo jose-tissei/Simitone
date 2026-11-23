@@ -128,5 +128,96 @@ namespace Conversations.Tests
             g.Tick(g.ActiveEvent.DurationSeconds + 0.5f);
             Assert.Equal(beforeCleared + 1, g.FalseAlarmsCleared);
         }
+
+        [Fact]
+        public void DefaultShift_IsShortThreeRounds_AndIncludesPizzaDeliveryFalseAlarm()
+        {
+            Assert.Equal(3, SecurityWatchGame.DefaultTotalRounds);
+            Assert.False(SecurityWatchGame.IsThreatKind(SecurityEventKind.PizzaDelivery));
+            Assert.Equal("Pizza Delivery", SecurityWatchGame.LabelOf(SecurityEventKind.PizzaDelivery));
+
+            bool sawPizza = false;
+            for (int seed = 1; seed <= 40 && !sawPizza; seed++)
+            {
+                var g = new SecurityWatchGame("Bob", 60, SecurityWatchGame.DefaultTotalRounds, seed);
+                while (!g.IsFinished && g.ActiveEvent != null)
+                {
+                    if (g.ActiveEvent.Kind == SecurityEventKind.PizzaDelivery)
+                    {
+                        sawPizza = true;
+                        Assert.False(g.ActiveEvent.IsThreat);
+                        break;
+                    }
+                    g.SelectCamera(g.ActiveEvent.CameraIndex);
+                    if (g.ActiveEvent.IsThreat) g.SoundAlarm();
+                    else g.MarkAllClear();
+                }
+            }
+            Assert.True(sawPizza, "Expected PizzaDelivery to appear as a false alarm across seeded shifts");
+        }
+
+        [Fact]
+        public void ScanPause_HoldsQuietBeforeTriggeringMotionEvent()
+        {
+            var g = new SecurityWatchGame("Bob", 70, 3, seed: 42, scanPauseSeconds: 1.5f);
+            Assert.True(g.IsScanning);
+            Assert.Null(g.ActiveEvent);
+            Assert.Equal(0, g.EventTriggerSequence);
+
+            g.Tick(0.8f);
+            Assert.True(g.IsScanning);
+            Assert.Null(g.ActiveEvent);
+
+            g.Tick(0.9f);
+            Assert.False(g.IsScanning);
+            Assert.NotNull(g.ActiveEvent);
+            Assert.Equal(1, g.EventTriggerSequence);
+        }
+
+        [Fact]
+        public void QuietNightShift_RewardsCalmSignOff_AndPenalizesFalseAlarm()
+        {
+            var calm = new SecurityWatchGame("Bob", 70, quietNight: true);
+            Assert.True(calm.IsQuietShift);
+            Assert.Null(calm.ActiveEvent);
+            Assert.False(calm.IsFinished);
+
+            var r = calm.MarkAllClear();
+            Assert.Equal(SecurityRoundResult.QuietPatrolCleared, r);
+            Assert.True(calm.IsFinished);
+            var okOutcome = calm.ComputeOutcome();
+            Assert.True(okOutcome.WasQuietShift);
+            Assert.Equal("A", okOutcome.Grade);
+            Assert.True(okOutcome.BonusSimoleons > 0);
+
+            var panic = new SecurityWatchGame("Bob", 70, quietNight: true);
+            var r2 = panic.SoundAlarm();
+            Assert.Equal(SecurityRoundResult.FalseAlarmTriggered, r2);
+            Assert.True(panic.IsFinished);
+            Assert.Equal("B", panic.ComputeOutcome().Grade);
+
+            var timed = new SecurityWatchGame("Bob", 70, quietNight: true);
+            timed.Tick(SecurityWatchGame.DefaultQuietShiftSeconds + 0.5f);
+            Assert.True(timed.IsFinished);
+            Assert.Equal("A", timed.ComputeOutcome().Grade);
+        }
+
+        [Fact]
+        public void DailyDispatchCadence_LeavesRoughlyHalfOfNightsQuiet()
+        {
+            int activeDays = 0;
+            int quietPatrols = 0;
+            for (int day = 1; day <= 60; day++)
+            {
+                if (CareerDispatchRules.IsActiveDispatchDay("n:7", day))
+                {
+                    activeDays++;
+                    if (CareerDispatchRules.IsQuietNightShift("n:7", day))
+                        quietPatrols++;
+                }
+            }
+            Assert.InRange(activeDays, 20, 42);
+            Assert.True(quietPatrols >= 1, "Expected at least one quiet night patrol over 60 days");
+        }
     }
 }

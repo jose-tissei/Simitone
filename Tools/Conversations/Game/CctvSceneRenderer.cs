@@ -27,9 +27,10 @@ namespace Simitone.Conversations
             "cam4_alley.png"
         };
 
+        const string MonitorFrameSuffix = "crt_monitor_frame.png";
         const int TargetW = 384;
         const int TargetH = 216;
-        const int BackdropCornerRadiusPx = 12; // Maps to ~10px on ~400px CCTV tiles (SimUiTokens.RadiusCamera)
+        const int BackdropCornerRadiusPx = 6; // Soft corner mask nested behind the physical CRT monitor bezel
 
         sealed class ActorRig
         {
@@ -47,6 +48,7 @@ namespace Simitone.Conversations
 
         GraphicsDevice boundDevice;
         readonly Texture2D[] backdrops = new Texture2D[4];
+        Texture2D monitorFrame;
         bool backdropsLoaded;
 
         BasicCamera camera;
@@ -78,12 +80,21 @@ namespace Simitone.Conversations
             return (tex != null && !tex.IsDisposed) ? tex : null;
         }
 
+        public Texture2D GetMonitorFrame(GraphicsDevice gd)
+        {
+            if (gd == null) return null;
+            EnsureDevice(gd);
+            if (!backdropsLoaded) LoadBackdrops(gd);
+            return (monitorFrame != null && !monitorFrame.IsDisposed) ? monitorFrame : null;
+        }
+
         public string DiagnosticSummary()
         {
             int loaded = 0;
             for (int i = 0; i < 4; i++)
                 if (backdrops[i] != null && !backdrops[i].IsDisposed) loaded++;
-            return "backdrops=" + loaded + "/4 live3d=" + HasLiveActorFrame + " kind=" + lastRenderedKind;
+            bool hasBezel = monitorFrame != null && !monitorFrame.IsDisposed;
+            return "backdrops=" + loaded + "/4 bezel=" + hasBezel + " live3d=" + HasLiveActorFrame + " kind=" + lastRenderedKind;
         }
 
         public void PreDraw(GraphicsDevice gd, SecurityWatchGame game)
@@ -163,11 +174,11 @@ namespace Simitone.Conversations
                     rig.Avatar.Skeleton.ComputeBonePositions(rig.Avatar.Skeleton.RootBone, Matrix.Identity);
 
                 // Overhead ~34 deg security-cam pitch calibrated to match the 2x zoomed Sims 1 lot proportions:
-                //   Humans ~42% of monitor height (matching doors/fences); Pets ~24% of monitor height.
+                //   Humans ~38-42% of monitor height (matching doors/fences); Pets ~16-19% of monitor height.
                 if (rig.IsPet)
                 {
-                    camera.Position = new Vector3(0f, 3.25f, 5.30f);
-                    camera.Target = new Vector3(0f, 0.30f, 0f);
+                    camera.Position = new Vector3(0f, 3.45f, 5.45f);
+                    camera.Target = new Vector3(0f, 0.24f, 0f);
                 }
                 else
                 {
@@ -177,7 +188,7 @@ namespace Simitone.Conversations
 
                 // Exact View * Projection screen coordinates for dead-center tracking brackets & grounded foot shadow
                 var viewProj = camera.View * camera.Projection;
-                float centerY = rig.IsPet ? 0.22f : 0.68f;
+                float centerY = rig.IsPet ? 0.14f : 0.68f;
                 var bodyClip = Vector4.Transform(new Vector3(worldX, centerY, worldZ), viewProj);
                 if (Math.Abs(bodyClip.W) > 0.001f)
                 {
@@ -280,6 +291,20 @@ namespace Simitone.Conversations
                         backdrops[i] = tex;
                     }
                 }
+
+                string frameMatch = resNames.FirstOrDefault(n => n.EndsWith(MonitorFrameSuffix, StringComparison.OrdinalIgnoreCase));
+                if (frameMatch != null)
+                {
+                    using (var stream = asm.GetManifestResourceStream(frameMatch))
+                    {
+                        if (stream != null)
+                        {
+                            var frameTex = Texture2D.FromStream(gd, stream);
+                            PremultiplyAlpha(frameTex);
+                            monitorFrame = frameTex;
+                        }
+                    }
+                }
             }
             catch (Exception e)
             {
@@ -287,8 +312,34 @@ namespace Simitone.Conversations
             }
         }
 
+        // Converts straight RGBA loaded by Texture2D.FromStream into premultiplied RGBA
+        // so semi-transparent CRT glass shadows and specular reflections blend cleanly under AlphaBlend.
+        static void PremultiplyAlpha(Texture2D tex)
+        {
+            if (tex == null || tex.IsDisposed) return;
+            var data = new Color[tex.Width * tex.Height];
+            tex.GetData(data);
+            for (int i = 0; i < data.Length; i++)
+            {
+                Color c = data[i];
+                if (c.A == 255) continue;
+                if (c.A == 0)
+                {
+                    data[i] = Color.Transparent;
+                    continue;
+                }
+                float a = c.A / 255f;
+                data[i] = new Color(
+                    (byte)Math.Round(c.R * a),
+                    (byte)Math.Round(c.G * a),
+                    (byte)Math.Round(c.B * a),
+                    c.A);
+            }
+            tex.SetData(data);
+        }
+
         // Bakes an anti-aliased SDF rounded-corner alpha mask (premultiplied RGBA) directly into the backdrop texture
-        // so it nests seamlessly inside SimUiTokens.RadiusCamera rounded bezels without needing a stencil shader.
+        // so it nests seamlessly inside the curved CRT monitor screen aperture.
         static void ApplyRoundedAlphaMask(Texture2D tex, int radius)
         {
             if (tex == null || tex.IsDisposed) return;
@@ -376,13 +427,23 @@ namespace Simitone.Conversations
                             label: "Night Prowler");
                         break;
 
+                    case SecurityEventKind.PizzaDelivery:
+                        rig = BuildHumanRig(content,
+                            headApr: "c_pizzaguy.apr", headTex: "pizzaguyface",
+                            bodyApr: "b001mafit_01.apr", bodyTex: "pizzaguysuit",
+                            handSkin: "lgt",
+                            animCandidates: new[] { "a2o-walking-loop.anim", "a2o-rarm-carry-loop.anim", "a2o-idle1.anim" },
+                            patrolWalk: true, walkAmp: 1.05f, walkFreq: 0.28f, animSpeed: 0.96f, facingYaw: 0.45f,
+                            label: "Pizza Delivery Sim");
+                        break;
+
                     case SecurityEventKind.StrayCat:
                         rig = BuildPetRig(content,
                             skelName: "kat.skel",
                             bodyApr: "b000cat_tabby.apr", bodyTex: "b000cat_tabby",
                             fallbackApr: "b008cat_bombay.apr", fallbackTex: "b008cat_bombay",
                             animCandidates: new[] { "k2o-walking-loop.anim", "k2o-stand-tailswish-loop-slow.anim", "k2o-stand-breathe-loop.anim" },
-                            scale: 0.48f, patrolWalk: true, walkAmp: 1.20f, walkFreq: 0.32f, animSpeed: 1.05f,
+                            scale: 0.28f, patrolWalk: true, walkAmp: 1.25f, walkFreq: 0.34f, animSpeed: 1.08f,
                             label: "Stray Tabby Cat");
                         break;
 
@@ -392,7 +453,7 @@ namespace Simitone.Conversations
                             bodyApr: "racoon.apr", bodyTex: "racoon",
                             fallbackApr: "b000dog_lab.apr", fallbackTex: "b000dog_lab",
                             animCandidates: new[] { "d2o-raccoon-walk-loop.anim", "d2o-walking-loop.anim", "d2o-sniff-sidetoside.anim" },
-                            scale: 0.46f, patrolWalk: true, walkAmp: 1.20f, walkFreq: 0.34f, animSpeed: 1.08f,
+                            scale: 0.27f, patrolWalk: true, walkAmp: 1.25f, walkFreq: 0.36f, animSpeed: 1.10f,
                             label: "El Bandito Raccoon");
                         break;
                 }
@@ -566,6 +627,14 @@ namespace Simitone.Conversations
                 catch { }
                 backdrops[i] = null;
             }
+
+            try
+            {
+                if (monitorFrame != null && !monitorFrame.IsDisposed)
+                    monitorFrame.Dispose();
+            }
+            catch { }
+            monitorFrame = null;
 
             rigs.Clear();
             failedKinds.Clear();
