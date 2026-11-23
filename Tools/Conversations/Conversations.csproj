@@ -17,7 +17,12 @@
     <Reference Include="FSO.Client"><HintPath>$(AppDir)\FSO.Client.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Files"><HintPath>$(AppDir)\FSO.Files.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.Common"><HintPath>$(AppDir)\FSO.Common.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Vitaboy"><HintPath>$(AppDir)\FSO.Vitaboy.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="FSO.Vitaboy.Engine"><HintPath>$(AppDir)\FSO.Vitaboy.Engine.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="Newtonsoft.Json"><HintPath>$(AppDir)\Newtonsoft.Json.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Cctv\*.png" />
   </ItemGroup>
 </Project>

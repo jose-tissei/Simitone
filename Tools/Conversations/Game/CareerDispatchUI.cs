@@ -193,8 +193,15 @@ namespace Simitone.Conversations
                 case "open":
                 {
                     CareerDispatchToast.Close();
-                    var av = ResolveTargetAvatar(arg);
-                    return SecurityWatchOverlay.Open(av, 42);
+                    int seedVal = 42;
+                    string simArg = arg;
+                    if (!string.IsNullOrWhiteSpace(arg) && int.TryParse(arg.Trim(), out var parsedSeed))
+                    {
+                        seedVal = parsedSeed;
+                        simArg = null;
+                    }
+                    var av = ResolveTargetAvatar(simArg);
+                    return SecurityWatchOverlay.Open(av, seedVal);
                 }
                 case "answer":
                 {
@@ -393,6 +400,7 @@ namespace Simitone.Conversations
         VMAvatar avatar;
         int savedSpeed = 1;
         bool rewardsApplied;
+        readonly CctvSceneRenderer cctvRenderer = new CctvSceneRenderer();
 
         readonly Rectangle[] camRects = new Rectangle[4];
         Rectangle panelRect, closeRect, alarmRect, clearRect, coffeeRect, claimRect;
@@ -490,7 +498,8 @@ namespace Simitone.Conversations
                    " cam=" + (ev != null ? ev.CameraIndex + 1 : 0) +
                    " kind=" + (ev != null ? ev.Kind.ToString() : "None") +
                    " threat=" + (ev != null && ev.IsThreat) +
-                   " score=" + g.CorrectCount + " awake=" + (int)g.Alertness + "%";
+                   " score=" + g.CorrectCount + " awake=" + (int)g.Alertness + "%" +
+                   " " + instance.cctvRenderer.DiagnosticSummary();
         }
 
         public static string PerformCommandAction(string action, string arg)
@@ -627,6 +636,16 @@ namespace Simitone.Conversations
             prevLeftDown = left;
         }
 
+        public override void PreDraw(UISpriteBatch batch)
+        {
+            base.PreDraw(batch);
+            if (!isOpen || !Visible || game == null || game.IsFinished) return;
+            var gd = batch != null && batch.GraphicsDevice != null
+                ? batch.GraphicsDevice
+                : FSO.Client.GameFacade.GraphicsDevice;
+            cctvRenderer.PreDraw(gd, game);
+        }
+
         public override void Draw(UISpriteBatch batch)
         {
             if (!isOpen || !Visible || game == null) return;
@@ -729,63 +748,63 @@ namespace Simitone.Conversations
                 ? (blink > 0 ? SimUiTokens.Danger : SimUiTokens.Amber)
                 : (selected ? SimUiTokens.Mint : (hovered ? SimUiTokens.Cyan : SimUiTokens.InnerBorder));
 
-            // Night-vision rounded CRT phosphor screen
             float dimFactor = game.Alertness < 20f ? 0.55f : 1f;
-            var bg = new Color((int)(8 * dimFactor), (int)(26 * dimFactor), (int)(22 * dimFactor), 245);
-            FillRoundedRect(batch, r, SimUiTokens.RadiusCamera, bg);
-
-            // Responsive architectural horizon & backdrop fitted cleanly inside rounded bottom corners
             float hudH = 24f;
             float floorH = SimLayout.Clamp(r.Height * 0.24f, 22f, 44f);
             float horizonY = r.Bottom - floorH;
-            FillRoundedBottomRect(batch, new SimRect(r.X, horizonY, r.Width, floorH), SimUiTokens.RadiusCamera, new Color(14, 40, 32, 220));
-            FillRect(batch, px, r.X + 2f, horizonY, Math.Max(0f, r.Width - 4f), 2f, new Color(36, 108, 80, 170));
 
-            float archTop = r.Y + hudH + 14f;
-            float archH = Math.Max(14f, horizonY - archTop);
-
-            if (camIdx == 0) // Front Gate: iron fence bars
+            // 1. Real Sims 1 night-time Full 3D lot backdrop (already anti-aliased rounded alpha masked)
+            var backdrop = cctvRenderer.GetBackdrop(batch.GraphicsDevice, camIdx);
+            if (backdrop != null)
             {
-                for (float fx = r.X + 22f; fx < r.Right - 18f; fx += 24f)
-                    FillRect(batch, px, fx, archTop, 3f, archH, new Color(22, 62, 48, 165));
-                FillRect(batch, px, r.X + 14f, archTop + archH * 0.22f, r.Width - 28f, 3f, new Color(28, 76, 58, 175));
-            }
-            else if (camIdx == 1) // Loading Dock: stacked crates
-            {
-                float c1 = Math.Min(42f, archH * 0.65f);
-                float c2 = Math.Min(52f, archH * 0.80f);
-                FillRect(batch, px, r.X + 20f, horizonY - c1, 50f, c1, new Color(24, 66, 50, 180));
-                FillRect(batch, px, r.Right - 86f, horizonY - c2, 62f, c2, new Color(20, 56, 42, 180));
-            }
-            else if (camIdx == 2) // Vault Hall: steel doorway arch
-            {
-                float inset = Math.Min(110f, r.Width * 0.26f);
-                FillRect(batch, px, r.X + inset, archTop, Math.Max(40f, r.Width - inset * 2f), archH, new Color(16, 48, 38, 190));
-                FillRect(batch, px, r.X + inset + 8f, archTop + 8f, Math.Max(24f, r.Width - (inset + 8f) * 2f), 3f, new Color(42, 114, 86, 175));
-            }
-            else // Back Alley: dumpster
-            {
-                float dH = Math.Min(36f, archH * 0.60f);
-                FillRect(batch, px, r.X + 22f, horizonY - dH, 62f, dH, new Color(22, 58, 46, 185));
-                FillRect(batch, px, r.X + 18f, horizonY - dH - 5f, 70f, 5f, new Color(34, 84, 64, 200));
-            }
-
-            // Animated subject silhouette scaled to fit cleanly below HUD bar
-            if (ev != null)
-            {
-                DrawSilhouette(batch, px, r, horizonY, hudH, ev);
+                // Slightly brighten the active motion camera so the player's eye locks on immediately
+                float camBright = (activeMotion ? 1.0f : (selected ? 0.88f : 0.78f)) * dimFactor;
+                var tint = new Color(
+                    (byte)Math.Round(255f * camBright),
+                    (byte)Math.Round(255f * camBright),
+                    (byte)Math.Round(255f * camBright),
+                    (byte)255);
+                batch.Draw(backdrop, ToXnaRect(r), tint);
             }
             else
             {
-                var quietRect = new SimRect(r.X + 8f, r.Y + hudH, r.Width - 16f, r.Height - hudH);
-                DrawFittedLine(batch, "ALL QUIET", quietRect, quietStyle, SimTextAlign.Center);
+                // Graceful fallback if embedded backdrop ever fails to load
+                var bg = new Color((int)(8 * dimFactor), (int)(26 * dimFactor), (int)(22 * dimFactor), 245);
+                FillRoundedRect(batch, r, SimUiTokens.RadiusCamera, bg);
+                FillRoundedBottomRect(batch, new SimRect(r.X, horizonY, r.Width, floorH), SimUiTokens.RadiusCamera, new Color(14, 40, 32, 220));
+                FillRect(batch, px, r.X + 2f, horizonY, Math.Max(0f, r.Width - 4f), 2f, new Color(36, 108, 80, 170));
             }
 
-            // Subtle CRT scanlines inset cleanly inside the rounded bezel
-            for (float sy = r.Y + hudH + 2f; sy < r.Bottom - 4f; sy += 4f)
-                FillRect(batch, px, r.X + 3f, sy, Math.Max(0f, r.Width - 6f), 1f, new Color(0, 0, 0, 38));
+            // 2. Live 60 FPS animated 3D Sims 1 actor (or dynamic swaying tree shadows) composited over the lot
+            if (ev != null)
+            {
+                if (ev.Kind == SecurityEventKind.TreeShadow)
+                {
+                    DrawTreeShadowSweep(batch, px, r, hudH, ev);
+                }
+                else if (cctvRenderer.HasLiveActorFrame && cctvRenderer.ActorTarget != null)
+                {
+                    DrawLive3DActorOverlay(batch, px, r, hudH, dimFactor, ev);
+                }
+                else
+                {
+                    DrawSilhouette(batch, px, r, horizonY, hudH, ev);
+                }
+            }
+            else
+            {
+                // Subtle translucent ALL QUIET pill near bottom-center so the real TS1 lot remains clearly visible
+                float pillW = Math.Min(98f, r.Width - 20f);
+                var quietPill = new SimRect(r.X + (r.Width - pillW) * 0.5f, r.Bottom - 26f, pillW, 18f);
+                FillRoundedRect(batch, quietPill, 9, Color.Black * 0.52f);
+                DrawFittedLine(batch, "ALL QUIET", quietPill, quietStyle, SimTextAlign.Center);
+            }
 
-            // Top-rounded HUD bar inside camera monitor (strictly split: left label, right status pill)
+            // 3. Subtle CRT phosphor scanlines inset cleanly inside the rounded bezel
+            for (float sy = r.Y + hudH + 2f; sy < r.Bottom - 5f; sy += 4f)
+                FillRect(batch, px, r.X + 3f, sy, Math.Max(0f, r.Width - 6f), 1f, new Color(0, 0, 0, 32));
+
+            // 4. Top-rounded HUD bar inside camera monitor (strictly split: left label, right status pill)
             FillRoundedTopRect(batch, new SimRect(r.X, r.Y, r.Width, hudH), SimUiTokens.RadiusCamera, Color.Black * 0.72f);
 
             float statusW = activeMotion ? 86f : 56f;
@@ -808,8 +827,84 @@ namespace Simitone.Conversations
                 DrawFittedLine(batch, "REC", new SimRect(dotX + 11f, r.Y, statusW - 14f, hudH), mutedStyle, SimTextAlign.Left);
             }
 
-            // Rounded glowing monitor border drawn on top for crisp silhouette
+            // 5. Rounded glowing monitor border drawn on top for crisp silhouette
             DrawRoundedBorder(batch, new SimRect(r.X - 1f, r.Y - 1f, r.Width + 2f, r.Height + 2f), SimUiTokens.RadiusCamera + 1, border, 2);
+        }
+
+        void DrawLive3DActorOverlay(UISpriteBatch batch, Texture2D px, SimRect r, float hudH, float dimFactor, SecurityEvent ev)
+        {
+            float contentX = r.X + 4f;
+            float contentW = Math.Max(20f, r.Width - 8f);
+            float contentY = r.Y + hudH;
+            float contentH = Math.Max(20f, r.Height - hudH - 4f);
+
+            float actorCx = contentX + contentW * cctvRenderer.ActorNormalizedX;
+            float actorCy = contentY + contentH * cctvRenderer.ActorNormalizedY;
+            float footY = contentY + contentH * cctvRenderer.ActorFootNormalizedY;
+
+            // Grounded contact shadow ellipse directly beneath the 3D Sim's projected feet
+            bool isPet = ev.Kind == SecurityEventKind.StrayCat || ev.Kind == SecurityEventKind.Raccoon;
+            float shW = (isPet ? 52f : 56f) * SimLayout.Clamp(r.Width / 340f, 0.72f, 1.15f);
+            float shH = isPet ? 11f : 13f;
+            float shY = SimLayout.Clamp(footY - shH * 0.45f, contentY + 20f, r.Bottom - shH - 4f);
+            FillRoundedRect(batch, new SimRect(actorCx - shW * 0.5f, shY, shW, shH), (int)(shH * 0.5f), Color.Black * 0.46f);
+
+            // Composite the live 384x216 transparent _3DTargetScene RenderTarget with crisp night-vision phosphor tint
+            var dest = new Rectangle(
+                (int)Math.Round(contentX),
+                (int)Math.Round(contentY),
+                Math.Max(1, (int)Math.Round(contentW)),
+                Math.Max(1, (int)Math.Round(contentH)));
+
+            // Bright green-white night-vision IR illumination so burglar stripes, mask, cat/raccoon markings pop clearly
+            var nvTint = new Color(
+                (byte)Math.Round(202f * dimFactor),
+                (byte)Math.Round(255f * dimFactor),
+                (byte)Math.Round(218f * dimFactor),
+                (byte)255);
+            batch.Draw(cctvRenderer.ActorTarget, dest, nvTint);
+
+            // Motion-tracking corner reticle dead-centered on the live 3D actor
+            float sc = SimLayout.Clamp(contentH / 128f, 0.65f, 1.15f);
+            float bw = (isPet ? 92f : 86f) * sc;
+            float bh = (isPet ? 66f : 104f) * sc;
+            float bx = SimLayout.Clamp(actorCx - bw * 0.5f, r.X + 10f, r.Right - bw - 10f);
+            float by = SimLayout.Clamp(actorCy - bh * 0.5f, contentY + 4f, r.Bottom - bh - 6f);
+            DrawMotionBrackets(batch, px, bx, by, bw, bh, 12f * sc, SimUiTokens.Amber * 0.88f);
+        }
+
+        void DrawTreeShadowSweep(UISpriteBatch batch, Texture2D px, SimRect r, float hudH, SecurityEvent ev)
+        {
+            float contentY = r.Y + hudH;
+            float contentH = Math.Max(20f, r.Height - hudH - 6f);
+            float sway = (float)Math.Sin(game.ElapsedSeconds * 2.1f) * 18f;
+            float cx = r.X + r.Width * 0.5f + sway;
+
+            // Organic multi-layered swaying tree canopy shadow sweeping across the real night lot
+            var shadowDark = new Color(4, 16, 12, 165);
+            var shadowSoft = new Color(8, 28, 20, 120);
+            FillRoundedRect(batch, new SimRect(cx - 56f, contentY + contentH * 0.16f, 112f, 22f), 11, shadowSoft);
+            FillRoundedRect(batch, new SimRect(cx - 38f + sway * 0.35f, contentY + contentH * 0.32f, 88f, 20f), 10, shadowDark);
+            FillRoundedRect(batch, new SimRect(cx - 48f - sway * 0.25f, contentY + contentH * 0.50f, 96f, 18f), 9, shadowSoft);
+            FillRoundedRect(batch, new SimRect(cx - 24f + sway * 0.4f, contentY + contentH * 0.64f, 64f, 14f), 7, shadowDark);
+
+            // Motion-tracking brackets around the moving shadow
+            float bw = 104f, bh = Math.Min(92f, contentH - 12f);
+            float bx = SimLayout.Clamp(cx - bw * 0.5f, r.X + 10f, r.Right - bw - 10f);
+            float by = contentY + (contentH - bh) * 0.5f;
+            DrawMotionBrackets(batch, px, bx, by, bw, bh, 12f, SimUiTokens.Amber * 0.85f);
+        }
+
+        void DrawMotionBrackets(UISpriteBatch batch, Texture2D px, float bx, float by, float bw, float bh, float br, Color col)
+        {
+            FillRect(batch, px, bx, by, br, 2f, col);
+            FillRect(batch, px, bx, by, 2f, br, col);
+            FillRect(batch, px, bx + bw - br, by, br, 2f, col);
+            FillRect(batch, px, bx + bw - 2f, by, 2f, br, col);
+            FillRect(batch, px, bx, by + bh - 2f, br, 2f, col);
+            FillRect(batch, px, bx, by + bh - br, 2f, br, col);
+            FillRect(batch, px, bx + bw - br, by + bh - 2f, br, 2f, col);
+            FillRect(batch, px, bx + bw - 2f, by + bh - br, 2f, br, col);
         }
 
         void DrawSilhouette(UISpriteBatch batch, Texture2D px, SimRect r, float floorY, float hudH, SecurityEvent ev)
