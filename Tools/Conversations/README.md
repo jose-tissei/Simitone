@@ -50,12 +50,9 @@ Set `SIMITONE_LAYA_URL` (and `SIMITONE_LAYA_KEY`) to use an already running serv
 
 ## The lines and AI subjects (no live LLM at play time)
 `Content\conversations\bank.json` holds both the dialogue lines (`speaker`, `reply`) and the AI Talk subjects (`subjects`).
-It is built offline with your local Ollama by `Tools/ConvoBank`:
-- `convobank --out Tools/Conversations/bank/bank.json --model gemma3:4b --subjects` (builds lines + AI subjects)
-- `convobank --out Tools/Conversations/bank/bank.json --model gemma3:4b --subjects-only` (generates/tops up AI subjects only)
-- `convobank --out Tools/Conversations/bank/bank.json --subjects-only --seed-subjects` (seeds the 48 built-in AI subjects offline)
+The lines are written by hand (no language model is used to make them): edit the files in `Tools/Conversations/bank/lines/*.txt` (the format is described at the top of the first file), then run `pwsh Tools/Conversations/bank/Build-Bank.ps1` to assemble `bank.json`. The script keeps the `subjects` list already in `bank.json`.
 
-Every line and subject passes validation (length, characters, blocked words, no raw TS1 interest labels). Missing bank entries fall back to built-in lines and built-in AI subjects, so there is never an empty line or raw TS1 topic.
+Every line and subject passes validation (length, characters, blocked words, no raw TS1 interest labels), and when the game loads the bank it also drops any line with asterisks, quote marks, dashes used as punctuation or no sentence ending (`DialogueBank.IsCleanLine`). The shipped bank is tested for zero dropped lines and for lines in every combination the game can ask for (`RepoBankLinesTests`). Missing bank entries fall back to built-in lines and built-in AI subjects, so there is never an empty line or raw TS1 topic.
 Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `{topic}` AI Talk subject.
 
 ## How it plugs into the game (no game source is edited)
@@ -71,9 +68,9 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
 | `Logic/` | Pure `net461`/`net9.0` logic, zero game types, unit tested: `Traits`, `OutcomeResolver`, `DialogueBank`, `LayaClient`, `LayaHost`, `TopicLogic`, `AiSubjectBank`, `SocialMemory`, `SimMemoryViewModel`, `SocialIntelligence`, `ParallelSocialPlanner`, `PieMenuLogic`, `BalloonLayout` |
 | `Game/` | Game runtime: `Boot`, `ParallelSocialDriver`, `ConvoPieMenu`, `ConvoPrimitive`, `ConvoTalk`, `ConvoOverlay`, `SimMemoryMenu` |
 | `bank/` | `bank.json` (built dialogue lines + 48 AI Talk subjects) and review sheets |
-| `../Conversations.Tests` | 239 unit tests |
+| `../Conversations.Tests` | 248 unit tests |
 | `../Package-Laya.ps1` | Builds the bundled Laya |
-| `../ConvoBank` | Offline dialogue & AI subject builder (Ollama) |
+| `bank/lines`, `bank/Build-Bank.ps1` | The hand-written dialogue lines and the script that assembles `bank.json` |
 | `../Install-Conversations.ps1` | Patches a pristine release and installs into a game folder |
 | `../PatchTests/ConversationsPatchTests.cs` | Cecil patcher integration & idempotency tests against the real release |
 
@@ -98,4 +95,4 @@ and make sure Python with `laya` is available (or a bundled `laya\python`).
 - Which script variant runs depends on the installed expansions; the hook finds the outcome step by its shape and logs
   `could not find the outcome store` if a variant does not match (the game then behaves as before).
 - Parallel room chatter uses verbal interactions only (`talk`, `compliment`, `joke`, `brag`, `cheerup`, `apologize`, `flirt`, `tease`); physical socials remain in manual Romance or native scripts.
-- Missing bank entries fall back to built-in lines and built-in AI subjects; expanding the bank is an offline run of `ConvoBank` (no live Ollama in the game).
+- Missing bank entries fall back to built-in lines and built-in AI subjects; to add lines, edit `bank/lines/*.txt` and run `bank/Build-Bank.ps1` (no language model is involved, in the game or in the build).

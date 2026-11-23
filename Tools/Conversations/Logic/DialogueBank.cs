@@ -6,7 +6,7 @@ using Newtonsoft.Json;
 
 namespace Simitone.Conversations
 {
-    // The fixed list of lines. Built offline (Tools/ConvoBank) so no AI call is ever needed during play.
+    // The fixed list of lines. Written by hand (bank/lines/*.txt, assembled into bank.json by bank/Build-Bank.ps1), so no AI call is ever needed during play.
     //   speaker[interaction][tone]            -> lines the speaker can say, one list per tone (Gentle, Playful, Bold)
     //   reply[interaction][quality][temper]   -> lines the receiver answers with; quality 1 = bad .. 3 = best,
     //                                            temper = easily_offended | thick_skinned | cold | receptive | any
@@ -57,8 +57,66 @@ namespace Simitone.Conversations
 
         public static DialogueBank Parse(string json)
         {
-            try { return new DialogueBank(JsonConvert.DeserializeObject<BankFile>(json)); }
+            try
+            {
+                var f = JsonConvert.DeserializeObject<BankFile>(json);
+                var dropped = Scrub(f);
+                return new DialogueBank(f) { Dropped = dropped };
+            }
             catch { return new DialogueBank(); }
+        }
+
+        // lines removed while loading because they failed the style filter (see IsCleanLine)
+        public int Dropped { get; private set; }
+
+        // Applies Tidy + IsCleanLine to every speaker and reply line, drops what fails and leaves emptied lists empty
+        // (Find treats an empty list as missing, so the built-in lines are used). Returns how many lines were dropped.
+        static int Scrub(BankFile f)
+        {
+            if (f == null) return 0;
+            int dropped = 0;
+            Func<List<string>, List<string>> clean = list =>
+            {
+                var kept = new List<string>();
+                foreach (var raw in list ?? new List<string>())
+                {
+                    var s = Tidy(raw);
+                    string reason;
+                    if (IsCleanLine(s, out reason)) kept.Add(s); else dropped++;
+                }
+                return kept;
+            };
+            if (f.Speaker != null)
+                foreach (var byTone in f.Speaker.Values.Where(v => v != null))
+                    foreach (var k in byTone.Keys.ToList()) byTone[k] = clean(byTone[k]);
+            if (f.Reply != null)
+                foreach (var byQuality in f.Reply.Values.Where(v => v != null))
+                    foreach (var byTemper in byQuality.Values.Where(v => v != null))
+                        foreach (var k in byTemper.Keys.ToList()) byTemper[k] = clean(byTemper[k]);
+            return dropped;
+        }
+
+        // curly single quotes become plain apostrophes (they look the same in the game font and are easier to edit); repeated spaces are collapsed
+        public static string Tidy(string line)
+        {
+            if (line == null) return null;
+            var s = line.Replace('’', '\'').Replace('‘', '\'');
+            while (s.Contains("  ")) s = s.Replace("  ", " ");
+            return s.Trim();
+        }
+
+        // Style rules for a line in a speech balloon, on top of IsAcceptable: no markdown asterisks, no stray or curly double quotes,
+        // no dashes used as punctuation, and it must end like a sentence.
+        public static bool IsCleanLine(string line, out string reason)
+        {
+            if (!IsAcceptable(line, out reason)) return false;
+            var s = line.Trim();
+            if (s.Contains("*")) { reason = "asterisk"; return false; }
+            if (s.Contains("–") || s.Contains("—") || s.Contains(" - ")) { reason = "dash"; return false; }
+            if (s.Contains("\"") || s.Contains("“") || s.Contains("”") || s.Contains("‘")) { reason = "quote marks"; return false; }
+            var end = s[s.Length - 1];
+            if (end != '.' && end != '!' && end != '?' && end != '…') { reason = "no end punctuation"; return false; }
+            return true;
         }
 
         static string Tkey(Tone t) { return ((int)t).ToString(); }
@@ -114,7 +172,7 @@ namespace Simitone.Conversations
             return (line ?? "").Replace("{me}", me ?? "").Replace("{name}", name ?? "").Replace("{job}", string.IsNullOrWhiteSpace(job) ? "friend" : job).Replace("{topic}", string.IsNullOrWhiteSpace(topic) ? "that" : topic);
         }
 
-        // lines that pass the quality filter used both when building the bank and when loading hand edits
+        // safety filter (length, characters, blocked words, placeholders); IsCleanLine adds the style rules applied when the bank is loaded
         public static bool IsAcceptable(string line, out string reason)
         {
             reason = null;

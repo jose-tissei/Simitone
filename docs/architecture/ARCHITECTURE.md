@@ -101,6 +101,6 @@ Note: on disk the folders are named `tso.*`, but they build into blocks called `
 Before a social plays, the player picks one of three lines; the other Sim's reaction depends on their character; both lines are shown.
 How it works, in plain words: the game already has one shared step where a social looks up its result. We replace that step with our own
 (`Tools/Conversations`), which shows the choice, asks a small local program (**Laya**, started by the game itself) to label the other
-Sim's temperament, and nudges the game's own result by at most one step. The lines come from a fixed list written ahead of time with
-a local language model (`Tools/ConvoBank`), so nothing slow happens while you play. The Options menu has a switch for all of it.
+Sim's temperament, and nudges the game's own result by at most one step. The lines come from a fixed list written by hand
+(`Tools/Conversations/bank/lines`), so nothing slow happens while you play. The Options menu has a switch for all of it.
 Details, install steps and limits: `Tools/Conversations/README.md`. The rules the game uses for relationships: `RELATIONSHIPS.md`.

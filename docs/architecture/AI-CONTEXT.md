@@ -89,6 +89,6 @@ See docs/architecture/RELATIONSHIPS.md (decoded from the original scripts with T
 - Feature: 3-line choice before 18 socials (script `397` hook), Talk subjects (`select topic I like.` routine hook), Laya-classified outcome shift (max one step), speech panel, Options toggle.
 - Read `Tools/Conversations/README.md` first. Pure logic in `Tools/Conversations/Logic` (unit tests in `Tools/Conversations.Tests`, 134); game side in `Game/`.
 - Install: `pwsh Tools/Install-Conversations.ps1 -Pristine <v0.8.12> -App <game folder>`. Patcher: `Tools/SpriteCardsPatch` with `Conversations.dll` as 4th argument (patches `VMContext..ctor`, `VMThread.ExecuteSubRoutine`, Options menu).
-- Runtime services: Laya (local, started by the game on 127.0.0.1, random key; env `LAYA_*` set by `LayaHost`); no Ollama at play time (bank built offline by `Tools/ConvoBank`).
+- Runtime services: Laya (local, started by the game on 127.0.0.1, random key; env `LAYA_*` set by `LayaHost`); no language model at play time or in the build (the bank is hand-written in `Tools/Conversations/bank/lines`, assembled by `Build-Bank.ps1`).
 - Gotchas learned: `Boot.Startup` runs before MonoGame is linked, so the early entry class `Early` must not mention game types; script variants differ per expansion (labels like "Hug - Friendly - Person A"), so hooks find routines by label/shape; the in-game Options panel pauses the game (speed -1).
 - Debug: `simtool convo status|last|log|tone N|force N|on|off`, `simtool interact/menu/sims/rel/dialog/answer/global/speed`.
