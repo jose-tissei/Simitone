@@ -44,8 +44,8 @@ namespace Simitone.Conversations
 
         ConvoOverlay()
         {
-            name = TextStyle.DefaultLabel.Clone(); name.Size = 14; name.Color = new Color(255, 230, 120); name.Shadow = true;
-            text = TextStyle.DefaultLabel.Clone(); text.Size = 16; text.Color = Color.White; text.Shadow = true;
+            name = SimUiTokens.MakeStyle(14, SimUiTokens.Mint, true);
+            text = SimUiTokens.MakeStyle(15, SimUiTokens.TextPrimary, true);
         }
 
         const int MaxLines = 4;
@@ -95,19 +95,31 @@ namespace Simitone.Conversations
         {
             if (lines.Count == 0) return;
             var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
-            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
-            float screenW = batch.GraphicsDevice.Viewport.Width / scale;
-            float screenH = batch.GraphicsDevice.Viewport.Height / scale;
+            float screenW, screenH;
+            var cur = UIScreen.Current;
+            if (cur != null && cur.ScreenWidth > 0 && cur.ScreenHeight > 0)
+            {
+                screenW = cur.ScreenWidth;
+                screenH = cur.ScreenHeight;
+            }
+            else
+            {
+                float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
+                screenW = batch.GraphicsDevice.Viewport.Width / scale;
+                screenH = batch.GraphicsDevice.Viewport.Height / scale;
+            }
 
             var placed = new List<BalloonLayout.Box>();
             float stripY = screenH - 24;
+            float maxTextW = Math.Min(MaxTextWidth, Math.Max(140f, screenW - 64f));
             foreach (var l in lines)
             {
                 if (clock < l.Born) continue;
-                var wrapped = BalloonLayout.Wrap(l.Text, MaxTextWidth, s => text.MeasureString(s).X);
-                float tw = 0;
+                var wrapped = BalloonLayout.Wrap(l.Text, maxTextW, s => text.MeasureString(s).X);
+                float tw = name.MeasureString(l.Who).X;
                 foreach (var w in wrapped) tw = Math.Max(tw, text.MeasureString(w).X);
-                float lh = 20, w2 = tw + 24, h = 26 + wrapped.Count * lh;
+                float lh = Math.Max(20f, text.MeasureString("Ag").Y + 2f);
+                float w2 = tw + 24f, h = 28f + wrapped.Count * lh;
 
                 var anchor = Anchor(l);
                 BalloonLayout.Box box;
@@ -120,22 +132,23 @@ namespace Simitone.Conversations
                 else
                 {
                     stripY -= h + 6;
-                    box = new BalloonLayout.Box { X = (screenW - w2) / 2 + 120, Y = stripY, W = w2, H = h };
+                    box = new BalloonLayout.Box { X = Math.Max(12f, Math.Min(screenW - w2 - 12f, (screenW - w2) * 0.5f + 120f)), Y = stripY, W = w2, H = h };
                 }
                 placed.Add(box);
                 LastPlacement = over ? "over-heads" : "strip";
 
-                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, box.H), new Color(20, 20, 30, 215));
-                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, 2), new Color(255, 230, 120, 230));   // accent edge
+                DrawLocalTexture(batch, px, null, new Vector2(box.X - 1, box.Y - 1), new Vector2(box.W + 2, box.H + 2), SimUiTokens.InnerBorder);
+                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, box.H), SimUiTokens.DialogBg);
+                DrawLocalTexture(batch, px, null, new Vector2(box.X, box.Y), new Vector2(box.W, 2), SimUiTokens.Mint);   // Sims plumbob mint accent edge
                 if (over)
                 {
                     // a small tail pointing down at the Sim
                     float cx = Math.Max(box.X + 10, Math.Min(anchor.Value.X, box.X + box.W - 10));
                     for (int i = 0; i < 6; i++)
-                        DrawLocalTexture(batch, px, null, new Vector2(cx - (6 - i), box.Y + box.H + i), new Vector2((6 - i) * 2, 1), new Color(20, 20, 30, 215));
+                        DrawLocalTexture(batch, px, null, new Vector2(cx - (6 - i), box.Y + box.H + i), new Vector2((6 - i) * 2, 1), SimUiTokens.DialogBg);
                 }
                 DrawLocalString(batch, l.Who, new Vector2(box.X + 12, box.Y + 5), name);
-                float ty = box.Y + 22;
+                float ty = box.Y + 24;
                 foreach (var w in wrapped) { DrawLocalString(batch, w, new Vector2(box.X + 12, ty), text); ty += lh; }
             }
         }

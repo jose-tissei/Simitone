@@ -226,8 +226,8 @@ namespace Simitone.Conversations
         static string Signed(int v) { return v > 0 ? "+" + v : v.ToString(); }
     }
 
-    // Pulsing top-right Radio Dispatch toast when a Security Guard Sim receives a shift call.
-    public class CareerDispatchToast : UIElement
+    // Native Simitone-styled top-right Radio Dispatch toast when a Security Guard Sim receives a shift call.
+    public class CareerDispatchToast : SimUiElement
     {
         const float ToastTimeoutSeconds = 30f;
 
@@ -237,7 +237,7 @@ namespace Simitone.Conversations
         public static bool IsOpen { get { return isOpen && instance != null; } }
         public static VMAvatar CurrentAvatar { get { return instance != null ? instance.avatar : null; } }
 
-        readonly TextStyle channelStyle, titleStyle, bodyStyle, btnStyle;
+        readonly TextStyle channelStyle, titleStyle, bodyStyle, timerStyle;
         VMAvatar avatar;
         string simName = "Sim";
         string rankTitle = "Security Guard";
@@ -249,19 +249,10 @@ namespace Simitone.Conversations
 
         CareerDispatchToast()
         {
-            channelStyle = MakeStyle(11, new Color(255, 214, 102));
-            titleStyle = MakeStyle(15, new Color(246, 250, 255));
-            bodyStyle = MakeStyle(12, new Color(185, 210, 224));
-            btnStyle = MakeStyle(12, new Color(246, 250, 255));
-        }
-
-        static TextStyle MakeStyle(int size, Color color)
-        {
-            var s = TextStyle.DefaultLabel.Clone();
-            s.Size = size;
-            s.Color = color;
-            s.Shadow = true;
-            return s;
+            channelStyle = SimUiTokens.MakeStyle(12, SimUiTokens.DialogTitle, false);
+            titleStyle = SimUiTokens.MakeStyle(15, SimUiTokens.TextPrimary, true);
+            bodyStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextMuted, true);
+            timerStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Mint, true);
         }
 
         public static string Show(VMAvatar av, string rankTitle)
@@ -271,11 +262,9 @@ namespace Simitone.Conversations
                 var screen = UIScreen.Current;
                 if (screen == null) return "no screen";
                 if (instance == null) instance = new CareerDispatchToast();
-                if (instance.Parent != screen)
-                {
-                    if (instance.Parent != null) instance.Parent.Remove(instance);
-                    screen.Add(instance);
-                }
+                if (instance.Parent != null && instance.Parent != screen)
+                    instance.Parent.Remove(instance);
+                screen.Add(instance);
                 instance.avatar = av;
                 instance.simName = av != null && !string.IsNullOrWhiteSpace(av.Name) ? av.Name.Trim() : "Sim";
                 instance.rankTitle = string.IsNullOrWhiteSpace(rankTitle) ? "Security Guard" : rankTitle.Trim();
@@ -342,113 +331,94 @@ namespace Simitone.Conversations
         {
             if (!isOpen || !Visible) return;
             var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
-            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
-            float screenW = batch.GraphicsDevice.Viewport.Width / scale;
+            float screenW, screenH;
+            GetScreenSize(batch, out screenW, out screenH);
 
-            float w = 372f, h = 118f;
-            float x = screenW - w - 22f;
-            float y = 22f;
+            var layout = DispatchToastLayout.Compute(screenW, screenH);
+            answerRect = ToXnaRect(layout.AnswerBtn);
+            ignoreRect = ToXnaRect(layout.IgnoreBtn);
 
             float pulse = 0.5f + 0.5f * (float)Math.Sin(pulseTime * 6.0f);
-            var accent = new Color((int)(220 + 35 * pulse), (int)(168 + 56 * pulse), 65, 255);
 
-            // Outer border & radio chassis
-            DrawLocalTexture(batch, px, null, new Vector2(x - 2, y - 2), new Vector2(w + 4, h + 4), new Color(75, 130, 165, 210));
-            DrawLocalTexture(batch, px, null, new Vector2(x, y), new Vector2(w, h), new Color(14, 22, 34, 242));
-            DrawLocalTexture(batch, px, null, new Vector2(x, y), new Vector2(w, 3), accent);
+            // 1. Translucent Simitone dark glass toast shell + gradient header bar
+            DrawDialogShell(batch, layout.Panel, false, screenW, screenH);
+            DrawTitleBar(batch, layout.HeaderBar, layout.ChannelTextRect, "RADIO DISPATCH • CH-04", channelStyle);
 
-            // Pulsing radio LED + signal bars
-            DrawLocalTexture(batch, px, null, new Vector2(x + 14, y + 14), new Vector2(10, 10),
-                pulse > 0.45f ? new Color(255, 198, 72, 255) : new Color(110, 82, 32, 220));
+            // Pulsing radio LED inside reserved left header slot
+            Color ledBg = Color.Black * 0.55f;
+            FillRect(batch, px, layout.LedRect.X - 1, layout.LedRect.Y - 1, layout.LedRect.Width + 2, layout.LedRect.Height + 2, ledBg);
+            FillRect(batch, px, layout.LedRect, pulse > 0.45f ? SimUiTokens.Mint : new Color(0, 110, 68, 220));
+
+            // Animated signal bars inside reserved right header slot (never overlaps title!)
+            FillRect(batch, px, layout.SignalBarsRect, Color.Black * 0.48f);
             for (int b = 0; b < 4; b++)
             {
-                int bh = 4 + b * 2;
+                float bh = 4f + b * 3f;
                 bool lit = b < 2 || pulse > 0.35f;
-                DrawLocalTexture(batch, px, null, new Vector2(x + w - 42 + b * 7, y + 22 - bh), new Vector2(4, bh),
-                    lit ? new Color(96, 232, 168, 240) : new Color(40, 62, 74, 180));
+                FillRect(batch, px,
+                    layout.SignalBarsRect.X + 4f + b * 7f,
+                    layout.SignalBarsRect.Bottom - 2f - bh,
+                    4f, bh,
+                    lit ? SimUiTokens.Mint : new Color(40, 82, 74, 190));
             }
 
-            DrawLocalString(batch, "RADIO DISPATCH  •  CH-04 LAW ENFORCEMENT", new Vector2(x + 30, y + 12), channelStyle);
-            DrawLocalString(batch, simName + "  •  " + rankTitle + " (Lvl 1)", new Vector2(x + 14, y + 32), titleStyle);
-            DrawLocalString(batch, "Night Watch motion alert on precinct CCTV feeds!", new Vector2(x + 14, y + 54), bodyStyle);
+            // 2. Sim & alert copy (auto-ellipsized within layout rects)
+            DrawFittedLine(batch, simName + "  •  " + rankTitle + " (Lvl 1)", layout.TitleRect, titleStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "Motion alert on precinct CCTV feeds!", layout.BodyRect, bodyStyle, SimTextAlign.Left);
 
-            // Action buttons
-            answerRect = new Rectangle((int)(x + 14), (int)(y + 78), 164, 28);
-            ignoreRect = new Rectangle((int)(x + 188), (int)(y + 78), 96, 28);
+            // 3. Native Simitone pill buttons + countdown seconds
+            DrawPillButton(batch, layout.AnswerBtn, "ANSWER", SimButtonVariant.Primary, hoverAnswer);
+            DrawPillButton(batch, layout.IgnoreBtn, "IGNORE", SimButtonVariant.Secondary, hoverIgnore);
 
-            DrawLocalTexture(batch, px, null, new Vector2(answerRect.X, answerRect.Y), new Vector2(answerRect.Width, answerRect.Height),
-                hoverAnswer ? new Color(54, 148, 104, 250) : new Color(36, 114, 82, 240));
-            DrawLocalTexture(batch, px, null, new Vector2(answerRect.X, answerRect.Y + answerRect.Height - 2), new Vector2(answerRect.Width, 2),
-                new Color(255, 224, 120, 240));
-            CenterText(batch, "ANSWER DISPATCH", answerRect, btnStyle);
-
-            DrawLocalTexture(batch, px, null, new Vector2(ignoreRect.X, ignoreRect.Y), new Vector2(ignoreRect.Width, ignoreRect.Height),
-                hoverIgnore ? new Color(68, 76, 94, 240) : new Color(38, 48, 64, 225));
-            CenterText(batch, "IGNORE", ignoreRect, btnStyle);
-
-            // Countdown timer text + bar
             string secLabel = Math.Max(0, (int)Math.Ceiling(remaining)) + "s";
-            DrawLocalString(batch, secLabel, new Vector2(x + w - 38, y + 84), bodyStyle);
+            DrawFittedLine(batch, secLabel, layout.TimerTextRect, timerStyle, SimTextAlign.Right);
 
-            float frac = Math.Max(0f, Math.Min(1f, remaining / ToastTimeoutSeconds));
-            DrawLocalTexture(batch, px, null, new Vector2(x, y + h - 3), new Vector2(w, 3), new Color(32, 46, 62, 200));
-            DrawLocalTexture(batch, px, null, new Vector2(x, y + h - 3), new Vector2(w * frac, 3), accent);
-        }
-
-        void CenterText(UISpriteBatch batch, string text, Rectangle r, TextStyle style)
-        {
-            var sz = style.MeasureString(text);
-            DrawLocalString(batch, text, new Vector2(r.X + (r.Width - sz.X) * 0.5f, r.Y + (r.Height - sz.Y) * 0.5f), style);
+            // 4. Native motive-style countdown bar
+            float frac = SimLayout.Clamp(remaining / ToastTimeoutSeconds, 0f, 1f);
+            DrawMotiveBar(batch, layout.TimerBarRect, frac, frac < 0.25f);
         }
     }
 
-    // Floating CCTV Night Watch mini-game window for Law Enforcement Level 1 (Security Guard).
-    public class SecurityWatchOverlay : UIElement
+    // Native Simitone-styled floating CCTV Night Watch mini-game for Law Enforcement Level 1 (Security Guard).
+    public class SecurityWatchOverlay : SimUiElement
     {
         static SecurityWatchOverlay instance;
         static bool isOpen;
 
         public static bool IsOpen { get { return isOpen && instance != null; } }
 
-        readonly TextStyle titleStyle, subStyle, goldStyle, bodyStyle, mutedStyle, camStyle, quietStyle, alertStyle, greenStyle, redStyle, btnStyle, gradeStyle;
+        readonly TextStyle headerTitleStyle, subStyle, cyanStyle, mintStyle, bodyStyle, mutedStyle, camStyle, quietStyle, alertStyle, redStyle, amberStyle, badgeTextStyle, statValMintStyle, statValCyanStyle, statValRedStyle, gradeStyle;
         SecurityWatchGame game;
         SecurityWatchOutcome finalOutcome;
         VMAvatar avatar;
         int savedSpeed = 1;
         bool rewardsApplied;
-        string appliedSummary = "";
 
         readonly Rectangle[] camRects = new Rectangle[4];
         Rectangle panelRect, closeRect, alarmRect, clearRect, coffeeRect, claimRect;
         bool prevLeftDown, prevEscDown, prevADown, prevDDown, prevSpaceDown, prevEnterDown;
         readonly bool[] prevNumDown = new bool[4];
         int hoveredCam = -1;
-        bool hoverAlarm, hoverClear, hoverCoffee, hoverClaim;
+        bool hoverClose, hoverAlarm, hoverClear, hoverCoffee, hoverClaim;
 
         SecurityWatchOverlay()
         {
-            titleStyle = MakeStyle(20, new Color(255, 224, 120));
-            subStyle = MakeStyle(13, new Color(172, 202, 224));
-            goldStyle = MakeStyle(14, new Color(255, 220, 118));
-            bodyStyle = MakeStyle(14, new Color(238, 244, 250));
-            mutedStyle = MakeStyle(12, new Color(165, 184, 202));
-            camStyle = MakeStyle(12, new Color(142, 245, 178));
-            quietStyle = MakeStyle(12, new Color(68, 128, 92, 165));
-            quietStyle.Shadow = false;
-            alertStyle = MakeStyle(12, new Color(255, 116, 108));
-            greenStyle = MakeStyle(14, new Color(122, 238, 162));
-            redStyle = MakeStyle(14, new Color(255, 134, 128));
-            btnStyle = MakeStyle(14, new Color(248, 251, 255));
-            gradeStyle = MakeStyle(44, new Color(255, 228, 124));
-        }
-
-        static TextStyle MakeStyle(int size, Color color)
-        {
-            var s = TextStyle.DefaultLabel.Clone();
-            s.Size = size;
-            s.Color = color;
-            s.Shadow = true;
-            return s;
+            headerTitleStyle = SimUiTokens.MakeStyle(20, SimUiTokens.DialogTitle, false);
+            subStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextMuted, true);
+            cyanStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Cyan, true);
+            mintStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Mint, true);
+            bodyStyle = SimUiTokens.MakeStyle(13, SimUiTokens.TextPrimary, true);
+            mutedStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextMuted, true);
+            camStyle = SimUiTokens.MakeStyle(12, SimUiTokens.MintSoft, true);
+            quietStyle = SimUiTokens.MakeStyle(12, new Color(78, 148, 108, 170), false);
+            alertStyle = SimUiTokens.MakeStyle(12, SimUiTokens.Danger, true);
+            redStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Danger, true);
+            amberStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Amber, true);
+            badgeTextStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextPrimary, true);
+            statValMintStyle = SimUiTokens.MakeStyle(20, SimUiTokens.Mint, true);
+            statValCyanStyle = SimUiTokens.MakeStyle(20, SimUiTokens.Cyan, true);
+            statValRedStyle = SimUiTokens.MakeStyle(20, SimUiTokens.Danger, true);
+            gradeStyle = SimUiTokens.MakeStyle(42, Color.White, true);
         }
 
         public static string Open(VMAvatar av, int? seed)
@@ -458,11 +428,9 @@ namespace Simitone.Conversations
                 var screen = UIScreen.Current;
                 if (screen == null) return "no screen";
                 if (instance == null) instance = new SecurityWatchOverlay();
-                if (instance.Parent != screen)
-                {
-                    if (instance.Parent != null) instance.Parent.Remove(instance);
-                    screen.Add(instance);
-                }
+                if (instance.Parent != null && instance.Parent != screen)
+                    instance.Parent.Remove(instance);
+                screen.Add(instance);
 
                 instance.avatar = av;
                 string simName = av != null && !string.IsNullOrWhiteSpace(av.Name) ? av.Name.Trim() : "Sim";
@@ -470,7 +438,6 @@ namespace Simitone.Conversations
                 instance.game = new SecurityWatchGame(simName, energy, SecurityWatchGame.DefaultTotalRounds, seed);
                 instance.finalOutcome = null;
                 instance.rewardsApplied = false;
-                instance.appliedSummary = "";
 
                 // Pause live simulation while player focuses on the CCTV monitor
                 var vm = CareerDispatchDriver.CurrentVM();
@@ -554,7 +521,7 @@ namespace Simitone.Conversations
         {
             if (rewardsApplied || game == null) return;
             if (finalOutcome == null) finalOutcome = game.ComputeOutcome();
-            appliedSummary = CareerDispatchDriver.ApplyRewards(avatar, finalOutcome);
+            CareerDispatchDriver.ApplyRewards(avatar, finalOutcome);
             rewardsApplied = true;
         }
 
@@ -618,6 +585,7 @@ namespace Simitone.Conversations
             int mx = (int)(state.MouseState.X / scale);
             int my = (int)(state.MouseState.Y / scale);
 
+            hoverClose = closeRect.Contains(mx, my);
             hoveredCam = -1;
             for (int i = 0; i < 4; i++)
                 if (camRects[i].Contains(mx, my)) { hoveredCam = i; break; }
@@ -629,7 +597,7 @@ namespace Simitone.Conversations
             bool left = state.MouseState.LeftButton == ButtonState.Pressed;
             if (left && !prevLeftDown)
             {
-                if (closeRect.Contains(mx, my))
+                if (hoverClose)
                 {
                     prevLeftDown = true;
                     Close(game.IsFinished);
@@ -663,384 +631,330 @@ namespace Simitone.Conversations
         {
             if (!isOpen || !Visible || game == null) return;
             var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
-            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
-            float screenW = batch.GraphicsDevice.Viewport.Width / scale;
-            float screenH = batch.GraphicsDevice.Viewport.Height / scale;
+            float screenW, screenH;
+            GetScreenSize(batch, out screenW, out screenH);
 
-            float pw = Math.Min(880f, screenW - 60f);
-            float ph = Math.Min(594f, screenH - 64f);
-            float px0 = (screenW - pw) * 0.5f;
-            float py0 = (screenH - ph) * 0.5f;
-            panelRect = new Rectangle((int)px0, (int)py0, (int)pw, (int)ph);
+            var layout = SecurityWatchLayout.Compute(screenW, screenH, game.IsFinished);
+            panelRect = ToXnaRect(layout.Panel);
+            closeRect = ToXnaRect(layout.CloseBtn);
 
-            // Dim backdrop + chassis + gold badge accent
-            DrawLocalTexture(batch, px, null, Vector2.Zero, new Vector2(screenW, screenH), new Color(4, 8, 14, 155));
-            DrawLocalTexture(batch, px, null, new Vector2(px0 - 2, py0 - 2), new Vector2(pw + 4, ph + 4), new Color(80, 128, 156, 200));
-            DrawLocalTexture(batch, px, null, new Vector2(px0, py0), new Vector2(pw, ph), new Color(14, 20, 30, 246));
-            DrawLocalTexture(batch, px, null, new Vector2(px0, py0), new Vector2(pw, 4), new Color(255, 214, 98, 245));
+            // 1. Native Simitone modal backdrop + gradient title bar + badges + close pill
+            DrawDialogShell(batch, layout.Panel, true, screenW, screenH);
+            DrawTitleBar(batch, layout.HeaderBar, layout.TitleRect, "CCTV NIGHT WATCH", headerTitleStyle);
 
-            // Header bar
-            DrawLocalString(batch, "CCTV NIGHT WATCH  •  SECURITY GUARD (LVL 1)", new Vector2(px0 + 20, py0 + 14), titleStyle);
-            string sub = game.SimName + " on Duty  |  Shift: 12:00 AM - 6:00 AM  |  Law Enforcement Precinct";
-            DrawLocalString(batch, sub, new Vector2(px0 + 20, py0 + 40), subStyle);
-
-            // Round & Score pills
             string roundPill = game.IsFinished
                 ? "SHIFT COMPLETE"
                 : "EVENT " + (game.CurrentRoundIndex + 1) + " / " + game.TotalRounds;
             string scorePill = "SCORE " + game.CorrectCount + "/" + game.TotalRounds;
-            DrawBadge(batch, px, px0 + pw - 296, py0 + 16, 134, 28, roundPill, new Color(28, 48, 68, 235), goldStyle);
-            DrawBadge(batch, px, px0 + pw - 154, py0 + 16, 98, 28, scorePill, new Color(24, 56, 48, 235), greenStyle);
 
-            // Close button [X]
-            closeRect = new Rectangle((int)(px0 + pw - 46), (int)(py0 + 16), 30, 28);
-            DrawLocalTexture(batch, px, null, new Vector2(closeRect.X, closeRect.Y), new Vector2(closeRect.Width, closeRect.Height), new Color(72, 42, 50, 235));
-            CenterText(batch, "X", closeRect, btnStyle);
+            DrawPillBadge(batch, layout.RoundBadge, roundPill, SimUiTokens.PillDarkBg, cyanStyle);
+            DrawPillBadge(batch, layout.ScoreBadge, scorePill, SimUiTokens.PillDarkBg, mintStyle);
+            DrawPillButton(batch, layout.CloseBtn, "X", SimButtonVariant.Close, hoverClose);
 
-            DrawLocalTexture(batch, px, null, new Vector2(px0 + 16, py0 + 64), new Vector2(pw - 32, 1), new Color(68, 96, 122, 160));
+            // Clean subtitle line below gradient header
+            string sub = game.SimName + " on Duty  •  Security Guard (Lvl 1)  •  12:00 AM - 6:00 AM  •  Law Enforcement Precinct";
+            DrawFittedLine(batch, sub, layout.SubtitleBar, subStyle, SimTextAlign.Left);
 
             if (game.IsFinished)
             {
-                DrawSummary(batch, px, px0, py0 + 74, pw, ph - 84);
+                DrawSummary(batch, px, layout);
                 return;
             }
 
-            // 2x2 CCTV camera feed grid
-            float padX = 20f, gapX = 14f, gapY = 12f;
-            float gridY = py0 + 76f;
-            float camW = (pw - padX * 2f - gapX) * 0.5f;
-            float camH = 182f;
-
+            // 2. Responsive 2x2 CCTV camera feed grid
             var ev = game.ActiveEvent;
             for (int i = 0; i < 4; i++)
             {
-                int col = i % 2;
-                int row = i / 2;
-                float cx = px0 + padX + col * (camW + gapX);
-                float cy = gridY + row * (camH + gapY);
-                camRects[i] = new Rectangle((int)cx, (int)cy, (int)camW, (int)camH);
-                DrawCameraFeed(batch, px, i, camRects[i], ev != null && ev.CameraIndex == i ? ev : null);
+                camRects[i] = ToXnaRect(layout.Cameras[i]);
+                DrawCameraFeed(batch, px, i, layout.Cameras[i], ev != null && ev.CameraIndex == i ? ev : null);
             }
 
-            // Bottom tactical control deck
-            float deckY = gridY + camH * 2f + gapY + 14f;
-            float deckH = ph - (deckY - py0) - 16f;
-            DrawLocalTexture(batch, px, null, new Vector2(px0 + 20, deckY), new Vector2(pw - 40, deckH), new Color(18, 26, 40, 230));
-            DrawLocalTexture(batch, px, null, new Vector2(px0 + 20, deckY), new Vector2(pw - 40, 2), new Color(72, 110, 140, 175));
+            // 3. Responsive bottom tactical control deck (glass card)
+            DrawGlassCard(batch, layout.DeckPanel, SimUiTokens.CardBgAlt, SimUiTokens.TealHighlight * 0.85f);
 
-            // Event report + timer bar
             string report = ev != null
                 ? SecurityWatchGame.CameraLabels[ev.CameraIndex] + "  —  " + ev.Headline
                 : "Scanning perimeter feeds...";
             string clue = game.FeedbackTimer > 0f && !string.IsNullOrWhiteSpace(game.LastFeedback)
                 ? game.LastFeedback
                 : (ev != null ? ev.ClueText : "");
-            TextStyle clueStyle = subStyle;
+            TextStyle clueStyle = mutedStyle;
             if (game.FeedbackTimer > 0f)
             {
                 if (game.LastResult == SecurityRoundResult.ThreatCaught || game.LastResult == SecurityRoundResult.FalseAlarmCleared)
-                    clueStyle = greenStyle;
+                    clueStyle = mintStyle;
                 else if (game.LastResult != SecurityRoundResult.None)
                     clueStyle = redStyle;
             }
 
-            DrawLocalString(batch, report, new Vector2(px0 + 34, deckY + 10), goldStyle);
-            DrawLocalString(batch, clue, new Vector2(px0 + 34, deckY + 32), clueStyle);
+            DrawFittedLine(batch, report, layout.ReportTextRect, amberStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, clue, layout.ClueTextRect, clueStyle, SimTextAlign.Left);
 
-            // Event countdown bar on top-right of deck
+            // Event countdown motive bar on top-right of deck (strictly separated from report/clue!)
             if (ev != null)
             {
-                float tBarW = 190f;
-                float tBarX = px0 + pw - 34f - tBarW;
-                float tFrac = Math.Max(0f, Math.Min(1f, ev.RemainingSeconds / Math.Max(0.1f, ev.DurationSeconds)));
-                DrawLocalString(batch, "TIME LEFT: " + ev.RemainingSeconds.ToString("0.0") + "s", new Vector2(tBarX, deckY + 10), tFrac < 0.3f ? alertStyle : mutedStyle);
-                DrawLocalTexture(batch, px, null, new Vector2(tBarX, deckY + 30), new Vector2(tBarW, 9), new Color(34, 46, 62, 220));
-                DrawLocalTexture(batch, px, null, new Vector2(tBarX, deckY + 30), new Vector2(tBarW * tFrac, 9),
-                    tFrac < 0.3f ? new Color(245, 96, 86, 245) : new Color(96, 214, 172, 245));
+                float tFrac = SimLayout.Clamp(ev.RemainingSeconds / Math.Max(0.1f, ev.DurationSeconds), 0f, 1f);
+                DrawFittedLine(batch, "TIME LEFT: " + ev.RemainingSeconds.ToString("0.0") + "s",
+                    layout.TimerLabelRect, tFrac < 0.30f ? alertStyle : mutedStyle, SimTextAlign.Right);
+                DrawMotiveBar(batch, layout.TimerBarRect, tFrac, tFrac < 0.30f);
             }
 
-            // Action buttons row
-            float btnY = deckY + 62f;
-            alarmRect = new Rectangle((int)(px0 + 34), (int)btnY, 218, 42);
-            clearRect = new Rectangle((int)(px0 + 266), (int)btnY, 218, 42);
+            // Tactical controls (native Simitone pill buttons + motive alertness bar)
+            alarmRect = ToXnaRect(layout.AlarmBtn);
+            clearRect = ToXnaRect(layout.ClearBtn);
+            coffeeRect = ToXnaRect(layout.CoffeeBtn);
 
-            DrawLocalTexture(batch, px, null, new Vector2(alarmRect.X, alarmRect.Y), new Vector2(alarmRect.Width, alarmRect.Height),
-                hoverAlarm ? new Color(196, 64, 58, 250) : new Color(152, 46, 44, 240));
-            DrawLocalTexture(batch, px, null, new Vector2(alarmRect.X, alarmRect.Y + alarmRect.Height - 3), new Vector2(alarmRect.Width, 3),
-                new Color(255, 196, 98, 245));
-            CenterText(batch, "[A]  SOUND ALARM  (Threat)", alarmRect, btnStyle);
+            DrawPillButton(batch, layout.AlarmBtn, "[A] SOUND ALARM", SimButtonVariant.Danger, hoverAlarm);
+            DrawPillButton(batch, layout.ClearBtn, "[D] ALL CLEAR", SimButtonVariant.Primary, hoverClear);
 
-            DrawLocalTexture(batch, px, null, new Vector2(clearRect.X, clearRect.Y), new Vector2(clearRect.Width, clearRect.Height),
-                hoverClear ? new Color(46, 146, 114, 250) : new Color(32, 112, 88, 240));
-            DrawLocalTexture(batch, px, null, new Vector2(clearRect.X, clearRect.Y + clearRect.Height - 3), new Vector2(clearRect.Width, 3),
-                new Color(142, 245, 190, 235));
-            CenterText(batch, "[D]  ALL CLEAR  (False Alarm)", clearRect, btnStyle);
+            float aFrac = SimLayout.Clamp(game.Alertness / 100f, 0f, 1f);
+            DrawFittedLine(batch, "STAY AWAKE: " + (int)Math.Round(game.Alertness) + "%",
+                layout.AwakeLabelRect, aFrac < 0.30f ? alertStyle : mutedStyle, SimTextAlign.Left);
+            DrawMotiveBar(batch, layout.AwakeBarRect, aFrac, aFrac < 0.30f);
 
-            // Stay Awake meter + Sip Coffee button on right side
-            float awakeX = px0 + 506f;
-            float awakeW = 148f;
-            float aFrac = Math.Max(0f, Math.Min(1f, game.Alertness / 100f));
-            DrawLocalString(batch, "STAY AWAKE: " + (int)Math.Round(game.Alertness) + "%", new Vector2(awakeX, btnY + 2),
-                aFrac < 0.30f ? alertStyle : mutedStyle);
-            DrawLocalTexture(batch, px, null, new Vector2(awakeX, btnY + 24), new Vector2(awakeW, 12), new Color(34, 46, 62, 220));
-            Color awakeColor = aFrac < 0.30f ? new Color(245, 96, 86, 245) : (aFrac < 0.55f ? new Color(245, 196, 82, 245) : new Color(108, 224, 152, 245));
-            DrawLocalTexture(batch, px, null, new Vector2(awakeX, btnY + 24), new Vector2(awakeW * aFrac, 12), awakeColor);
-
-            coffeeRect = new Rectangle((int)(awakeX + awakeW + 12), (int)btnY, (int)(px0 + pw - 34 - (awakeX + awakeW + 12)), 42);
             bool hasCoffee = game.CoffeeSipsLeft > 0;
-            DrawLocalTexture(batch, px, null, new Vector2(coffeeRect.X, coffeeRect.Y), new Vector2(coffeeRect.Width, coffeeRect.Height),
-                hasCoffee ? (hoverCoffee ? new Color(148, 98, 46, 250) : new Color(112, 74, 34, 240)) : new Color(42, 46, 56, 190));
-            if (hasCoffee)
-                DrawLocalTexture(batch, px, null, new Vector2(coffeeRect.X, coffeeRect.Y + coffeeRect.Height - 2), new Vector2(coffeeRect.Width, 2), new Color(255, 214, 120, 220));
-            CenterText(batch, "[SPC] COFFEE (" + game.CoffeeSipsLeft + ")", coffeeRect, hasCoffee ? btnStyle : mutedStyle);
+            DrawPillButton(batch, layout.CoffeeBtn, "[SPC] COFFEE (" + game.CoffeeSipsLeft + ")",
+                SimButtonVariant.Warning, hoverCoffee && hasCoffee, hasCoffee);
         }
 
-        void DrawCameraFeed(UISpriteBatch batch, Texture2D px, int camIdx, Rectangle r, SecurityEvent ev)
+        void DrawCameraFeed(UISpriteBatch batch, Texture2D px, int camIdx, SimRect r, SecurityEvent ev)
         {
             bool selected = game.SelectedCamera == camIdx;
             bool hovered = hoveredCam == camIdx;
             bool activeMotion = ev != null;
             float blink = (float)Math.Sin(game.ElapsedSeconds * 7.5f);
 
-            // Outer frame
+            // Crisp Sims-styled outer border
             Color border = activeMotion
-                ? (blink > 0 ? new Color(245, 92, 82, 245) : new Color(210, 146, 68, 230))
-                : (selected ? new Color(255, 220, 118, 235) : (hovered ? new Color(110, 178, 148, 200) : new Color(50, 78, 72, 190)));
-            DrawLocalTexture(batch, px, null, new Vector2(r.X - 2, r.Y - 2), new Vector2(r.Width + 4, r.Height + 4), border);
+                ? (blink > 0 ? SimUiTokens.Danger : SimUiTokens.Amber)
+                : (selected ? SimUiTokens.Mint : (hovered ? SimUiTokens.Cyan : SimUiTokens.InnerBorder));
+            FillRect(batch, px, r.X - 2f, r.Y - 2f, r.Width + 4f, r.Height + 4f, border);
 
             // Night-vision CRT phosphor screen
             float dimFactor = game.Alertness < 20f ? 0.55f : 1f;
-            var bg = new Color((int)(10 * dimFactor), (int)(26 * dimFactor), (int)(18 * dimFactor), 245);
-            DrawLocalTexture(batch, px, null, new Vector2(r.X, r.Y), new Vector2(r.Width, r.Height), bg);
+            var bg = new Color((int)(8 * dimFactor), (int)(26 * dimFactor), (int)(22 * dimFactor), 245);
+            FillRect(batch, px, r, bg);
 
-            // Subtle architectural backdrop per camera (floor horizon + fence/wall/crates)
-            int horizonY = r.Y + r.Height - 46;
-            DrawLocalTexture(batch, px, null, new Vector2(r.X, horizonY), new Vector2(r.Width, 46), new Color(16, 38, 28, 220));
-            DrawLocalTexture(batch, px, null, new Vector2(r.X, horizonY), new Vector2(r.Width, 2), new Color(42, 92, 66, 160));
+            // Responsive architectural horizon & backdrop scaled proportionally to camera height
+            float hudH = 24f;
+            float floorH = SimLayout.Clamp(r.Height * 0.24f, 22f, 44f);
+            float horizonY = r.Bottom - floorH;
+            FillRect(batch, px, r.X, horizonY, r.Width, floorH, new Color(14, 40, 32, 220));
+            FillRect(batch, px, r.X, horizonY, r.Width, 2f, new Color(36, 108, 80, 170));
+
+            float archTop = r.Y + hudH + 14f;
+            float archH = Math.Max(14f, horizonY - archTop);
 
             if (camIdx == 0) // Front Gate: iron fence bars
             {
-                for (int fx = r.X + 24; fx < r.Right - 20; fx += 24)
-                    DrawLocalTexture(batch, px, null, new Vector2(fx, r.Y + 42), new Vector2(3, horizonY - (r.Y + 42)), new Color(24, 58, 42, 165));
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 16, r.Y + 56), new Vector2(r.Width - 32, 3), new Color(30, 70, 50, 175));
+                for (float fx = r.X + 22f; fx < r.Right - 18f; fx += 24f)
+                    FillRect(batch, px, fx, archTop, 3f, archH, new Color(22, 62, 48, 165));
+                FillRect(batch, px, r.X + 14f, archTop + archH * 0.22f, r.Width - 28f, 3f, new Color(28, 76, 58, 175));
             }
-            else if (camIdx == 1) // Loading Dock: stacked wooden crates
+            else if (camIdx == 1) // Loading Dock: stacked crates
             {
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 24, horizonY - 42), new Vector2(54, 42), new Color(26, 62, 44, 180));
-                DrawLocalTexture(batch, px, null, new Vector2(r.Right - 96, horizonY - 52), new Vector2(68, 52), new Color(22, 54, 38, 180));
+                float c1 = Math.Min(42f, archH * 0.65f);
+                float c2 = Math.Min(52f, archH * 0.80f);
+                FillRect(batch, px, r.X + 20f, horizonY - c1, 50f, c1, new Color(24, 66, 50, 180));
+                FillRect(batch, px, r.Right - 86f, horizonY - c2, 62f, c2, new Color(20, 56, 42, 180));
             }
             else if (camIdx == 2) // Vault Hall: steel doorway arch
             {
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 120, r.Y + 44), new Vector2(r.Width - 240, horizonY - (r.Y + 44)), new Color(18, 46, 34, 190));
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 128, r.Y + 52), new Vector2(r.Width - 256, 3), new Color(46, 108, 76, 175));
+                float inset = Math.Min(110f, r.Width * 0.26f);
+                FillRect(batch, px, r.X + inset, archTop, Math.Max(40f, r.Width - inset * 2f), archH, new Color(16, 48, 38, 190));
+                FillRect(batch, px, r.X + inset + 8f, archTop + 8f, Math.Max(24f, r.Width - (inset + 8f) * 2f), 3f, new Color(42, 114, 86, 175));
             }
-            else // Back Alley: brick wall & dumpster
+            else // Back Alley: dumpster
             {
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 26, horizonY - 38), new Vector2(66, 38), new Color(24, 56, 42, 185));
-                DrawLocalTexture(batch, px, null, new Vector2(r.X + 22, horizonY - 43), new Vector2(74, 6), new Color(34, 78, 56, 200));
+                float dH = Math.Min(36f, archH * 0.60f);
+                FillRect(batch, px, r.X + 22f, horizonY - dH, 62f, dH, new Color(22, 58, 46, 185));
+                FillRect(batch, px, r.X + 18f, horizonY - dH - 5f, 70f, 5f, new Color(34, 84, 64, 200));
             }
 
-            // Draw the animated subject silhouette when motion is on this camera
+            // Animated subject silhouette scaled to fit cleanly below HUD bar
             if (ev != null)
             {
-                DrawSilhouette(batch, px, r, horizonY, ev);
+                DrawSilhouette(batch, px, r, horizonY, hudH, ev);
             }
             else
             {
-                DrawLocalString(batch, "ALL QUIET", new Vector2(r.X + r.Width * 0.5f - 34, r.Y + r.Height * 0.5f - 8), quietStyle);
+                var quietRect = new SimRect(r.X + 8f, r.Y + hudH, r.Width - 16f, r.Height - hudH);
+                DrawFittedLine(batch, "ALL QUIET", quietRect, quietStyle, SimTextAlign.Center);
             }
 
-            // CRT scanlines overlay
-            for (int sy = r.Y + 2; sy < r.Bottom; sy += 4)
-                DrawLocalTexture(batch, px, null, new Vector2(r.X, sy), new Vector2(r.Width, 1), new Color(0, 0, 0, 42));
+            // Subtle CRT scanlines
+            for (float sy = r.Y + hudH + 2f; sy < r.Bottom; sy += 4f)
+                FillRect(batch, px, r.X, sy, r.Width, 1f, new Color(0, 0, 0, 38));
 
-            // HUD overlays inside monitor
-            DrawLocalTexture(batch, px, null, new Vector2(r.X, r.Y), new Vector2(r.Width, 24), new Color(4, 12, 9, 175));
-            DrawLocalString(batch, "[" + (camIdx + 1) + "] " + SecurityWatchGame.CameraLabels[camIdx], new Vector2(r.X + 8, r.Y + 5), camStyle);
+            // Top HUD bar inside camera monitor (strictly split: left label, right status pill)
+            FillRect(batch, px, r.X, r.Y, r.Width, hudH, Color.Black * 0.72f);
+
+            float statusW = activeMotion ? 86f : 56f;
+            var labelRect = new SimRect(r.X + 8f, r.Y, Math.Max(40f, r.Width - statusW - 18f), hudH);
+            DrawFittedLine(batch, "[" + (camIdx + 1) + "] " + SecurityWatchGame.CameraLabels[camIdx], labelRect, camStyle, SimTextAlign.Left);
 
             if (activeMotion)
             {
                 if (blink > -0.2f)
                 {
-                    DrawLocalTexture(batch, px, null, new Vector2(r.Right - 96, r.Y + 4), new Vector2(88, 17), new Color(176, 36, 34, 235));
-                    DrawLocalString(batch, "! MOTION", new Vector2(r.Right - 84, r.Y + 5), btnStyle);
+                    var motionRect = new SimRect(r.Right - statusW - 6f, r.Y + 3f, statusW, hudH - 6f);
+                    DrawPillBadge(batch, motionRect, "! MOTION", SimUiTokens.DangerBtnTint, badgeTextStyle);
                 }
             }
             else
             {
-                DrawLocalTexture(batch, px, null, new Vector2(r.Right - 50, r.Y + 8), new Vector2(7, 7),
-                    blink > 0 ? new Color(220, 62, 54, 230) : new Color(90, 34, 30, 180));
-                DrawLocalString(batch, "REC", new Vector2(r.Right - 38, r.Y + 5), mutedStyle);
+                float dotX = r.Right - statusW - 4f;
+                FillRect(batch, px, dotX, r.Y + (hudH - 7f) * 0.5f, 7f, 7f,
+                    blink > 0 ? SimUiTokens.Danger : new Color(96, 36, 36, 180));
+                DrawFittedLine(batch, "REC", new SimRect(dotX + 11f, r.Y, statusW - 14f, hudH), mutedStyle, SimTextAlign.Left);
             }
         }
 
-        void DrawSilhouette(UISpriteBatch batch, Texture2D px, Rectangle r, int floorY, SecurityEvent ev)
+        void DrawSilhouette(UISpriteBatch batch, Texture2D px, SimRect r, float floorY, float hudH, SecurityEvent ev)
         {
-            float sway = (float)Math.Sin(ev.MotionPhase * 4.5f) * 8f;
-            int cx = r.X + r.Width / 2 + (int)sway;
+            float availH = Math.Max(46f, floorY - (r.Y + hudH + 6f));
+            float sc = SimLayout.Clamp(availH / 92f, 0.54f, 1.05f);
+            float sway = (float)Math.Sin(ev.MotionPhase * 4.5f) * 8f * sc;
+            float cx = r.X + r.Width * 0.5f + sway;
 
-            // Motion tracking brackets around subject
-            var bracketCol = ev.IsThreat ? new Color(255, 112, 96, 210) : new Color(255, 224, 120, 185);
-            int bx = cx - 44, by = floorY - 82, bw = 88, bh = 86;
-            DrawLocalTexture(batch, px, null, new Vector2(bx, by), new Vector2(14, 2), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx, by), new Vector2(2, 14), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx + bw - 14, by), new Vector2(14, 2), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx + bw - 2, by), new Vector2(2, 14), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx, by + bh - 2), new Vector2(14, 2), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx, by + bh - 14), new Vector2(2, 14), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx + bw - 14, by + bh - 2), new Vector2(14, 2), bracketCol);
-            DrawLocalTexture(batch, px, null, new Vector2(bx + bw - 2, by + bh - 14), new Vector2(2, 14), bracketCol);
+            // Motion tracking brackets
+            var bracketCol = ev.IsThreat ? SimUiTokens.Danger * 0.9f : SimUiTokens.Amber * 0.85f;
+            float bw = 88f * sc, bh = 86f * sc, br = 12f * sc;
+            float bx = cx - bw * 0.5f;
+            float by = Math.Max(r.Y + hudH + 3f, floorY - bh + 2f);
+            FillRect(batch, px, bx, by, br, 2f, bracketCol);
+            FillRect(batch, px, bx, by, 2f, br, bracketCol);
+            FillRect(batch, px, bx + bw - br, by, br, 2f, bracketCol);
+            FillRect(batch, px, bx + bw - 2f, by, 2f, br, bracketCol);
+            FillRect(batch, px, bx, by + bh - 2f, br, 2f, bracketCol);
+            FillRect(batch, px, bx, by + bh - br, 2f, br, bracketCol);
+            FillRect(batch, px, bx + bw - br, by + bh - 2f, br, 2f, bracketCol);
+            FillRect(batch, px, bx + bw - 2f, by + bh - br, 2f, br, bracketCol);
 
             var litGreen = new Color(168, 255, 198, 235);
-            var darkSil = new Color(18, 34, 26, 245);
-            var midGreen = new Color(96, 206, 142, 235);
+            var darkSil = new Color(16, 34, 28, 245);
+            var midGreen = new Color(86, 212, 146, 235);
+
+            Action<float, float, float, float, Color> part = (ox, oy, pw, ph, col) =>
+                FillRect(batch, px, cx + ox * sc, floorY + oy * sc, pw * sc, ph * sc, col);
 
             switch (ev.Kind)
             {
                 case SecurityEventKind.Burglar:
-                    // Beanie + masked head
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 10, floorY - 74), new Vector2(20, 8), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 9, floorY - 66), new Vector2(18, 16), litGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 9, floorY - 61), new Vector2(18, 5), darkSil); // domino mask
-                    // Classic black & white striped burglar shirt
+                    part(-10, -74, 20, 8, darkSil);
+                    part(-9, -66, 18, 16, litGreen);
+                    part(-9, -61, 18, 5, darkSil);
                     for (int s = 0; s < 5; s++)
-                        DrawLocalTexture(batch, px, null, new Vector2(cx - 14, floorY - 48 + s * 6), new Vector2(28, 6), s % 2 == 0 ? darkSil : litGreen);
-                    // Legs
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 11, floorY - 18), new Vector2(8, 20), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 3, floorY - 18), new Vector2(8, 20), darkSil);
-                    // Loot sack + crowbar
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 32, floorY - 52), new Vector2(18, 24), midGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 16, floorY - 56), new Vector2(4, 26), new Color(230, 248, 238, 245));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 16, floorY - 58), new Vector2(11, 4), new Color(230, 248, 238, 245));
+                        part(-14, -48 + s * 6, 28, 6, s % 2 == 0 ? darkSil : litGreen);
+                    part(-11, -18, 8, 20, darkSil);
+                    part(3, -18, 8, 20, darkSil);
+                    part(-32, -52, 18, 24, midGreen);
+                    part(16, -56, 4, 26, new Color(230, 248, 238, 245));
+                    part(16, -58, 11, 4, new Color(230, 248, 238, 245));
                     break;
 
                 case SecurityEventKind.Vandal:
-                    // Hooded figure
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 12, floorY - 72), new Vector2(24, 22), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 15, floorY - 50), new Vector2(30, 32), midGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 11, floorY - 18), new Vector2(9, 20), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 2, floorY - 18), new Vector2(9, 20), darkSil);
-                    // Extended arm + spray can + bright paint splash
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 14, floorY - 46), new Vector2(16, 6), midGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 28, floorY - 54), new Vector2(6, 12), litGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 36, floorY - 64), new Vector2(18, 16), new Color(255, 118, 168, 215));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 42, floorY - 50), new Vector2(14, 12), new Color(110, 232, 255, 205));
+                    part(-12, -72, 24, 22, darkSil);
+                    part(-15, -50, 30, 32, midGreen);
+                    part(-11, -18, 9, 20, darkSil);
+                    part(2, -18, 9, 20, darkSil);
+                    part(14, -46, 16, 6, midGreen);
+                    part(28, -54, 6, 12, litGreen);
+                    part(36, -64, 18, 16, new Color(255, 118, 168, 215));
+                    part(42, -50, 14, 12, SimUiTokens.Cyan * 0.85f);
                     break;
 
                 case SecurityEventKind.Prowler:
-                    // Crouched prowler + flashlight beam
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 22, floorY - 48), new Vector2(18, 16), litGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 26, floorY - 32), new Vector2(30, 20), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 20, floorY - 12), new Vector2(24, 14), darkSil);
-                    // Flashlight cone
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 6, floorY - 30), new Vector2(10, 5), litGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 16, floorY - 38), new Vector2(28, 22), new Color(255, 245, 150, 110));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 44, floorY - 44), new Vector2(24, 34), new Color(255, 245, 150, 65));
+                    part(-22, -48, 18, 16, litGreen);
+                    part(-26, -32, 30, 20, darkSil);
+                    part(-20, -12, 24, 14, darkSil);
+                    part(6, -30, 10, 5, litGreen);
+                    part(16, -38, 28, 22, new Color(255, 245, 150, 115));
+                    part(44, -44, 24, 34, new Color(255, 245, 150, 68));
                     break;
 
                 case SecurityEventKind.Raccoon:
-                    // Tipped trash can + cute hunched raccoon with ringed tail
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 38, floorY - 24), new Vector2(26, 22), new Color(92, 140, 118, 220));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 10, floorY - 24), new Vector2(26, 18), midGreen);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 16, floorY - 22), new Vector2(12, 12), litGreen); // head
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 16, floorY - 18), new Vector2(10, 4), darkSil);  // raccoon mask
-                    // Ringed tail
+                    part(-38, -24, 26, 22, new Color(92, 144, 124, 220));
+                    part(-10, -24, 26, 18, midGreen);
+                    part(-16, -22, 12, 12, litGreen);
+                    part(-16, -18, 10, 4, darkSil);
                     for (int t = 0; t < 4; t++)
-                        DrawLocalTexture(batch, px, null, new Vector2(cx + 16 + t * 5, floorY - 20 - t * 2), new Vector2(5, 6), t % 2 == 0 ? darkSil : litGreen);
+                        part(16 + t * 5, -20 - t * 2, 5, 6, t % 2 == 0 ? darkSil : litGreen);
                     break;
 
                 case SecurityEventKind.StrayCat:
-                    // Small cat silhouette + pointy ears + curved tail + 2 glowing yellow eyes
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 14, floorY - 20), new Vector2(24, 14), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 22, floorY - 30), new Vector2(14, 13), darkSil);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 22, floorY - 35), new Vector2(4, 6), darkSil); // left ear
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 12, floorY - 35), new Vector2(4, 6), darkSil); // right ear
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 20, floorY - 25), new Vector2(3, 3), new Color(255, 240, 110, 255)); // eye
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 14, floorY - 25), new Vector2(3, 3), new Color(255, 240, 110, 255)); // eye
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 10, floorY - 36), new Vector2(4, 20), darkSil); // upright tail
-                    DrawLocalTexture(batch, px, null, new Vector2(cx + 14, floorY - 38), new Vector2(6, 4), darkSil);
+                    part(-14, -20, 24, 14, darkSil);
+                    part(-22, -30, 14, 13, darkSil);
+                    part(-22, -35, 4, 6, darkSil);
+                    part(-12, -35, 4, 6, darkSil);
+                    part(-20, -25, 3, 3, new Color(255, 240, 110, 255));
+                    part(-14, -25, 3, 3, new Color(255, 240, 110, 255));
+                    part(10, -36, 4, 20, darkSil);
+                    part(14, -38, 6, 4, darkSil);
                     break;
 
                 case SecurityEventKind.TreeShadow:
-                    // Swaying tree branches casting soft shadows
-                    int lean = (int)(Math.Sin(ev.MotionPhase * 3.0f) * 10f);
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 6, floorY - 68), new Vector2(12, 68), new Color(24, 66, 46, 210));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 34 + lean, floorY - 76), new Vector2(68, 18), new Color(40, 112, 74, 185));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 24 + lean / 2, floorY - 58), new Vector2(54, 16), new Color(34, 96, 64, 180));
-                    DrawLocalTexture(batch, px, null, new Vector2(cx - 38 + lean, floorY - 12), new Vector2(76, 10), new Color(8, 22, 16, 165));
+                    float lean = (float)(Math.Sin(ev.MotionPhase * 3.0f) * 10.0);
+                    part(-6, -68, 12, 68, new Color(24, 68, 48, 210));
+                    part(-34 + lean, -76, 68, 18, new Color(40, 116, 78, 185));
+                    part(-24 + lean * 0.5f, -58, 54, 16, new Color(34, 98, 66, 180));
+                    part(-38 + lean, -12, 76, 10, new Color(8, 22, 16, 165));
                     break;
             }
         }
 
-        void DrawSummary(UISpriteBatch batch, Texture2D px, float px0, float y0, float pw, float h)
+        void DrawSummary(UISpriteBatch batch, Texture2D px, SecurityWatchLayout layout)
         {
             var o = finalOutcome ?? game.ComputeOutcome();
-            float cardX = px0 + 48f;
-            float cardW = pw - 96f;
-            DrawLocalTexture(batch, px, null, new Vector2(cardX, y0 + 18), new Vector2(cardW, h - 42), new Color(18, 26, 40, 232));
-            DrawLocalTexture(batch, px, null, new Vector2(cardX, y0 + 18), new Vector2(cardW, 3), new Color(255, 220, 118, 240));
 
-            // Big Rank Badge
-            Color gradeBg = o.Grade == "S" ? new Color(46, 112, 86, 245)
-                          : (o.Grade == "A" ? new Color(42, 92, 128, 245)
-                          : (o.Grade == "B" ? new Color(118, 92, 42, 245) : new Color(122, 48, 52, 245)));
-            var badgeRect = new Rectangle((int)(cardX + 36), (int)(y0 + 52), 116, 116);
-            DrawLocalTexture(batch, px, null, new Vector2(badgeRect.X, badgeRect.Y), new Vector2(badgeRect.Width, badgeRect.Height), gradeBg);
-            DrawLocalTexture(batch, px, null, new Vector2(badgeRect.X, badgeRect.Y), new Vector2(badgeRect.Width, 3), new Color(255, 224, 120, 255));
-            CenterText(batch, o.Grade, badgeRect, gradeStyle);
-            DrawLocalString(batch, "SHIFT GRADE", new Vector2(badgeRect.X + 16, badgeRect.Bottom + 8), mutedStyle);
+            // Main summary glass card
+            DrawGlassCard(batch, layout.SummaryCard, SimUiTokens.CardBgAlt, SimUiTokens.Mint * 0.75f);
 
-            // Title & Summary
-            float tx = badgeRect.Right + 32f;
-            DrawLocalString(batch, "NIGHT WATCH SHIFT REPORT  •  " + game.SimName, new Vector2(tx, y0 + 52), titleStyle);
-            DrawLocalString(batch, o.Summary, new Vector2(tx, y0 + 84), bodyStyle);
+            // Big Simitone Grade Badge
+            Color gradeBg = o.Grade == "S" ? new Color(10, 118, 76, 240)
+                          : (o.Grade == "A" ? new Color(12, 92, 128, 240)
+                          : (o.Grade == "B" ? new Color(142, 98, 20, 240) : SimUiTokens.DangerBg));
+            Color gradeAccent = o.Grade == "S" ? SimUiTokens.Mint
+                              : (o.Grade == "A" ? SimUiTokens.Cyan
+                              : (o.Grade == "B" ? SimUiTokens.Amber : SimUiTokens.Danger));
+            DrawGlassCard(batch, layout.GradeBadge, gradeBg, gradeAccent);
+            DrawFittedLine(batch, o.Grade, layout.GradeBadge, gradeStyle, SimTextAlign.Center);
+            DrawFittedLine(batch, "SHIFT GRADE", layout.GradeCaptionRect, mutedStyle, SimTextAlign.Center);
 
-            // Stats grid
-            float statY = y0 + 126f;
-            DrawStatBox(batch, px, tx, statY, 170, 62, "THREATS CAUGHT", o.ThreatsCaught.ToString(), greenStyle);
-            DrawStatBox(batch, px, tx + 182, statY, 190, 62, "FALSE ALARMS CLEARED", o.FalseAlarmsCleared.ToString(), subStyle);
-            DrawStatBox(batch, px, tx + 384, statY, 150, 62, "MISTAKES", o.Mistakes.ToString(), o.Mistakes == 0 ? greenStyle : redStyle);
+            // Title & Wrapped Summary (strictly clamped inside SummaryBodyRect!)
+            DrawFittedLine(batch, "NIGHT WATCH SHIFT REPORT  •  " + game.SimName, layout.SummaryTitleRect, mintStyle, SimTextAlign.Left);
+            DrawFittedWrapped(batch, o.Summary, layout.SummaryBodyRect, bodyStyle, 3);
 
-            // Rewards panel
-            float rewY = y0 + 216f;
-            DrawLocalTexture(batch, px, null, new Vector2(cardX + 36, rewY), new Vector2(cardW - 72, 112), new Color(13, 20, 32, 230));
-            DrawLocalString(batch, "SHIFT REWARDS APPLIED TO " + game.SimName.ToUpperInvariant(), new Vector2(cardX + 54, rewY + 14), goldStyle);
+            // 3 Responsive Flex Stat Cards
+            DrawStatCard(batch, layout.StatCards[0], "THREATS CAUGHT", o.ThreatsCaught.ToString(), SimUiTokens.Mint, statValMintStyle);
+            DrawStatCard(batch, layout.StatCards[1], "FALSE ALARMS", o.FalseAlarmsCleared.ToString(), SimUiTokens.Cyan, statValCyanStyle);
+            DrawStatCard(batch, layout.StatCards[2], "MISTAKES", o.Mistakes.ToString(), o.Mistakes == 0 ? SimUiTokens.Mint : SimUiTokens.Danger, o.Mistakes == 0 ? statValMintStyle : statValRedStyle);
 
-            string cashStr = "+$" + o.BonusSimoleons + " Overtime Bonus";
+            // Rewards Glass Card (2 balanced columns + motives line — zero collision!)
+            DrawGlassCard(batch, layout.RewardsCard, SimUiTokens.CardBg, SimUiTokens.Cyan * 0.7f);
+            DrawFittedLine(batch, "SHIFT REWARDS APPLIED TO " + game.SimName.ToUpperInvariant(), layout.RewardsHeaderRect, cyanStyle, SimTextAlign.Left);
+
+            string cashStr = "+\u00a7" + o.BonusSimoleons + " Overtime Bonus";
             string perfStr = "Job Performance " + (o.JobPerformanceDelta >= 0 ? "+" : "") + o.JobPerformanceDelta;
-            string motiveStr = "Energy " + (o.EnergyDelta >= 0 ? "+" : "") + o.EnergyDelta + "   |   Fun " + (o.FunDelta >= 0 ? "+" : "") + o.FunDelta;
+            string motiveStr = "Energy " + (o.EnergyDelta >= 0 ? "+" : "") + o.EnergyDelta + "   •   Fun " + (o.FunDelta >= 0 ? "+" : "") + o.FunDelta;
 
-            DrawLocalString(batch, cashStr, new Vector2(cardX + 54, rewY + 46), greenStyle);
-            DrawLocalString(batch, perfStr, new Vector2(cardX + 290, rewY + 46), o.JobPerformanceDelta >= 0 ? greenStyle : redStyle);
-            DrawLocalString(batch, motiveStr, new Vector2(cardX + 54, rewY + 74), bodyStyle);
+            DrawFittedLine(batch, cashStr, layout.RewardCashRect, mintStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, perfStr, layout.RewardPerfRect, o.JobPerformanceDelta >= 0 ? mintStyle : redStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, motiveStr, layout.RewardMotivesRect, bodyStyle, SimTextAlign.Left);
 
-            // Claim button
-            claimRect = new Rectangle((int)(cardX + cardW * 0.5f - 145), (int)(y0 + h - 90), 290, 44);
-            DrawLocalTexture(batch, px, null, new Vector2(claimRect.X, claimRect.Y), new Vector2(claimRect.Width, claimRect.Height),
-                hoverClaim ? new Color(54, 152, 108, 250) : new Color(36, 118, 84, 242));
-            DrawLocalTexture(batch, px, null, new Vector2(claimRect.X, claimRect.Y + claimRect.Height - 3), new Vector2(claimRect.Width, 3),
-                new Color(255, 224, 120, 250));
-            CenterText(batch, "CLAIM REWARDS & RETURN", claimRect, btnStyle);
+            // Centered native green Simitone pill button
+            claimRect = ToXnaRect(layout.ClaimBtn);
+            DrawPillButton(batch, layout.ClaimBtn, "CLAIM REWARDS & RETURN", SimButtonVariant.Primary, hoverClaim);
         }
 
-        void DrawStatBox(UISpriteBatch batch, Texture2D px, float x, float y, float w, float h, string label, string val, TextStyle valStyle)
+        void DrawStatCard(UISpriteBatch batch, SimRect rect, string label, string value, Color accent, TextStyle valueStyle)
         {
-            DrawLocalTexture(batch, px, null, new Vector2(x, y), new Vector2(w, h), new Color(14, 22, 34, 220));
-            DrawLocalString(batch, label, new Vector2(x + 12, y + 10), mutedStyle);
-            DrawLocalString(batch, val, new Vector2(x + 12, y + 32), valStyle);
-        }
-
-        void DrawBadge(UISpriteBatch batch, Texture2D px, float x, float y, float w, float h, string text, Color bg, TextStyle style)
-        {
-            var r = new Rectangle((int)x, (int)y, (int)w, (int)h);
-            DrawLocalTexture(batch, px, null, new Vector2(r.X, r.Y), new Vector2(r.Width, r.Height), bg);
-            CenterText(batch, text, r, style);
-        }
-
-        void CenterText(UISpriteBatch batch, string text, Rectangle r, TextStyle style)
-        {
-            var sz = style.MeasureString(text);
-            DrawLocalString(batch, text, new Vector2(r.X + (r.Width - sz.X) * 0.5f, r.Y + (r.Height - sz.Y) * 0.5f), style);
+            DrawGlassCard(batch, rect, SimUiTokens.CardBg, accent * 0.8f);
+            var inner = rect.Deflate(12f, 8f);
+            var labelRect = new SimRect(inner.X, inner.Y, inner.Width, 17f);
+            var valRect = new SimRect(inner.X, labelRect.Bottom + 3f, inner.Width, Math.Max(20f, inner.Bottom - (labelRect.Bottom + 3f)));
+            DrawFittedLine(batch, label, labelRect, mutedStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, value, valRect, valueStyle, SimTextAlign.Left);
         }
     }
 }
