@@ -242,8 +242,8 @@ Explicitly excluded from this feature spec to prevent scope creep.
 | DISP-01 | P1: Mid-Shift Radio Dispatch Toast & Daily Cooldown | Shipped (`d2b87f5`) | Verified |
 | DISP-02 | P1: Pause-Safe Floating Overlay & VM Reward Application | Shipped (`d2b87f5`) | Verified |
 | DISP-03 | P1: Lvl 1 Security Guard — CCTV Night Watch | Shipped (`d2b87f5`) | Verified |
-| DISP-04 | P2: Multi-Rank Dispatch Registry & Career Tab Trigger | Milestone 2 | Pending |
-| DISP-05 | P2: Lvl 2 Cadet — Academy Obstacle & Drill | Milestone 2 | Pending |
+| DISP-04 | P2: Multi-Rank Dispatch Registry & Career Tab Trigger | Milestone 2 (Shipped) | Verified |
+| DISP-05 | P2: Lvl 2 Cadet — Academy Obstacle & Drill (Unified 3D) | Milestone 2 (Shipped) | Verified |
 | DISP-06 | P2: Lvl 3 Patrol Officer — Beat Patrol | Milestone 2 | Pending |
 | DISP-07 | P2: Lvl 4 Desk Sergeant — 911 Dispatch Triage | Milestone 2 | Pending |
 | DISP-08 | P2: Lvl 5 Vice Squad — Undercover Sting (Laya) | Milestone 3 | Pending |
@@ -256,13 +256,28 @@ Explicitly excluded from this feature spec to prevent scope creep.
 | DISP-15 | P3: On-Lot Perk — Question Sim → Sim Memory (Lvl 6+) | Milestone 3 | Pending |
 | DISP-16 | P3: On-Lot Perk — Heroic Pose / Inspire Room (Lvl 10) | Milestone 4 | Pending |
 
-**Coverage:** 16 total, 3 Verified (`DISP-01`–`DISP-03`), 13 Pending across Milestones 2–4.
+**Coverage:** 16 total, 5 Verified (`DISP-01`–`DISP-05`), 11 Pending across Milestones 2–4.
+
+---
+
+## Future Improvements
+
+### CCTV Night Watch — Option 2: Full Real-Time Multi-Camera `FSO.LotView.World` Rendering
+
+Upgrade Level 1 (**Security Guard — CCTV Night Watch**) from hybrid 2D lot backdrops + 3D `SimAvatar` overlays to live multi-camera `FSO.LotView.World` rendering into 4 `RenderTarget2D` feeds (round-robin 1 camera per frame → ~15 FPS per monitor, matching real security camera refresh rates and guaranteeing 100% native Sims 1 world scale and dynamic lighting).
+
+- **Sub-Variant 2A — Live cameras on the player's current lot**: Temporarily swap `World.State` camera/rotation/tile in `PreDraw`/`InternalDraw`, render into a `320×180` target, then restore `World.State` (requires virtual actor injection or reframing as home neighborhood patrol).
+- **Sub-Variant 2B — Dedicated mini "Precinct" lot**: Secondary `World` / `SubWorldComponent` (`20×20` tiles with real TS1 walls, lamps, crates, dumpster, and live `SimAvatar` actors).
+- **Engine caveats to address during implementation**:
+  - `PPXDepthEngine` and `WorldContent` hold process-wide static render targets & shader state (`PPXDepthEngine.Backbuffer`, `WorldContent.LightEffects`, `WorldConfig.Current`); extra viewpoints must carefully save/restore render targets, viewport, and `WorldState.PrepareLighting`.
+  - **2D vs. Full 3D asymmetry**: Cheap in Full 3D (`WorldPlatform3D` + `CameraController3D`), whereas 2D / Hybrid2D (`WorldPlatform2D`) relies on a screen-sized `ScrollBuffer` + MRT depth buffer that invalidates `WorldSpace` / `BlueprintChanges`, so 2D mode may need a 3D-only camera path for the feeds.
 
 ---
 
 ## Success Criteria
 
 - [x] Security Guard (Lvl 1) PoC playable end-to-end with 12 passing unit tests and verified live screenshots.
+- [x] Multi-Rank Dispatch Router (`DISP-04`) + Career Tab **Work Assignment** trigger + Level 2 Cadet **Academy Obstacle & Drill** (`DISP-05`) with unified real-time 3D scene & live `SimAvatar` verified end-to-end with unit tests and live 3D video/screenshots.
 - [ ] Every Law Enforcement rank (1–10) completes in 15–45 seconds with both mouse and keyboard support.
 - [ ] Zero game-thread hangs or crashes across all ranks, including when Laya is disabled or the neighborhood has few Sims.
 - [ ] All pure mini-game state machines have deterministic seeded unit test coverage in `Tools/Conversations.Tests/`.

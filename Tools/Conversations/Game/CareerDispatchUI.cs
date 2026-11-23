@@ -16,20 +16,27 @@ using Microsoft.Xna.Framework.Input;
 
 namespace Simitone.Conversations
 {
-    // Drives automatic mid-shift Radio Dispatch notifications during work hours
-    // and hosts the Security Guard Level 1 ("CCTV Night Watch") floating mini-game.
+    // Multi-rank Radio Dispatch router & Career Tab Work Assignment driver for Law Enforcement (DISP-04).
+    // Routes active shifts and manual daily assignments to rank-specific mini-games (Lvl 1 Security Guard,
+    // Lvl 2 Cadet Academy, and future Levels 3-10) while sharing a single daily quota and VM reward pipeline.
     public static class CareerDispatchDriver
     {
-        static readonly Dictionary<string, int> lastDispatchedDayBySim = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+        static readonly CareerDispatchQuota dailyQuota = new CareerDispatchQuota();
         static int tickCounter;
 
         public static bool ToastVisible { get { return CareerDispatchToast.IsOpen; } }
-        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen; } }
+        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen; } }
 
         public static void OnTick(VM vm)
         {
             if (vm == null || !vm.Ready || !Boot.Enabled) return;
-            if (++tickCounter % 60 != 0) return;
+            tickCounter++;
+
+            // Keep Career Tab "Work Assignment" button attached whenever UIJobSubpanel is open
+            if (tickCounter % 15 == 0)
+                CareerAssignmentButton.SyncWithCareerTab(vm);
+
+            if (tickCounter % 60 != 0) return;
             if (ToastVisible || GameOpen) return;
 
             try
@@ -44,49 +51,107 @@ namespace Simitone.Conversations
                     if (av == null || av.Dead || av.IsPet) continue;
                     if (!IsInActiveFamily(av, fam)) continue;
 
-                    var jobType = av.GetPersonData(VMPersonDataVariable.JobType);
-                    if (jobType <= 0) continue;
-                    var level = av.GetPersonData(VMPersonDataVariable.JobPromotionLevel);
+                    var rank = ResolveRankForAvatar(av, out string jobTitle, out int startHour, out int endHour);
+                    if (rank == null || !rank.IsImplemented) continue;
 
-                    string careerName = "", jobTitle = "";
-                    int startHour = 0, endHour = 6;
-                    try
-                    {
-                        var job = Content.Get().Jobs.GetJob((ushort)jobType);
-                        if (job != null)
-                        {
-                            careerName = job.Name ?? "";
-                            if (job.JobLevels != null && level >= 0 && level < job.JobLevels.Length)
-                            {
-                                jobTitle = job.JobLevels[level].JobName ?? "";
-                                startHour = job.JobLevels[level].StartTime;
-                                endHour = job.JobLevels[level].EndTime;
-                            }
-                        }
-                    }
-                    catch { }
-
-                    bool isGuard = CareerDispatchRules.IsSecurityGuard(careerName, jobTitle, level);
                     bool isAtWork = av.Position == LotTilePos.OUT_OF_WORLD;
                     string simKey = KeyOf(av);
-                    int lastDay = lastDispatchedDayBySim.TryGetValue(simKey, out var d) ? d : -1;
+                    int lastDay = dailyQuota.GetLastUsedDay(simKey);
 
-                    if (CareerDispatchRules.ShouldTriggerDispatch(isGuard, isAtWork, day, lastDay, hour, startHour, endHour))
+                    if (CareerDispatchRules.ShouldTriggerDispatch(true, isAtWork, day, lastDay, hour, startHour, endHour))
                     {
-                        lastDispatchedDayBySim[simKey] = day;
+                        dailyQuota.MarkUsed(simKey, day);
                         if (!CareerDispatchRules.IsActiveDispatchDay(simKey, day))
                         {
-                            Boot.Log("dispatch: quiet night (no radio interruption) for " + av.Name + " day=" + day);
+                            Boot.Log("dispatch: quiet shift (no radio interruption) for " + av.Name + " (" + rank.RankTitle + ") day=" + day);
                             break;
                         }
-                        bool quietNight = CareerDispatchRules.IsQuietNightShift(simKey, day);
-                        CareerDispatchToast.Show(av, string.IsNullOrWhiteSpace(jobTitle) ? "Security Guard" : jobTitle, quietNight);
-                        Boot.Log("dispatch: triggered radio call for " + av.Name + " (" + jobTitle + ") day=" + day + " hour=" + hour + " quiet=" + quietNight);
+                        bool quietNight = rank.Kind == CareerMiniGameKind.SecurityWatch &&
+                                          CareerDispatchRules.IsQuietNightShift(simKey, day);
+                        CareerDispatchToast.Show(av, rank, string.IsNullOrWhiteSpace(jobTitle) ? rank.RankTitle : jobTitle, quietNight);
+                        Boot.Log("dispatch: triggered radio call for " + av.Name + " (" + rank.RankTitle + ") day=" + day + " hour=" + hour + " quiet=" + quietNight);
                         break;
                     }
                 }
             }
             catch (Exception e) { Boot.Log("dispatch tick error: " + e.Message); }
+        }
+
+        public static LawEnforcementRankDescriptor ResolveRankForAvatar(
+            VMAvatar av,
+            out string jobTitle,
+            out int startHour,
+            out int endHour)
+        {
+            jobTitle = "";
+            startHour = 0;
+            endHour = 6;
+            if (av == null) return null;
+
+            var jobType = av.GetPersonData(VMPersonDataVariable.JobType);
+            if (jobType <= 0) return null;
+            var level = av.GetPersonData(VMPersonDataVariable.JobPromotionLevel);
+
+            string careerName = "";
+            try
+            {
+                var job = Content.Get().Jobs.GetJob((ushort)jobType);
+                if (job != null)
+                {
+                    careerName = job.Name ?? "";
+                    if (job.JobLevels != null && level >= 0 && level < job.JobLevels.Length)
+                    {
+                        jobTitle = job.JobLevels[level].JobName ?? "";
+                        startHour = job.JobLevels[level].StartTime;
+                        endHour = job.JobLevels[level].EndTime;
+                    }
+                }
+            }
+            catch { }
+
+            var desc = CareerDispatchRegistry.Resolve(careerName, jobTitle, level);
+            if (desc != null && startHour == 0 && endHour == 6 && desc.PromotionLevel > 0)
+            {
+                startHour = desc.DefaultShiftStartHour;
+                endHour = desc.DefaultShiftEndHour;
+            }
+            return desc;
+        }
+
+        public static bool HasUsedDailyQuota(VMAvatar av, VM vm)
+        {
+            if (av == null) return false;
+            int day = vm?.Context?.Clock?.DayOfMonth ?? 1;
+            return dailyQuota.HasUsedToday(KeyOf(av), day);
+        }
+
+        public static bool TryConsumeDailyQuota(VMAvatar av, VM vm)
+        {
+            if (av == null) return false;
+            int day = vm?.Context?.Clock?.DayOfMonth ?? 1;
+            return dailyQuota.TryConsume(KeyOf(av), day);
+        }
+
+        public static string LaunchRankMiniGame(
+            VMAvatar av,
+            LawEnforcementRankDescriptor rank,
+            bool quietNight = false,
+            int? bodyLevelOverride = null,
+            int? seed = null)
+        {
+            CareerDispatchToast.Close();
+            if (rank == null) rank = CareerDispatchRegistry.GetByLevel(0);
+
+            switch (rank.Kind)
+            {
+                case CareerMiniGameKind.CadetAcademy:
+                    SecurityWatchOverlay.Close(false);
+                    return CadetAcademyOverlay.Open(av, bodyLevelOverride, seed);
+                case CareerMiniGameKind.SecurityWatch:
+                default:
+                    CadetAcademyOverlay.Close(false);
+                    return SecurityWatchOverlay.Open(av, seed, SecurityWatchGame.DefaultTotalRounds, 3.6f, quietNight);
+            }
         }
 
         static bool IsInActiveFamily(VMAvatar av, FSO.Files.Formats.IFF.Chunks.FAMI fam)
@@ -139,45 +204,74 @@ namespace Simitone.Conversations
         public static string ApplyRewards(VMAvatar sim, SecurityWatchOutcome outcome)
         {
             if (outcome == null) return "no outcome";
+            return ApplyReward(sim, new CareerDispatchReward
+            {
+                Grade = outcome.Grade,
+                Summary = outcome.Summary,
+                BonusSimoleons = outcome.BonusSimoleons,
+                JobPerformanceDelta = outcome.JobPerformanceDelta,
+                EnergyDelta = outcome.EnergyDelta,
+                FunDelta = outcome.FunDelta,
+            });
+        }
+
+        // Unified reward pipeline for all Law Enforcement ranks (Simoleons, Performance, Skills, Motives).
+        public static string ApplyReward(VMAvatar sim, CareerDispatchReward reward)
+        {
+            if (reward == null) return "no reward";
             var applied = new List<string>();
             try
             {
                 var vm = CurrentVM();
                 var fam = vm?.TS1State?.CurrentFamily;
-                if (fam != null && outcome.BonusSimoleons != 0)
+                if (fam != null && reward.BonusSimoleons != 0)
                 {
-                    fam.Budget = Math.Max(0, fam.Budget + outcome.BonusSimoleons);
-                    applied.Add("+$" + outcome.BonusSimoleons);
+                    fam.Budget = Math.Max(0, fam.Budget + reward.BonusSimoleons);
+                    applied.Add("+$" + reward.BonusSimoleons);
                 }
 
                 if (sim != null)
                 {
-                    if (outcome.JobPerformanceDelta != 0)
+                    if (reward.JobPerformanceDelta != 0)
                     {
                         short cur = sim.GetPersonData(VMPersonDataVariable.JobPerformance);
-                        short next = (short)Math.Max(-100, Math.Min(100, cur + outcome.JobPerformanceDelta));
+                        short next = (short)Math.Max(-100, Math.Min(100, cur + reward.JobPerformanceDelta));
                         sim.SetPersonData(VMPersonDataVariable.JobPerformance, next);
-                        applied.Add("Perf " + Signed(outcome.JobPerformanceDelta));
+                        applied.Add("Perf " + Signed(reward.JobPerformanceDelta));
                     }
-                    if (outcome.EnergyDelta != 0)
-                    {
-                        short cur = sim.GetMotiveData(VMMotive.Energy);
-                        short next = (short)Math.Max(-100, Math.Min(100, cur + outcome.EnergyDelta));
-                        sim.SetMotiveData(VMMotive.Energy, next);
-                    }
-                    if (outcome.FunDelta != 0)
-                    {
-                        short cur = sim.GetMotiveData(VMMotive.Fun);
-                        short next = (short)Math.Max(-100, Math.Min(100, cur + outcome.FunDelta));
-                        sim.SetMotiveData(VMMotive.Fun, next);
-                    }
+
+                    ApplySkillDelta(sim, VMPersonDataVariable.BodySkill, reward.BodyXpDelta, "Body", applied);
+                    ApplySkillDelta(sim, VMPersonDataVariable.LogicSkill, reward.LogicXpDelta, "Logic", applied);
+                    ApplySkillDelta(sim, VMPersonDataVariable.CharismaSkill, reward.CharismaXpDelta, "Charisma", applied);
+                    ApplySkillDelta(sim, VMPersonDataVariable.MechanicalSkill, reward.MechanicalXpDelta, "Mech", applied);
+
+                    ApplyMotiveDelta(sim, VMMotive.Energy, reward.EnergyDelta);
+                    ApplyMotiveDelta(sim, VMMotive.Fun, reward.FunDelta);
+                    ApplyMotiveDelta(sim, VMMotive.Social, reward.SocialDelta);
                 }
             }
             catch (Exception e) { Boot.Log("dispatch reward apply error: " + e.Message); }
 
             string summary = applied.Count > 0 ? string.Join(", ", applied) : "recorded";
-            Boot.Log("dispatch: shift finished grade=" + outcome.Grade + " score=" + outcome.CorrectCount + "/" + outcome.TotalRounds + " (" + summary + ")");
+            Boot.Log("dispatch: shift reward grade=" + reward.Grade + " (" + summary + ")");
             return summary;
+        }
+
+        static void ApplySkillDelta(VMAvatar sim, VMPersonDataVariable varId, short delta, string label, List<string> applied)
+        {
+            if (delta == 0) return;
+            short cur = sim.GetPersonData(varId);
+            short next = (short)Math.Max(0, Math.Min(1000, cur + delta));
+            sim.SetPersonData(varId, next);
+            applied.Add(label + " " + Signed(delta));
+        }
+
+        static void ApplyMotiveDelta(VMAvatar sim, VMMotive motive, short delta)
+        {
+            if (delta == 0) return;
+            short cur = sim.GetMotiveData(motive);
+            short next = (short)Math.Max(-100, Math.Min(100, cur + delta));
+            sim.SetMotiveData(motive, next);
         }
 
         public static string Command(string[] args)
@@ -188,17 +282,63 @@ namespace Simitone.Conversations
             switch (sub)
             {
                 case "status":
-                    return "toast=" + ToastVisible + " game=" + GameOpen +
-                           (GameOpen ? " [" + SecurityWatchOverlay.Status() + "]" : "");
+                {
+                    string activeDetail = "";
+                    if (CadetAcademyOverlay.IsOpen) activeDetail = " [" + CadetAcademyOverlay.StatusSummary() + "]";
+                    else if (SecurityWatchOverlay.IsOpen) activeDetail = " [" + SecurityWatchOverlay.Status() + "]";
+                    return "toast=" + ToastVisible + " game=" + GameOpen + activeDetail;
+                }
                 case "toast":
                 {
-                    var av = ResolveTargetAvatar(arg);
-                    return CareerDispatchToast.Show(av, "Security Guard", false);
+                    LawEnforcementRankDescriptor rank = null;
+                    string simQuery = arg;
+                    if (args.Length > 1 && args[args.Length - 1].Equals("cadet", StringComparison.OrdinalIgnoreCase))
+                    {
+                        rank = CareerDispatchRegistry.GetByLevel(1);
+                        simQuery = args.Length > 2 ? string.Join(" ", args.Skip(1).Take(args.Length - 2)) : null;
+                    }
+                    else if (args.Length > 1 && args[args.Length - 1].Equals("guard", StringComparison.OrdinalIgnoreCase))
+                    {
+                        rank = CareerDispatchRegistry.GetByLevel(0);
+                        simQuery = args.Length > 2 ? string.Join(" ", args.Skip(1).Take(args.Length - 2)) : null;
+                    }
+                    var av = ResolveTargetAvatar(simQuery);
+                    if (rank == null)
+                        rank = ResolveRankForAvatar(av, out _, out _, out _) ?? CareerDispatchRegistry.GetByLevel(0);
+                    return CareerDispatchToast.Show(av, rank, rank.RankTitle, false);
+                }
+                case "cadet":
+                {
+                    CareerDispatchToast.Close();
+                    SecurityWatchOverlay.Close(false);
+                    int? bodyLvl = null;
+                    int? seedVal = 42;
+                    string simQuery = null;
+                    if (args.Length > 1)
+                    {
+                        if (int.TryParse(args[1].Trim(), out var parsedBody))
+                        {
+                            bodyLvl = parsedBody;
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedSeed))
+                                seedVal = parsedSeed;
+                        }
+                        else
+                        {
+                            simQuery = args[1].Trim();
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedBody2))
+                                bodyLvl = parsedBody2;
+                            if (args.Length > 3 && int.TryParse(args[3].Trim(), out var parsedSeed2))
+                                seedVal = parsedSeed2;
+                        }
+                    }
+                    var av = ResolveTargetAvatar(simQuery);
+                    return CadetAcademyOverlay.Open(av, bodyLvl, seedVal);
                 }
                 case "start":
                 case "open":
                 {
                     CareerDispatchToast.Close();
+                    CadetAcademyOverlay.Close(false);
                     int seedVal = 42;
                     int rounds = SecurityWatchGame.DefaultTotalRounds;
                     float scanPause = 3.6f;
@@ -226,27 +366,47 @@ namespace Simitone.Conversations
                 case "quiet":
                 {
                     CareerDispatchToast.Close();
+                    CadetAcademyOverlay.Close(false);
                     var av = ResolveTargetAvatar(arg);
                     return SecurityWatchOverlay.Open(av, null, 0, 0f, true);
                 }
                 case "answer":
                 {
                     var av = CareerDispatchToast.CurrentAvatar ?? ResolveTargetAvatar(arg);
+                    var rank = CareerDispatchToast.CurrentRank ?? ResolveRankForAvatar(av, out _, out _, out _) ?? CareerDispatchRegistry.GetByLevel(0);
                     bool quiet = CareerDispatchToast.IsQuietShift;
                     CareerDispatchToast.Close();
-                    return SecurityWatchOverlay.Open(av, null, SecurityWatchGame.DefaultTotalRounds, 1.4f, quiet);
+                    return LaunchRankMiniGame(av, rank, quiet);
                 }
                 case "action":
+                {
+                    if (CadetAcademyOverlay.IsOpen)
+                        return CadetAcademyOverlay.HandleScriptedAction(args.Length > 1 ? args[1] : "");
                     return SecurityWatchOverlay.PerformCommandAction(args.Length > 1 ? args[1] : "", args.Length > 2 ? args[2] : "");
+                }
                 case "finish":
+                {
+                    if (CadetAcademyOverlay.IsOpen) return CadetAcademyOverlay.FinishToSummary();
                     return SecurityWatchOverlay.FinishToSummary();
+                }
+                case "quota":
+                {
+                    if (args.Length > 1 && args[1].Equals("clear", StringComparison.OrdinalIgnoreCase))
+                    {
+                        dailyQuota.Clear();
+                        return "ok quota cleared";
+                    }
+                    var av = ResolveTargetAvatar(arg);
+                    return "ok usedToday=" + HasUsedDailyQuota(av, CurrentVM());
+                }
                 case "close":
                 case "dismiss":
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
+                    CadetAcademyOverlay.Close(false);
                     return "closed";
                 default:
-                    return "usage: convo dispatch status|toast [Sim]|start [seed] [rounds] [scanSec]|quiet [Sim]|answer|action alarm|clear|coffee|select N|finish|close";
+                    return "usage: convo dispatch status|toast [Sim] [cadet|guard]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|close";
             }
         }
 
@@ -260,7 +420,115 @@ namespace Simitone.Conversations
         static string Signed(int v) { return v > 0 ? "+" + v : v.ToString(); }
     }
 
-    // Native Simitone-styled top-right Radio Dispatch toast when a Security Guard Sim receives a shift call.
+    // Optional once-per-day "Work Assignment" button injected cleanly into Simitone's Career tab (UIJobSubpanel).
+    // Shares CareerDispatchDriver's daily quota with Radio Dispatch toasts so rewards cannot be double-farmed.
+    internal sealed class CareerAssignmentButton : SimUiElement
+    {
+        static CareerAssignmentButton instance;
+        static WeakReference<UIContainer> attachedSubpanel;
+
+        readonly TextStyle labelStyle;
+        Rectangle btnScreenRect;
+        bool hoverBtn;
+        bool prevLeftDown;
+        LawEnforcementRankDescriptor currentRank;
+        VMAvatar currentSim;
+        bool usedToday;
+
+        CareerAssignmentButton()
+        {
+            labelStyle = SimUiTokens.MakeStyle(11, Color.White, true);
+        }
+
+        public static void SyncWithCareerTab(VM vm)
+        {
+            try
+            {
+                var screen = UIScreen.Current;
+                if (screen == null) return;
+                var frontend = screen.GetType().GetProperty("Frontend")?.GetValue(screen, null);
+                var mainPanel = frontend?.GetType().GetProperty("MainPanel")?.GetValue(frontend, null)
+                             ?? frontend?.GetType().GetField("MainPanel")?.GetValue(frontend);
+                var subPanel = mainPanel?.GetType().GetField("SubPanel")?.GetValue(mainPanel) as UIContainer;
+
+                if (subPanel == null || subPanel.GetType().Name != "UIJobSubpanel")
+                {
+                    if (instance != null && instance.Parent != null)
+                        instance.Parent.Remove(instance);
+                    attachedSubpanel = null;
+                    return;
+                }
+
+                if (instance == null) instance = new CareerAssignmentButton();
+
+                UIContainer prev = null;
+                if (attachedSubpanel != null) attachedSubpanel.TryGetTarget(out prev);
+                if (!ReferenceEquals(prev, subPanel) || !ReferenceEquals(instance.Parent, subPanel))
+                {
+                    if (instance.Parent != null) instance.Parent.Remove(instance);
+                    subPanel.Add(instance);
+                    attachedSubpanel = new WeakReference<UIContainer>(subPanel);
+                }
+
+                var sel = screen.GetType().GetProperty("SelectedAvatar")?.GetValue(screen, null) as VMAvatar;
+                instance.currentSim = sel;
+                instance.currentRank = sel != null ? CareerDispatchDriver.ResolveRankForAvatar(sel, out _, out _, out _) : null;
+                instance.usedToday = sel != null && CareerDispatchDriver.HasUsedDailyQuota(sel, vm);
+                instance.Visible = instance.currentRank != null && instance.currentRank.IsImplemented && !CareerDispatchDriver.GameOpen;
+            }
+            catch { }
+        }
+
+        public override void Update(UpdateState state)
+        {
+            base.Update(state);
+            if (!Visible || currentRank == null || currentSim == null) return;
+
+            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
+            int mx = (int)(state.MouseState.X / scale);
+            int my = (int)(state.MouseState.Y / scale);
+            hoverBtn = btnScreenRect.Contains(mx, my);
+
+            bool left = state.MouseState.LeftButton == ButtonState.Pressed;
+            if (left && !prevLeftDown && hoverBtn && !usedToday && !CareerDispatchDriver.GameOpen)
+            {
+                var vm = CareerDispatchDriver.CurrentVM();
+                if (CareerDispatchDriver.TryConsumeDailyQuota(currentSim, vm))
+                {
+                    usedToday = true;
+                    CareerDispatchDriver.LaunchRankMiniGame(currentSim, currentRank, false);
+                }
+            }
+            prevLeftDown = left;
+        }
+
+        public override void Draw(UISpriteBatch batch)
+        {
+            if (!Visible || currentRank == null) return;
+
+            // Sits neatly below SalaryTitle (18, 94) and cleanly left of the Skills grid (x = 334)
+            var localRect = new SimRect(18f, 120f, 294f, 30f);
+            var globalOrigin = LocalPoint(Vector2.Zero);
+            btnScreenRect = new Rectangle(
+                (int)Math.Round(globalOrigin.X + localRect.X),
+                (int)Math.Round(globalOrigin.Y + localRect.Y),
+                (int)Math.Round(localRect.Width),
+                (int)Math.Round(localRect.Height));
+
+            if (usedToday)
+            {
+                FillRoundedRect(batch, localRect, SimUiTokens.RadiusControl, new Color(18, 34, 46, 200));
+                DrawRoundedBorder(batch, localRect, SimUiTokens.RadiusControl, SimUiTokens.InnerBorder, 1);
+                DrawFittedLine(batch, "DAILY ASSIGNMENT COMPLETE", new SimRect(localRect.X + 8f, localRect.Y + 7f, localRect.Width - 16f, 16f), labelStyle, SimTextAlign.Center);
+            }
+            else
+            {
+                DrawPillButton(batch, localRect, currentRank.AssignmentButtonText, SimButtonVariant.Primary, hoverBtn, true);
+            }
+        }
+    }
+
+    // Native Simitone-styled top-right Radio Dispatch toast for any Law Enforcement rank (Levels 1-10).
     public class CareerDispatchToast : SimUiElement
     {
         const float ToastTimeoutSeconds = 30f;
@@ -270,10 +538,12 @@ namespace Simitone.Conversations
 
         public static bool IsOpen { get { return isOpen && instance != null; } }
         public static VMAvatar CurrentAvatar { get { return instance != null ? instance.avatar : null; } }
+        public static LawEnforcementRankDescriptor CurrentRank { get { return instance != null ? instance.rankDescriptor : null; } }
         public static bool IsQuietShift { get { return instance != null && instance.quietShift; } }
 
         readonly TextStyle channelStyle, titleStyle, bodyStyle, timerStyle;
         VMAvatar avatar;
+        LawEnforcementRankDescriptor rankDescriptor;
         string simName = "Sim";
         string rankTitle = "Security Guard";
         bool quietShift;
@@ -291,7 +561,7 @@ namespace Simitone.Conversations
             timerStyle = SimUiTokens.MakeStyle(13, SimUiTokens.Mint, true);
         }
 
-        public static string Show(VMAvatar av, string rankTitle, bool quietNightShift = false)
+        public static string Show(VMAvatar av, LawEnforcementRankDescriptor rank, string rankTitle, bool quietNightShift = false)
         {
             try
             {
@@ -302,15 +572,16 @@ namespace Simitone.Conversations
                     instance.Parent.Remove(instance);
                 screen.Add(instance);
                 instance.avatar = av;
+                instance.rankDescriptor = rank ?? CareerDispatchRegistry.GetByLevel(0);
                 instance.simName = av != null && !string.IsNullOrWhiteSpace(av.Name) ? av.Name.Trim() : "Sim";
-                instance.rankTitle = string.IsNullOrWhiteSpace(rankTitle) ? "Security Guard" : rankTitle.Trim();
+                instance.rankTitle = string.IsNullOrWhiteSpace(rankTitle) ? instance.rankDescriptor.RankTitle : rankTitle.Trim();
                 instance.quietShift = quietNightShift;
                 instance.remaining = ToastTimeoutSeconds;
                 instance.pulseTime = 0f;
                 instance.prevLeftDown = true;
                 instance.Visible = true;
                 isOpen = true;
-                return "toast=open sim=" + instance.simName + " rank=" + instance.rankTitle + " quiet=" + quietNightShift;
+                return "toast=open sim=" + instance.simName + " rank=" + instance.rankTitle + " lvl=" + (instance.rankDescriptor.PromotionLevel + 1) + " quiet=" + quietNightShift;
             }
             catch (Exception e) { return "error: " + e.Message; }
         }
@@ -351,9 +622,10 @@ namespace Simitone.Conversations
                 if (hoverAnswer)
                 {
                     var av = avatar;
+                    var rank = rankDescriptor;
                     bool quiet = quietShift;
                     Close();
-                    SecurityWatchOverlay.Open(av, null, SecurityWatchGame.DefaultTotalRounds, 1.4f, quiet);
+                    CareerDispatchDriver.LaunchRankMiniGame(av, rank, quiet);
                     return;
                 }
                 if (hoverIgnore)
@@ -400,9 +672,13 @@ namespace Simitone.Conversations
                     lit ? SimUiTokens.Mint : new Color(40, 82, 74, 190));
             }
 
-            // 2. Sim & alert copy (auto-ellipsized within layout rects)
-            DrawFittedLine(batch, simName + "  •  " + rankTitle + " (Lvl 1)", layout.TitleRect, titleStyle, SimTextAlign.Left);
-            DrawFittedLine(batch, "Motion alert on precinct CCTV feeds!", layout.BodyRect, bodyStyle, SimTextAlign.Left);
+            // 2. Rank-aware Sim & alert copy
+            int lvlNum = (rankDescriptor != null ? rankDescriptor.PromotionLevel : 0) + 1;
+            string teaser = rankDescriptor != null
+                ? rankDescriptor.DispatchTeaser
+                : "Motion alert on precinct CCTV feeds!";
+            DrawFittedLine(batch, simName + "  •  " + rankTitle + " (Lvl " + lvlNum + ")", layout.TitleRect, titleStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, teaser, layout.BodyRect, bodyStyle, SimTextAlign.Left);
 
             // 3. Native Simitone pill buttons + countdown seconds
             DrawPillButton(batch, layout.AnswerBtn, "ANSWER", SimButtonVariant.Primary, hoverAnswer);
