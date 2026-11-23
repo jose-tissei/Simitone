@@ -56,9 +56,9 @@ static class ConvoLoader
         try { Look(); if (boot != null) boot.GetProperty("Enabled").SetValue(null, !Enabled, null); } catch { }
     }
 
-    public static object CreateMemoryStrip(float width)
+    public static void OpenMemoryMenu()
     {
-        try { Look(); return boot == null ? null : boot.GetMethod("CreateMemoryStrip").Invoke(null, new object[] { width }); } catch { return null; }
+        try { Look(); if (boot != null) boot.GetMethod("OpenMemoryMenu").Invoke(null, null); } catch { }
     }
 
     public static void CloseMemoryMenu()

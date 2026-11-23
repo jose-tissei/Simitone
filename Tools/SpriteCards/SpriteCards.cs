@@ -134,37 +134,33 @@ public static class SpriteCards
     {
         if (existing != null || main == null || main.Mode != UIMainPanelMode.LIVE || category != 5 || !ConvoLoader.Installed)
             return existing;
-        return new SimMemorySubpanelHost(main.Game);
+        int prevCat = main.Switcher != null && main.Switcher.ActiveCategory != 5 ? main.Switcher.ActiveCategory : 0;
+        ConvoLoader.OpenMemoryMenu();
+        return new SimMemoryLauncherSubpanel(main, prevCat);
     }
 
-    sealed class SimMemorySubpanelHost : UISubpanel
+    // Brief 1-frame bridge subpanel: immediately restores the previous Live bottom tab (e.g. Needs / Career)
+    // once UICategorySwitcher.Select(5) finishes, while the floating SimMemoryMenu window stays open on screen.
+    sealed class SimMemoryLauncherSubpanel : UISubpanel
     {
-        readonly UIElement strip;
+        readonly UIMainPanel main;
+        readonly int restoreCategory;
+        bool restored;
 
-        public SimMemorySubpanelHost(TS1GameScreen game) : base(game)
+        public SimMemoryLauncherSubpanel(UIMainPanel main, int restoreCategory) : base(main.Game)
         {
-            strip = ConvoLoader.CreateMemoryStrip(Size.X) as UIElement;
-            if (strip != null) Add(strip);
-            Invalidate();
-        }
-
-        public override void GameResized()
-        {
-            base.GameResized();
-            try { strip?.GetType().GetMethod("SetStripWidth")?.Invoke(strip, new object[] { Size.X }); } catch { }
-            Invalidate();
+            this.main = main;
+            this.restoreCategory = restoreCategory;
         }
 
         public override void Update(UpdateState state)
         {
             base.Update(state);
-            Invalidate();
-        }
-
-        public override void Kill()
-        {
-            ConvoLoader.CloseMemoryMenu();
-            base.Kill();
+            if (!restored)
+            {
+                restored = true;
+                try { main?.Switcher?.Select(restoreCategory); } catch { }
+            }
         }
     }
 

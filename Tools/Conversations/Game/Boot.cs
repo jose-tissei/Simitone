@@ -136,16 +136,16 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("memory menu error: " + e.Message); }
         }
 
+        public static void OpenMemoryMenu()
+        {
+            try { SimMemoryMenu.Open(null); }
+            catch (Exception e) { Log("memory menu error: " + e.Message); }
+        }
+
         public static void CloseMemoryMenu()
         {
             try { SimMemoryMenu.Close(); }
             catch { }
-        }
-
-        public static object CreateMemoryStrip(float width)
-        {
-            try { return new SimMemoryStrip(width); }
-            catch (Exception e) { Log("memory strip error: " + e.Message); return null; }
         }
 
         static string OpenLiveMemoryTab(bool expandSwitcher)
@@ -167,9 +167,14 @@ namespace Simitone.Conversations
                 if (openMethod != null && openMethod.GetParameters().Length == 0) openMethod.Invoke(main, null);
                 var switcher = main.GetType().GetField("Switcher")?.GetValue(main);
                 if (switcher == null) return "no switcher";
+                if (expandSwitcher)
+                {
+                    SimMemoryMenu.Close();
+                    switcher.GetType().GetMethod("Open")?.Invoke(switcher, null);
+                    return "switcher=open";
+                }
                 switcher.GetType().GetMethod("Select")?.Invoke(switcher, new object[] { 5 });
-                if (expandSwitcher) switcher.GetType().GetMethod("Open")?.Invoke(switcher, null);
-                return expandSwitcher ? "tab=5 switcher=open" : "tab=5";
+                return "tab=5 " + SimMemoryMenu.Status();
             }
             catch (Exception e) { return "error: " + (e.InnerException ?? e).Message; }
         }
