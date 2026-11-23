@@ -1979,6 +1979,325 @@
       }
     }
   },
+  "gossip": {
+    "greet": {
+      "0": [
+        "Hello, {name}. Do you have a moment?",
+        "Good to see you, {name}.",
+        "Hi {name}. How are you?",
+        "Nice to run into you, {name}.",
+        "Hello, {name}. I was hoping to catch you.",
+        "Hi there, {name}."
+      ],
+      "1": [
+        "Hey {name}! What's new?",
+        "Well hello, {name}!",
+        "Look who it is!",
+        "{name}! Just the Sim I wanted to see.",
+        "Hiya, {name}! Got any news?",
+        "Hey you! Pull up a chair."
+      ],
+      "2": [
+        "{name}. We should talk.",
+        "Hey, {name}. Got a minute?",
+        "{name}, good. I need a word.",
+        "Hello, {name}. Listen.",
+        "{name}! Come here.",
+        "Right, {name}, let's chat."
+      ]
+    },
+    "bye": {
+      "0": [
+        "I should get going. Take care, {name}.",
+        "It was nice chatting with you.",
+        "I'll see you later, {name}.",
+        "Thanks for the chat, {name}.",
+        "Take care of yourself.",
+        "Until next time, {name}."
+      ],
+      "1": [
+        "Okay, gotta run! Bye, {name}!",
+        "Catch you later, {name}!",
+        "That's all the news for now!",
+        "See ya, gossip buddy!",
+        "Toodle-oo, {name}!",
+        "Bye bye! Keep your ears open!"
+      ],
+      "2": [
+        "That's all. See you, {name}.",
+        "I'm done here. Goodbye.",
+        "Enough talk. Bye, {name}.",
+        "I've got things to do. Later.",
+        "Right, I'm off.",
+        "See you around, {name}."
+      ]
+    },
+    "lead": {
+      "0": [
+        "Can I tell you something?",
+        "I hope you don't mind me sharing this.",
+        "I thought you might like to know.",
+        "Please keep this between us, {name}.",
+        "I don't usually talk about others, but...",
+        "This is just between you and me."
+      ],
+      "1": [
+        "Oh, you won't believe this!",
+        "Psst, {name}, come closer!",
+        "Gossip time!",
+        "Guess what happened?",
+        "Hold on to your hat, {name}!",
+        "Ooh, I have news!"
+      ],
+      "2": [
+        "Listen, {name}.",
+        "Here's the news.",
+        "I'll tell you straight.",
+        "You should know this, {name}.",
+        "Let me fill you in.",
+        "Pay attention, {name}."
+      ]
+    },
+    "source": [
+      "{src} told me.",
+      "At least, that's what {src} said.",
+      "I heard it from {src}.",
+      "{src} let it slip.",
+      "That's what {src} told me.",
+      "So says {src}."
+    ],
+    "firsthand": [
+      "I saw it myself.",
+      "I was right there.",
+      "I saw it with my own eyes.",
+      "I saw the whole thing."
+    ],
+    "reaction": {
+      "surprised": [
+        "Really? I had no idea!",
+        "Wow, that's news to me!",
+        "Oh my goodness!",
+        "No way!",
+        "I didn't know that!",
+        "Well, well, well.",
+        "That's surprising!"
+      ],
+      "knewit": [
+        "Yes, I heard that too.",
+        "I already knew, but thanks.",
+        "Old news, I'm afraid.",
+        "Yes, so I've heard.",
+        "I know! Isn't it something?",
+        "That's what I heard as well."
+      ],
+      "doubtful": [
+        "Hm, that's not how I heard it.",
+        "Really? I heard something different.",
+        "That doesn't match what I know.",
+        "Are you sure? I remember it differently.",
+        "Hm. That's not what I was told.",
+        "I'm not sure that's right."
+      ],
+      "filledgap": [
+        "Oh, that's right! Thank you.",
+        "Ah, now I remember!",
+        "Thanks, that clears it up.",
+        "Oh yes, that's what it was.",
+        "That's the part I forgot!",
+        "Right, now it comes back to me."
+      ]
+    },
+    "aboutme": [
+      "That's actually about me, {name}!",
+      "Funny you ask. That one is about me!",
+      "Oh, that's about me, {name}.",
+      "Ha, you could say that one is about me.",
+      "That news is about me, believe it or not.",
+      "As it happens, that's about me!"
+    ],
+    "noidea": [
+      "I haven't heard anything about that.",
+      "No idea, I'm afraid.",
+      "Sorry, that's news to me.",
+      "I wish I knew.",
+      "I don't know anything about that.",
+      "You'd have to ask someone else."
+    ],
+    "tell": {
+      "promoted": {
+        "sure": [
+          "{who} got promoted to {label} {when}.",
+          "{who} got promoted {when}. Can you believe it?",
+          "{who} just got a promotion!",
+          "Did you know {who} is a {label} now?",
+          "{who} moved up to {label} {when}.",
+          "Apparently {who} got a promotion."
+        ],
+        "hedged": [
+          "I think {who} got promoted {when}, but I might be wrong.",
+          "Somebody said {who} got promoted to {label}, if I remember right.",
+          "I heard {who} got a promotion, but don't quote me.",
+          "If I remember right, {who} is a {label} now.",
+          "{who} got promoted {when}, or so I heard.",
+          "Word is {who} moved up to {label}. I could be mixing it up.",
+          "If I remember right, {who} got a promotion.",
+          "I may be wrong, but {who} got promoted to {label} {when}."
+        ]
+      },
+      "skillgain": {
+        "sure": [
+          "{who} reached level {amount} in {label} {when}.",
+          "{who} is getting really good at {label}.",
+          "{who} just hit level {amount} in {label}!",
+          "{who}'s {label} skill is up to {amount} now.",
+          "Did you hear? {who} improved their {label} {when}.",
+          "{who} has been practicing like crazy."
+        ],
+        "hedged": [
+          "I think {who} got to level {amount} in {label}, but I'm not sure.",
+          "{who} has been improving, I heard.",
+          "Somebody told me {who}'s {label} is around {amount}.",
+          "{who} got better at {label} {when}, if I remember right.",
+          "I heard {who} is quite good at {label} now.",
+          "{who} might have reached level {amount} in {label}. Don't hold me to it.",
+          "I think {who} has been getting better at something.",
+          "If I remember right, {who} is good at {label} now.",
+          "I may be wrong, but {who} reached level {amount} in {label}."
+        ]
+      },
+      "friendship": {
+        "sure": [
+          "{who} and {with} became friends {when}.",
+          "{who} and {with} are friends now!",
+          "{who} and {with} are getting along great.",
+          "It looks like {who} and {with} hit it off {when}.",
+          "{who} and {with} have grown close.",
+          "{who} made a new friend {when}.",
+          "{who} has a new friend now."
+        ],
+        "hedged": [
+          "I heard {who} and {with} became friends, if I remember right.",
+          "Word is {who} and {with} are getting close. Not sure, though.",
+          "I think {who} and {with} hit it off {when}.",
+          "Somebody said {who} and {with} are friends now, but I could be wrong.",
+          "{who} and {with} are friends, or so I heard.",
+          "I heard {who} made a new friend.",
+          "I think {who} made a new friend.",
+          "If I remember right, {who} and {with} are friends now.",
+          "{who} and {with} seem to get along, but I may be wrong."
+        ]
+      },
+      "romance": {
+        "sure": [
+          "{who} and {with} were kissing {when}!",
+          "I saw {who} and {with} getting very cozy {when}.",
+          "{who} and {with} are an item now.",
+          "{who} and {with} have a thing going.",
+          "Between us, {who} and {with} are in love.",
+          "{who} has a new romance. Don't tell anyone!"
+        ],
+        "hedged": [
+          "I heard {who} and {with} are an item, if I remember right.",
+          "Word is {who} and {with} kissed {when}. I could be wrong.",
+          "Somebody said {who} and {with} have a thing.",
+          "I think {who} and {with} are seeing each other.",
+          "{who} might be in love with {with}. Don't quote me.",
+          "I heard {who} has a secret crush.",
+          "I think {who} has a secret crush.",
+          "If I remember right, {who} and {with} are an item.",
+          "I may be wrong, but {who} and {with} kissed {when}."
+        ]
+      },
+      "argument": {
+        "sure": [
+          "{who} and {with} had a fight {when}.",
+          "{who} and {with} are not speaking.",
+          "{who} and {with} had a huge argument {when}!",
+          "You should have seen {who} yell at {with}.",
+          "{who} and {with} had words {when}.",
+          "{who} got into a fight {when}.",
+          "{who} is in a foul mood after a fight."
+        ],
+        "hedged": [
+          "I heard {who} and {with} had a fight, if I remember right.",
+          "Word is {who} and {with} are not speaking.",
+          "I think {who} and {with} argued {when}.",
+          "Somebody said {who} and {with} had words. I could be mixing it up.",
+          "{who} and {with} might have quarreled. Don't quote me.",
+          "I heard {who} is in a bad mood after an argument.",
+          "I think {who} had a fight with someone.",
+          "If I remember right, {who} and {with} had a fight.",
+          "I may be wrong, but {who} and {with} had words {when}."
+        ]
+      },
+      "gift": {
+        "sure": [
+          "{who} gave {with} a gift {when}.",
+          "{who} brought {with} a present!",
+          "{who} gave {with} something nice {when}.",
+          "{with} got a gift from {who}.",
+          "{who} surprised {with} with a present.",
+          "{who} gave somebody a nice gift {when}.",
+          "{who} has been very generous lately."
+        ],
+        "hedged": [
+          "I heard {who} gave {with} a gift, if I remember right.",
+          "Word is {who} got {with} something nice.",
+          "I think {who} brought {with} a present {when}.",
+          "Somebody said {who} gave {with} a gift. Not sure, though.",
+          "{who} might have given {with} a present.",
+          "I heard {who} is giving out presents.",
+          "I think {who} gave somebody a present.",
+          "If I remember right, {who} gave {with} a gift.",
+          "I may be wrong, but {who} brought {with} a present {when}."
+        ]
+      }
+    },
+    "ask": {
+      "promoted": [
+        "What was that about {who} and the promotion?",
+        "Wait, did {who} really get promoted?",
+        "When did {who} get promoted again?",
+        "Remind me, what happened with {who}'s job?",
+        "Did you hear anything about {who} getting promoted?"
+      ],
+      "skillgain": [
+        "How good did {who} get again?",
+        "What was that about {who} getting better at something?",
+        "Did {who} really improve a skill?",
+        "Remind me, what was {who} so good at?",
+        "Do you know how {who} has been doing lately?"
+      ],
+      "friendship": [
+        "Wait, are {who} and {with} really friends?",
+        "What was that about {who} and {with}?",
+        "Did you hear anything about {who} making friends?",
+        "Remind me, who did {who} befriend?",
+        "Are {who} and {with} getting along?"
+      ],
+      "romance": [
+        "Is it true about {who} and {with}?",
+        "Wait, are {who} and {with} together?",
+        "What do you know about {who}'s love life?",
+        "Remind me, who is {who} seeing?",
+        "Did you hear about {who} and {with}?"
+      ],
+      "argument": [
+        "What happened between {who} and {with}?",
+        "Is it true {who} and {with} fought?",
+        "Remind me, who was {who} fighting with?",
+        "Did you hear anything about {who} and {with}?",
+        "What was that fight about, {name}?"
+      ],
+      "gift": [
+        "Did {who} really give {with} a gift?",
+        "What was that about {who} and a present?",
+        "Remind me, who got a gift from {who}?",
+        "Did you hear anything about {who} and {with}?",
+        "What did {who} give?"
+      ]
+    }
+  },
   "subjects": [
     {
       "id": "coastal_roadtrip",

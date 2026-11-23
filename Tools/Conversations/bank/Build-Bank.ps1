@@ -9,6 +9,7 @@ $temperaments = 'easily_offended', 'thick_skinned', 'cold', 'receptive', 'any'
 
 $speaker = [ordered]@{}
 $reply = [ordered]@{}
+$gossip = [ordered]@{}
 $current = $null
 foreach ($file in Get-ChildItem (Join-Path $PSScriptRoot 'lines') -Filter '*.txt' | Sort-Object Name) {
     $n = 0
@@ -16,6 +17,34 @@ foreach ($file in Get-ChildItem (Join-Path $PSScriptRoot 'lines') -Filter '*.txt
         $n++
         $line = $raw.TrimEnd()
         if ($line -eq '' -or $line.StartsWith('#')) { continue }
+        if ($line -match '^\[gossip (.+)\]$') {
+            $list = New-Object System.Collections.Generic.List[string]
+            $g = $Matches[1].Split(' ')
+            $part = $g[0]
+            if ($part -in 'greet', 'bye', 'lead') {
+                if ($g.Count -ne 2 -or -not $tones.ContainsKey($g[1])) { throw "$($file.Name):$n bad gossip section '$line'" }
+                if (-not $gossip.Contains($part)) { $gossip[$part] = [ordered]@{} }
+                $gossip[$part][$tones[$g[1]]] = $list
+            }
+            elseif ($part -eq 'tell') {
+                if ($g.Count -ne 3 -or $g[2] -notin 'sure', 'hedged') { throw "$($file.Name):$n bad gossip section '$line'" }
+                if (-not $gossip.Contains('tell')) { $gossip['tell'] = [ordered]@{} }
+                if (-not $gossip['tell'].Contains($g[1])) { $gossip['tell'][$g[1]] = [ordered]@{} }
+                $gossip['tell'][$g[1]][$g[2]] = $list
+            }
+            elseif ($part -in 'ask', 'reaction') {
+                if ($g.Count -ne 2) { throw "$($file.Name):$n bad gossip section '$line'" }
+                if (-not $gossip.Contains($part)) { $gossip[$part] = [ordered]@{} }
+                $gossip[$part][$g[1]] = $list
+            }
+            elseif ($part -in 'noidea', 'source', 'firsthand', 'aboutme') {
+                if ($g.Count -ne 1) { throw "$($file.Name):$n bad gossip section '$line'" }
+                $gossip[$part] = $list
+            }
+            else { throw "$($file.Name):$n unknown gossip part '$line'" }
+            $current = $list
+            continue
+        }
         if ($line -match '^\[(speaker|reply) (.+)\]$') {
             $parts = $Matches[2].Split(' ')
             if ($Matches[1] -eq 'speaker') {
@@ -40,8 +69,9 @@ foreach ($file in Get-ChildItem (Join-Path $PSScriptRoot 'lines') -Filter '*.txt
 }
 
 $old = Get-Content $Bank -Raw -Encoding UTF8 | ConvertFrom-Json
-$out = [ordered]@{ version = 1; speaker = $speaker; reply = $reply; subjects = @($old.subjects) }
+$out = [ordered]@{ version = 1; speaker = $speaker; reply = $reply; gossip = $gossip; subjects = @($old.subjects) }
 # lists become arrays so a one-line list is still a JSON array
+foreach ($part in @($gossip.Keys)) { $v = $gossip[$part]; if ($v -is [System.Collections.Generic.List[string]]) { $gossip[$part] = [string[]]$v } else { foreach ($k in @($v.Keys)) { $w = $v[$k]; if ($w -is [System.Collections.Generic.List[string]]) { $v[$k] = [string[]]$w } else { foreach ($k2 in @($w.Keys)) { $w[$k2] = [string[]]$w[$k2] } } } } }
 foreach ($i in $speaker.Keys) { foreach ($t in @($speaker[$i].Keys)) { $speaker[$i][$t] = [string[]]$speaker[$i][$t] } }
 foreach ($i in $reply.Keys) { foreach ($q in $reply[$i].Keys) { foreach ($t in @($reply[$i][$q].Keys)) { $reply[$i][$q][$t] = [string[]]$reply[$i][$q][$t] } } }
 $json = $out | ConvertTo-Json -Depth 10
@@ -50,4 +80,4 @@ $json = ($json -replace "`r?`n", "`r`n") + "`r`n"
 [IO.File]::WriteAllText($Bank, $json, (New-Object System.Text.UTF8Encoding($false)))
 $speakerLines = ($speaker.Values | ForEach-Object { $_.Values } | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
 $replyLines = ($reply.Values | ForEach-Object { $_.Values } | ForEach-Object { $_.Values } | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
-Write-Host "bank.json written: $speakerLines speaker lines, $replyLines reply lines, $(@($old.subjects).Count) subjects" -ForegroundColor Green
+Write-Host "bank.json written: $speakerLines speaker lines, $replyLines reply lines, gossip sections: $($gossip.Count), $(@($old.subjects).Count) subjects" -ForegroundColor Green
