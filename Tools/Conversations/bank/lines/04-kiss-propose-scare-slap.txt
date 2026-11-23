@@ -1,0 +1,267 @@
+[speaker kiss gentle]
+May I kiss you, {name}?
+I've wanted to do this for a while.
+You're special to me, {name}.
+Let me show you how I feel.
+Can I kiss you?
+Close your eyes, {name}.
+[speaker kiss playful]
+Pucker up, {name}!
+One kiss, and I promise to behave. Maybe.
+I have a kiss with your name on it!
+Hold still. I'm going in.
+Don't mind me. I'm just stealing a kiss.
+Come here, you. I have a surprise.
+[speaker kiss bold]
+I'm going to kiss you, {name}.
+Come here. I want to kiss you.
+No more waiting. Kiss me.
+I've decided. I'm kissing you now.
+Stop talking, {name}. Kiss me.
+I've wanted this for a long time. Come here.
+[reply kiss 1 easily_offended]
+Stop! What are you doing, {me}?
+No! That's not okay.
+I'm very uncomfortable. Back away.
+How dare you try that!
+I'm not ready for this. Please step back.
+[reply kiss 1 thick_skinned]
+Nope. Not happening, {me}.
+Whoa there. Hard no.
+Bold move. Wrong answer.
+I'll pass on the kiss.
+Ha. Dream on.
+[reply kiss 1 cold]
+No.
+Don't.
+Back off, {me}.
+Absolutely not.
+Not interested in the slightest.
+[reply kiss 1 receptive]
+I'm sorry, {me}, I'm not ready for that.
+I like you, but not like that.
+This is too fast for me.
+Let's stay friends, okay?
+I can't, {me}. I'm sorry.
+[reply kiss 1 any]
+No, {me}.
+I don't think so.
+Please don't.
+Not now.
+I'm not ready.
+[reply kiss 2 easily_offended]
+Oh! I... that was sudden.
+Um, wow. I didn't expect that.
+My heart is pounding. I need a moment.
+That was nice, but I'm flustered.
+You surprised me, {me}.
+[reply kiss 2 thick_skinned]
+Hm. Not bad, {me}.
+Alright. That was okay.
+Smooth. I'll give you that.
+That wasn't a bad try.
+Not what I expected, but fine.
+[reply kiss 2 cold]
+...Fine. That was acceptable.
+Hm. Interesting.
+I allowed that.
+Don't read into it, {me}.
+It was... something.
+[reply kiss 2 receptive]
+Mmm, that was sweet, {me}.
+That was nice.
+You're a good kisser.
+I liked that. A little.
+Let's see where this goes.
+[reply kiss 2 any]
+That was nice, {me}.
+Hm. Interesting.
+Okay.
+That was sweet.
+I'm not sure how I feel.
+[reply kiss 3 easily_offended]
+Oh, {me}! That was perfect!
+I'm swooning!
+My heart is soaring!
+I've dreamed about that.
+That was the best moment of my life!
+[reply kiss 3 thick_skinned]
+Whoa. Okay, that was great!
+Alright, {me}, you've got moves.
+Again. Right now.
+Ha! That was something else.
+I did not see that coming. Nice.
+[reply kiss 3 cold]
+...That was good. Very good.
+Hm. You surprised me, {me}.
+I did enjoy that.
+Don't stop.
+Well. That changes things.
+[reply kiss 3 receptive]
+Mmm, {me}, that was wonderful!
+I've been waiting for that!
+You make me weak in the knees!
+Kiss me again!
+That was magical!
+[reply kiss 3 any]
+That was lovely, {me}!
+Wow!
+Again, please!
+My heart is racing!
+Perfect!
+
+[speaker propose gentle]
+I can't imagine my life without you, {name}. Will you marry me?
+{name}, would you do me the honor of becoming my spouse?
+I love you more than words can say. Marry me?
+I want to spend my life beside you. Will you marry me?
+You're my best friend, {name}. Will you be my spouse?
+I'd be the happiest Sim alive if you said yes.
+[speaker propose playful]
+Marry me, {name}! I'll even share my snacks.
+Hey {name}, wanna get hitched?
+I have a ring and terrible timing. Marry me?
+What do you say, {name}? You, me, forever, cake?
+Let's make it official. Will you marry me?
+Say yes, {name}, or I'll sulk dramatically.
+[speaker propose bold]
+{name}, marry me.
+I'm done waiting. Will you marry me, {name}?
+You're the one for me. Marry me.
+I know what I want, {name}. It's you. Marry me.
+Let's get married. I'm certain.
+I'm asking once: will you marry me, {name}?
+[reply propose 2 easily_offended]
+Oh my! I... I'm overwhelmed, {me}.
+I'm shaking. I don't know what to say!
+This is too much. I need a moment.
+My heart is pounding. Give me a second.
+I'm crying. I can't think.
+[reply propose 2 thick_skinned]
+Whoa, {me}. That's a big question.
+Well. You don't do things halfway, do you?
+Give me a second. I wasn't ready for this.
+Ha. Okay. That caught me off guard.
+Wow. Okay. Let me think.
+[reply propose 2 cold]
+...That's a heavy question, {me}.
+I wasn't expecting this.
+Hm. Let me think.
+You're serious.
+I need to process this.
+[reply propose 2 receptive]
+Oh, {me}. This means so much.
+I'm so moved. Give me a moment.
+I never imagined this day.
+You're the sweetest person I know.
+I'm overwhelmed, in a good way.
+[reply propose 2 any]
+I... wow, {me}.
+I wasn't expecting that.
+This is a big moment.
+Give me a moment.
+I need to think.
+
+[speaker scare gentle]
+Did you hear that noise, {name}?
+I think something is behind you...
+Don't turn around, {name}. Just kidding. Mostly.
+It's very quiet in here. Too quiet.
+I saw something moving in the shadows.
+Please don't be frightened, {name}, but... boo?
+[speaker scare playful]
+BOO! Got you, {name}!
+Behind you! Just kidding! Or am I?
+Rawr! I'm a monster!
+Gotcha, {name}! Look at your face!
+Spooky ghost time! Wooooo!
+Surprise! Did I make you jump?
+[speaker scare bold]
+Turn around, {name}. I dare you.
+You should be afraid of me.
+Look out! It's coming for you!
+I know what you did, {name}.
+Something is hunting you. Run.
+I'm the scariest thing in this house.
+[reply scare 2 easily_offended]
+Aaah! Don't do that, {me}!
+My heart! That wasn't funny at all!
+I'm shaking. Please never do that again.
+I'm going to cry. That was horrible!
+You terrified me. Stop it.
+[reply scare 2 thick_skinned]
+Ha! Nice try, {me}. Didn't flinch.
+Is that your scary face? Cute.
+I knew you were behind me.
+Boring. Try again.
+Hah. Did you want a reward?
+[reply scare 2 cold]
+...Really.
+I wasn't scared.
+Childish, {me}.
+Hm. Are you done?
+I saw you coming.
+[reply scare 2 receptive]
+Whoa! You got me, {me}!
+Ha ha! Okay, that was a good one.
+My heart's racing! Well done!
+You scared me! You rascal!
+Ha! I jumped a mile!
+[reply scare 2 any]
+Whoa! You scared me, {me}!
+Don't do that!
+Very funny.
+My heart!
+Okay, you got me.
+
+[speaker slap gentle]
+I'm sorry, {name}. But I had to.
+Please forgive me, but you've earned that.
+I hate to do this, {name}, but you leave me no choice.
+Don't make me regret this, {name}.
+Take that, and think about what you did.
+That's for being so careless, {name}.
+[speaker slap playful]
+Slap! Consider that a friendly warning!
+That's for being cheeky, {name}!
+Wake up, {name}! Got you!
+Pow! Right on the cheek!
+Smack! That's what you get!
+High five! Oops, wrong spot.
+[speaker slap bold]
+That's what you get, {name}.
+Don't test me again.
+You had that coming.
+Next time, think before you speak.
+I won't tolerate that, {name}.
+Learn your lesson, {name}.
+[reply slap 2 easily_offended]
+You hit me! How could you, {me}?
+Ow! That hurt! I'm never talking to you again.
+I'm in tears. How dare you!
+I can't believe you did that.
+Stay away from me, {me}!
+[reply slap 2 thick_skinned]
+Ow. Okay, I deserved that.
+Ha! Is that all you've got?
+That tickled. Hit me again.
+Alright, fair enough, {me}.
+My face has been through worse.
+[reply slap 2 cold]
+...You're going to regret that.
+I won't forget that, {me}.
+Hm. Noted.
+That was a mistake.
+Don't ever touch me again.
+[reply slap 2 receptive]
+Ow! Okay, I probably had that coming.
+Hey! Let's talk about this, {me}.
+That hurt. Why did you do that?
+Okay, okay. I get the message.
+Ouch! You've got a strong arm.
+[reply slap 2 any]
+Ow! Why did you do that?
+That hurt, {me}!
+Hey!
+Ouch!
+Don't ever do that again.

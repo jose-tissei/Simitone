@@ -1,0 +1,357 @@
+[speaker compliment gentle]
+You have a really kind way about you, {name}.
+That color looks lovely on you, {name}.
+I admire how thoughtful you are.
+You always make the room feel warmer.
+I just wanted to say you look wonderful today.
+Your smile is one of my favorite things, {name}.
+[speaker compliment playful]
+Looking good, {name}! Who dressed you? A genius?
+Okay, wow. That outfit is working overtime.
+You, {name}, are a walking sunbeam.
+Is it me, or are you glowing today?
+Stop being so charming. It's unfair to the rest of us.
+Style icon alert! That's you, {name}.
+[speaker compliment bold]
+You are the best-looking Sim in the room, {name}.
+I'll say it plainly: you look incredible.
+Nobody pulls off that look like you do.
+You have real presence, {name}. People notice.
+I think you're impressive, and I'm not shy about it.
+You're sharp, you're talented, and you know it.
+[reply compliment 1 easily_offended]
+Please don't tease me, {me}.
+Is that supposed to be a joke?
+That makes me uncomfortable.
+I don't believe you. Why say that?
+Now I feel awkward.
+[reply compliment 1 thick_skinned]
+Okay. Thanks, I guess.
+Flattery won't get you anywhere.
+Sure, whatever you say, {me}.
+Funny. What do you want?
+I've heard better lines.
+[reply compliment 1 cold]
+Hm.
+Spare me the flattery.
+I don't need that.
+Moving on, {me}.
+Right.
+[reply compliment 1 receptive]
+Oh! Um, thank you, {me}. That's unexpected.
+That's kind, though I don't quite know what to say.
+You're nice to say so. I'm a little embarrassed.
+Thank you, I think?
+Oh, stop. I'm not good at taking compliments.
+[reply compliment 1 any]
+Um, thanks, I guess.
+That's awkward, {me}.
+Okay. Thanks.
+I don't know what to say.
+If you say so.
+[reply compliment 3 easily_offended]
+Oh, {me}! That's the nicest thing anyone said today!
+You really mean that? Thank you!
+I'm blushing now. Thank you.
+That made my whole week.
+Aw, you're too sweet.
+[reply compliment 3 thick_skinned]
+Ha! Well, I know. But thanks.
+I do look good. Thanks, {me}.
+Flattery works. Keep going.
+Smooth talker. I like it.
+Hey, you have good taste.
+[reply compliment 3 cold]
+...Thank you. That was nice to hear.
+Hm. Not bad. Thanks, {me}.
+I appreciate that.
+Well. That was unexpected, and welcome.
+Noted. And thank you.
+[reply compliment 3 receptive]
+Aw, thank you so much, {me}! You made my day!
+You're so sweet! I'm beaming!
+That means the world coming from you.
+I'm touched, truly. Thank you!
+You always know how to cheer me up!
+[reply compliment 3 any]
+Thank you, {me}!
+That's so kind of you!
+You made my day.
+Aw, thanks!
+How sweet of you!
+
+[speaker dancewith gentle]
+Would you like to dance with me, {name}?
+This song is lovely. Shall we?
+I'd be happy to share a dance, {name}.
+Let's sway to the music for a while.
+Care to join me for a slow song?
+May I have this dance?
+[speaker dancewith playful]
+I have two left feet. Wanna dance anyway?
+Shake it with me, {name}!
+The floor is ours! Let's go!
+Prepare to be dazzled by my moves, {name}.
+Dance with me, or I'll dance alone and embarrass us both.
+Come on, {name}, let's cut a rug!
+[speaker dancewith bold]
+Dance with me, {name}. Now.
+You're dancing with me. Let's go.
+I'm leading. Keep up.
+Let's show everyone how it's done.
+This song needs us on the floor.
+Take my hand, {name}. We're dancing.
+[reply dancewith 1 easily_offended]
+I can't dance in front of everyone, {me}!
+No, please. I'd only embarrass myself.
+I feel too self-conscious. Not now.
+I'd rather not, thanks.
+Everyone would stare. Please, no.
+[reply dancewith 1 thick_skinned]
+Nah, my feet hurt.
+Not feeling it, {me}.
+Dancing's not my style. Pass.
+Ask someone else.
+Maybe after a snack.
+[reply dancewith 1 cold]
+No.
+I don't dance.
+Not now, {me}.
+Pass.
+Find another partner.
+[reply dancewith 1 receptive]
+Maybe another song, {me}? I'm tired.
+Thanks, but my feet are done for the night.
+I'd love to, but I'm not up to it.
+Sorry, {me}. Next time, I promise.
+Ask me again later, okay?
+[reply dancewith 1 any]
+No thanks, {me}.
+Not right now.
+I'd rather sit this one out.
+Maybe another time.
+Sorry, I'll pass.
+[reply dancewith 3 easily_offended]
+Oh! Yes, I'd love to, {me}!
+Okay, but go easy on me.
+I'm nervous, but let's do it!
+You make me feel brave. Let's dance.
+Yes! I was hoping you'd ask.
+[reply dancewith 3 thick_skinned]
+Why not? Let's tear up the floor!
+Sure, {me}. Try to keep up.
+Alright, let's give them a show.
+Fine, but I'm leading.
+Ha! You're on.
+[reply dancewith 3 cold]
+...Fine. One dance.
+Alright, {me}. Don't step on my feet.
+Hm. Why not.
+Very well.
+I suppose I could.
+[reply dancewith 3 receptive]
+I'd love to, {me}! Lead the way!
+Yes! I've been dying to dance!
+This is going to be so much fun!
+Oh, you're wonderful. Let's go!
+Absolutely, {me}!
+[reply dancewith 3 any]
+Sure, {me}, let's dance!
+I'd love to!
+Yes, let's go!
+Great idea!
+You're on!
+
+[speaker entertain gentle]
+I practiced a little show for you, {name}.
+May I entertain you for a minute?
+I hope this makes you smile, {name}.
+Here is something I've been working on.
+Let me brighten your afternoon with a performance.
+Please be kind. I'm a little nervous.
+[speaker entertain playful]
+Ladies and gentlemen, tonight only, just me!
+Step right up for the greatest show in town!
+Behold! The one-Sim circus!
+Watch closely, {name}. This will blow your mind.
+I promise at least ten percent of this is funny.
+Showtime, {name}! Pay no attention to the mess.
+[speaker entertain bold]
+Sit down, {name}. You're about to be amazed.
+This is the best show you'll see all week.
+Pay attention. I only do this once.
+Eyes on me, {name}. I'm the main event.
+You're going to love this. Everyone does.
+Give me your full attention. Starting now.
+[reply entertain 1 easily_offended]
+Oh dear. That was painful to watch.
+Please stop, {me}. It's embarrassing.
+I feel awkward just standing here.
+I'd prefer you didn't.
+That was a bit much, honestly.
+[reply entertain 1 thick_skinned]
+Boo. Next act!
+That was rough, {me}.
+I've seen better at a funeral.
+Do you take requests? Like, stopping?
+Don't quit your day job.
+[reply entertain 1 cold]
+...Are you finished?
+Not entertained.
+That was a waste of time.
+I'm checking my watch, {me}.
+No.
+[reply entertain 1 receptive]
+Aw, you tried, {me}. It was sweet.
+It wasn't my favorite, but I admire the effort.
+Maybe tweak the act a little?
+Good effort. I'm just a tough crowd.
+I appreciate it, even if it fell flat.
+[reply entertain 1 any]
+That was... something.
+Not quite my thing, {me}.
+Nice try.
+Um, okay.
+I'll pass on an encore.
+[reply entertain 3 easily_offended]
+That was wonderful, {me}! I loved it!
+I'm still smiling! Bravo!
+You're so talented. I'm amazed!
+That made me forget my worries.
+I didn't expect to enjoy that so much!
+[reply entertain 3 thick_skinned]
+Ha! Okay, that was good.
+Not bad, {me}. Encore!
+Alright, you earned a laugh.
+Ha! You've got style.
+Hey, I'd pay for that.
+[reply entertain 3 cold]
+...I laughed. Don't tell anyone.
+Hm. That was actually good.
+I'm entertained. Surprisingly.
+That was clever, {me}.
+Fine. Well done.
+[reply entertain 3 receptive]
+Bravo, {me}! That was fantastic!
+Ha ha! You're hilarious! More!
+You made my day! Encore!
+That was the best show ever!
+I loved every second of it!
+[reply entertain 3 any]
+Bravo, {me}!
+That was great!
+You're so funny!
+I loved it!
+Encore!
+
+[speaker flirt gentle]
+You have a lovely smile, {name}.
+I enjoy your company more than I expected.
+I was hoping I'd run into you today.
+There's something about you I can't stop noticing.
+Spending time with you is the best part of my day.
+You're easy to talk to, {name}. I like that.
+[speaker flirt playful]
+Do you have a map? I keep getting lost in your eyes.
+Are you a magician? Everyone else disappears when you're near.
+Hey {name}, is it hot in here, or is it you?
+Careful, {name}. You're making me forget my lines.
+If charm were a crime, you'd be in big trouble.
+Is your name Wi-Fi? I'm feeling a connection.
+[speaker flirt bold]
+I'll be honest, {name}. I can't stop looking at you.
+You're attractive, and you know exactly what you're doing.
+I think we should spend more time together.
+I like what I see, {name}.
+Let's skip the small talk. I'm interested in you.
+I'd like to take you out. Say yes.
+[reply flirt 1 easily_offended]
+That's inappropriate, {me}. I'm not comfortable.
+Please don't say things like that to me.
+I'm blushing, and not in a good way.
+I think you've misjudged things.
+Oh no. I don't feel that way at all.
+[reply flirt 1 thick_skinned]
+Nope. Not my type, {me}.
+Nice try, but no.
+Ha, you must be joking.
+Keep trying, champ. It won't work.
+I'm flattered. And uninterested.
+[reply flirt 1 cold]
+No.
+Not interested.
+Don't, {me}.
+This conversation is over.
+I don't feel the same.
+[reply flirt 1 receptive]
+Oh, {me}, I'm flattered, but I don't feel that way.
+I like you, but only as a friend.
+I'm sorry, my heart isn't in it.
+That's sweet, but I'm not ready.
+Thank you, but I can't return it.
+[reply flirt 1 any]
+That's not for me, {me}.
+No thanks.
+I don't feel that way.
+Please don't.
+Not interested.
+[reply flirt 2 easily_offended]
+Oh my! I'm not sure what to say.
+Um... I need a moment.
+You've made me blush.
+That's a lot, {me}. Let me think.
+I'm flustered. Give me time.
+[reply flirt 2 thick_skinned]
+Ha, smooth. I'll think about it.
+Not bad, {me}. Keep going.
+Alright, I'm a bit intrigued.
+Hm, you've got guts.
+You might be on to something.
+[reply flirt 2 cold]
+...I'll consider it.
+Interesting. Not yet convinced.
+Hm. We'll see.
+You're persistent, {me}.
+Don't push it. But carry on.
+[reply flirt 2 receptive]
+That's sweet, {me}. I'm warming up to you.
+Oh, I like that. Tell me more.
+You're making me smile.
+I'd like to know you better.
+Hm, maybe there's something here.
+[reply flirt 2 any]
+That's flattering, {me}.
+Hm, interesting.
+I'll think about it.
+You're sweet.
+Maybe.
+[reply flirt 3 easily_offended]
+Oh, {me}! I feel the same way!
+My heart is racing! Yes!
+I never dared hope you felt that way.
+You make me so happy.
+I'm blushing so much right now!
+[reply flirt 3 thick_skinned]
+Ha! Alright, you got me.
+Smooth, {me}. It worked.
+I like you too. Don't gloat.
+Okay, you're good. I'm in.
+You have my attention.
+[reply flirt 3 cold]
+...Fine. I like you too.
+Hm. You've won me over, {me}.
+I did not expect this. I'm pleased.
+You have my interest.
+Don't make me say it twice.
+[reply flirt 3 receptive]
+Oh, {me}, I was hoping you'd say that!
+I feel the exact same way!
+You make my heart skip!
+Yes! Let's see where this goes!
+You're wonderful, {me}.
+[reply flirt 3 any]
+I like you too, {me}!
+That's wonderful!
+You're charming.
+My heart is racing!
+Yes, please!

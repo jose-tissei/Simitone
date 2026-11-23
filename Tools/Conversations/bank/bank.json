@@ -3,501 +3,496 @@
   "speaker": {
     "apologize": {
       "0": [
-        "I just wanted to say I'm really sorry, {name}.",
-        "I just wanted to say I’m so sorry, {name}",
-        "Oh my goodness, please forgive me.",
-        "It was a silly mistake, truly.",
-        "I feel awful about how I acted.",
-        "I value our friendship so much, {name}.",
-        "Let me make it up to you somehow."
+        "I'm so sorry, {name}. I never meant to hurt you.",
+        "I owe you an apology, {name}, and I mean it.",
+        "I've been thinking about it, and I was wrong.",
+        "Please forgive me, {name}. I feel terrible.",
+        "I hate that things got tense between us.",
+        "Can we start over? I'm truly sorry."
       ],
       "1": [
-        "Seriously {name}, I was having a phase.",
-        "My brain just short-circuited, okay?",
-        "Don't look at me like that, it was weird!",
-        "Let's just pretend it never happened, yeah?",
-        "I owe you a giant ice cream, totally.",
-        "I was being a bit of a goofball, sorry!"
+        "I come in peace, {name}, wearing my very sorry face.",
+        "Okay, I messed up. Can we pretend it never happened?",
+        "My bad, {name}! Let me make it up to you.",
+        "I was a goofball and I know it. Forgive me?",
+        "Sorry! I'll even do the dishes. Okay, maybe one dish.",
+        "Please don't write me off, {name}. I'm sorry, truly."
       ],
       "2": [
-        "I was out of line, honestly.",
-        "Let's just move past this, {name}.",
-        "I truly regret what happened.",
-        "It wasn’t my intention, you know.",
-        "I value our friendship, {name}, sincerely.",
-        "I'm sorry, I mean it."
+        "I was out of line, {name}, and I'm owning it.",
+        "I was wrong. There, I said it. I'm sorry.",
+        "No excuses, {name}. I'm sorry.",
+        "I handled that badly, and I'm sorry for it.",
+        "Let's clear the air. I was in the wrong.",
+        "I'm not great at this, but I am sorry."
       ]
     },
     "backrub": {
       "0": [
-        "Oh, you seem a little tense, {name}.",
-        "Let me just rub that out for you.",
-        "Just relax and let me do the work.",
-        "That feels so much better, doesn't it {name}?",
-        "I'm really enjoying this little moment.",
-        "Would you like me to keep going?"
+        "You look tense, {name}. May I rub your shoulders?",
+        "Let me help you relax a little, {name}.",
+        "Sit down for a minute. I'll work on those knots.",
+        "You work so hard. Let me take the edge off.",
+        "Just close your eyes and breathe, {name}.",
+        "Would a back rub help right now?"
       ],
       "1": [
-        "Oh, you look tense, need a little melt-down?",
-        "Seriously, your shoulders are screaming. Let me help.",
-        "Just a little rub, nothing fancy, promise!",
-        "Don't look so serious, {name}, relax!",
-        "I'm pretty sure I can fix this with some pressure.",
-        "This is my specialty, {name} – pure bliss.”"
+        "Step right up, {name}, the shoulder clinic is open!",
+        "Your shoulders are tighter than a drum. Let me fix that.",
+        "Free back rub, today only. Interested?",
+        "I have magic hands, {name}. Want proof?",
+        "Turn around, {name}. Doctor Rub is in.",
+        "Those knots don't stand a chance against me."
       ],
       "2": [
-        "Seriously, you deserve a back rub.",
-        "Let me work out those knots for you, {name}.",
-        "Don't fight it, it’s incredibly relaxing.",
-        "Just lean back and let me do my thing.",
-        "I'm really good at this, {name}, trust me.",
-        "You'll feel amazing after this, truly."
+        "Sit. You're tense, and I'm fixing it.",
+        "Turn around, {name}. I'm doing your shoulders.",
+        "You need this. Don't argue.",
+        "Hold still, {name}. I know what I'm doing.",
+        "Those knots are coming out, one way or another.",
+        "I'm giving you a back rub. Relax."
       ]
     },
     "brag": {
       "0": [
-        "Oh my goodness, I finally finished the painting!",
-        "It feels so good to have created something.",
-        "I’m just so incredibly proud of it, {name}.",
-        "It took ages, but I really put my heart into it.",
-        "I think you should see it, {name}, I'd love your opinion.",
-        "Honestly, it’s one of my best pieces yet!"
+        "I'm quite proud of how my week has gone, {name}.",
+        "I have some good news, {name}. May I share it?",
+        "I worked hard on my skills lately, and it paid off.",
+        "I don't like to boast, but I'm really pleased with myself.",
+        "Something nice happened today, and I wanted to tell you.",
+        "I finally got the hang of something difficult."
       ],
       "1": [
-        "Seriously, I finally mastered the ukulele!",
-        "It's not *that* impressive, {name}, really.",
-        "I made a whole batch of cookies!",
-        "They’re, like, super gooey and amazing.",
-        "Got a perfect score on the painting, {name}!",
-        "Don’t tell anyone, but I’m a secret gardening genius."
+        "Guess who just got better at everything? This Sim!",
+        "Behold, {name}, the most talented Sim on the lot!",
+        "I'm kind of amazing. Just saying.",
+        "Ask me how I did. Go on, ask!",
+        "Today I was a genius. Tomorrow too, probably.",
+        "Pretty sure I'm the best at this. No pressure."
       ],
       "2": [
-        "I finally finished that painting, it’s a masterpiece!",
-        "Seriously, {name}, you wouldn't believe the score I got.",
-        "My garden is thriving, it's absolutely gorgeous.",
-        "I just landed a huge promotion at work, naturally.",
-        "Don't even talk to me, I’m busy achieving greatness.",
-        "This new outfit looks incredible on me, obviously."
+        "I'm better at this than anyone you know, {name}.",
+        "Nobody on this street can match my skills.",
+        "Let me tell you how great I am.",
+        "I've earned every bit of my success, and it shows.",
+        "Facts: I'm the best, and the proof is everywhere.",
+        "Watch and learn, {name}. This is how it's done."
       ]
     },
     "cheerup": {
       "0": [
-        "Hey, you okay? Just wanted to check in, {name}.",
-        "Hey, you seem a little down. Just wanted to say hi.",
-        "Hey {name}, just wanted to check in, you seem a little down.",
-        "Everything okay, {name}? No pressure to share, just wanted to see.",
-        "It’s alright to not be alright, you know? I'm here.",
-        "Want to talk about it, or would you rather just relax?",
-        "Seriously, {name}, you deserve a little sunshine today.",
-        "Let's do something fun, what do you think, {name}?"
+        "You seem a little down, {name}. Want to talk?",
+        "I'm here for you, {name}, whatever you need.",
+        "It's okay to have a rough day. I'm with you.",
+        "Come sit with me for a while, {name}.",
+        "Whatever it is, we'll get through it together.",
+        "You don't have to smile. I'll just stay close."
       ],
       "1": [
-        "Seriously {name}, you’re sulking? It's Tuesday!",
-        "Don’t be such a raincloud, lighten up!",
-        "Did you just frown at a butterfly?",
-        "Let’s do something ridiculous, like juggling!",
-        "You’re way too dramatic, honestly {name}!",
-        "Smile! It’s contagious, silly!"
+        "Why the long face, {name}? Let's fix that!",
+        "Hey, grumpy! Smile and I'll find you a snack.",
+        "Rain clouds are overrated. Come play with me!",
+        "I demand that you smile. It's an order.",
+        "Let's do something silly and forget the bad stuff.",
+        "Cheer up, {name}! The world has cake in it."
       ],
       "2": [
-        "Don't you dare wallow in that, seriously.",
-        "Look, it's not the end of the world, {name}.",
-        "You're letting this get to you – stop it.",
-        "Cheer up, it's a beautiful day, you know.",
-        "Seriously, pull yourself together, {name}, quick.",
-        "Let's do something fun, what do you say?"
+        "Enough sulking, {name}. Let's turn this day around.",
+        "Stand up, shake it off, and let's move on.",
+        "You're stronger than this. Snap out of it.",
+        "It's not the end of the world. Let's go.",
+        "I'm not letting you stay down, {name}.",
+        "Chin up. You've handled worse than this."
       ]
     },
     "compliment": {
       "0": [
-        "That shirt looks really nice on you, {name}.",
-        "That's a really nice shirt, {name}!",
-        "That outfit looks really nice on you, {name}."
+        "You have a really kind way about you, {name}.",
+        "That color looks lovely on you, {name}.",
+        "I admire how thoughtful you are.",
+        "You always make the room feel warmer.",
+        "I just wanted to say you look wonderful today.",
+        "Your smile is one of my favorite things, {name}."
       ],
       "1": [
-        "You've got a seriously fantastic smile, {name}!",
-        "Wow, that outfit really suits you!",
-        "Seriously, your hair looks amazing today.",
-        "I just noticed you're incredibly charming.",
-        "You’re rocking that look, {name}, totally!",
-        "That’s a seriously impressive skill!"
+        "Looking good, {name}! Who dressed you? A genius?",
+        "Okay, wow. That outfit is working overtime.",
+        "You, {name}, are a walking sunbeam.",
+        "Is it me, or are you glowing today?",
+        "Stop being so charming. It's unfair to the rest of us.",
+        "Style icon alert! That's you, {name}."
       ],
       "2": [
-        "You look really sharp today, {name}.",
-        "You look fantastic today, {name}.",
-        "Honestly, {name}, you're the best-looking Sim on this lot.",
-        "Everyone else is jealous of you, {name}, and they should be.",
-        "I'd say you're perfect, {name}, but I don't want it to go to your head.",
-        "Wow, {name}. Just wow. Look at you."
+        "You are the best-looking Sim in the room, {name}.",
+        "I'll say it plainly: you look incredible.",
+        "Nobody pulls off that look like you do.",
+        "You have real presence, {name}. People notice.",
+        "I think you're impressive, and I'm not shy about it.",
+        "You're sharp, you're talented, and you know it."
       ]
     },
     "dancewith": {
       "0": [
-        "This music is lovely, isn't it {name}?",
-        "I was just thinking of asking you to dance.",
-        "Would you be free to sway with me for a bit?",
-        "It would be really wonderful to dance with you.",
-        "Maybe we could just move to this song, {name}?",
-        "I’d love to share this moment with you."
+        "Would you like to dance with me, {name}?",
+        "This song is lovely. Shall we?",
+        "I'd be happy to share a dance, {name}.",
+        "Let's sway to the music for a while.",
+        "Care to join me for a slow song?",
+        "May I have this dance?"
       ],
       "1": [
-        "You know, you move really well.",
-        "I've been practicing my steps.",
-        "Care to join me on the dance floor?",
-        "Seriously, it'd be way more fun with {name}.",
-        "Don't tell me you're afraid of a little music?",
-        "Let's make some memories, {name}!"
+        "I have two left feet. Wanna dance anyway?",
+        "Shake it with me, {name}!",
+        "The floor is ours! Let's go!",
+        "Prepare to be dazzled by my moves, {name}.",
+        "Dance with me, or I'll dance alone and embarrass us both.",
+        "Come on, {name}, let's cut a rug!"
       ],
       "2": [
-        "Come on, let's dance, {name}",
-        "Seriously, I want to move with you.",
-        "Don't be shy, this is fun.",
-        "Let's get this party started, {name}.",
-        "You're really good at this, let's go.",
-        "This song's perfect, let’s dance together."
+        "Dance with me, {name}. Now.",
+        "You're dancing with me. Let's go.",
+        "I'm leading. Keep up.",
+        "Let's show everyone how it's done.",
+        "This song needs us on the floor.",
+        "Take my hand, {name}. We're dancing."
       ]
     },
     "entertain": {
       "0": [
-        "Just watch {name}, it's silly but I love it!",
-        "This is a bit ridiculous, isn't it?",
-        "Don't worry if it's bad, just have fun!",
-        "I'm trying to make you laugh, really!",
-        "It's a goofy performance, you see?",
-        "You're such a good audience, {name}."
+        "I practiced a little show for you, {name}.",
+        "May I entertain you for a minute?",
+        "I hope this makes you smile, {name}.",
+        "Here is something I've been working on.",
+        "Let me brighten your afternoon with a performance.",
+        "Please be kind. I'm a little nervous."
       ],
       "1": [
-        "Seriously {name}, you won't believe this!",
-        "I'm thinking of juggling turnips, really.",
-        "It's a bit silly, but it's fun, right?",
-        "Don't laugh, {name}, I'm an artist!",
-        "This is my magnum opus, you see?",
-        "You're the only one who gets it, {name}."
+        "Ladies and gentlemen, tonight only, just me!",
+        "Step right up for the greatest show in town!",
+        "Behold! The one-Sim circus!",
+        "Watch closely, {name}. This will blow your mind.",
+        "I promise at least ten percent of this is funny.",
+        "Showtime, {name}! Pay no attention to the mess."
       ],
       "2": [
-        "Watch this, {name}, it’s going to be legendary.",
-        "Seriously, you haven’t seen anything like this before.",
-        "I’ve been practicing, and it’s *perfect*.",
-        "Don’t laugh, {name}, this is serious business.",
-        "This is going to be the highlight of your day.",
-        "Trust me, this is pure comedic gold."
+        "Sit down, {name}. You're about to be amazed.",
+        "This is the best show you'll see all week.",
+        "Pay attention. I only do this once.",
+        "Eyes on me, {name}. I'm the main event.",
+        "You're going to love this. Everyone does.",
+        "Give me your full attention. Starting now."
       ]
     },
     "flirt": {
       "0": [
-        "You have a really lovely smile, {name}.",
-        "You have such a kind smile, {name}",
-        "I really enjoy talking with you.",
-        "It’s nice just being around you.",
-        "You seem like a really interesting person.",
-        "I was hoping I could get to know you better, {name}.",
-        "Spending time with you is lovely."
+        "You have a lovely smile, {name}.",
+        "I enjoy your company more than I expected.",
+        "I was hoping I'd run into you today.",
+        "There's something about you I can't stop noticing.",
+        "Spending time with you is the best part of my day.",
+        "You're easy to talk to, {name}. I like that."
       ],
       "1": [
-        "You know, you just have a really nice smile.",
-        "I was just thinking about you, actually.",
-        "Is it just me, or are you incredibly charming?",
-        "Don't mind me, just admiring your style.",
-        "Maybe we could, you know, explore that park together?",
-        "Seriously, {name}, you’re pretty distracting."
+        "Do you have a map? I keep getting lost in your eyes.",
+        "Are you a magician? Everyone else disappears when you're near.",
+        "Hey {name}, is it hot in here, or is it you?",
+        "Careful, {name}. You're making me forget my lines.",
+        "If charm were a crime, you'd be in big trouble.",
+        "Is your name Wi-Fi? I'm feeling a connection."
       ],
       "2": [
-        "You look incredible tonight {name}.",
-        "Seriously, I've been wanting to talk to you.",
-        "Don't you think this place is a little warm?",
-        "I find your confidence incredibly attractive.",
-        "Let's skip the small talk, shall we {name}?",
-        "I'm enjoying your company very much."
+        "I'll be honest, {name}. I can't stop looking at you.",
+        "You're attractive, and you know exactly what you're doing.",
+        "I think we should spend more time together.",
+        "I like what I see, {name}.",
+        "Let's skip the small talk. I'm interested in you.",
+        "I'd like to take you out. Say yes."
       ]
     },
     "givegift": {
       "0": [
-        "I just thought you might like this, {name}!",
-        "Just wanted to surprise you, {name}!",
-        "I thought you deserved a little something special.",
-        "This reminded me of you, honestly.",
-        "Hope you like it, it’s from the heart.",
-        "It's nothing big, just a little treat for you, {name}.",
-        "I really wanted to brighten your day."
+        "I got you something small, {name}. I hope you like it.",
+        "This made me think of you, {name}.",
+        "A little gift, just because.",
+        "I wanted to give you something nice.",
+        "I thought of you when I saw this.",
+        "Please accept this. It comes from the heart."
       ],
       "1": [
-        "I got you something, it’s kinda silly!",
-        "Seriously, you deserve a treat, {name}!",
-        "Hope you like this little surprise, hehe.",
-        "Don’t tell anyone I got you this, okay?",
-        "It’s purely for you, {name}, no strings attached!",
-        "Consider it a tiny little declaration of love!"
+        "Surprise! I come bearing gifts!",
+        "Ta-da! Guess what I got you, {name}!",
+        "Close your eyes and hold out your hands!",
+        "It's not much, but it's wrapped really well.",
+        "Who loves you? I do, and I brought a present!",
+        "Open it! Don't shake it. Okay, shake it a little."
       ],
       "2": [
-        "I got you something special, {name}.",
-        "This is absolutely perfect for you.",
-        "Seriously, you deserve this.",
-        "Don't even think about returning it.",
-        "It’s a small token of my appreciation.",
-        "Consider it a little surprise, {name}."
+        "Take it, {name}. You deserve it.",
+        "I picked this out for you. Don't argue.",
+        "This gift is for you. No excuses.",
+        "I know what you like. This is it.",
+        "Here, {name}. I want you to have this.",
+        "Accept this gift. I insist."
       ]
     },
     "hug": {
       "0": [
-        "Just wanted to be close to you, {name}.",
-        "Just wanted to wrap you in a hug, {name}.",
-        "Just wanted to be close for a bit, {name}."
+        "I could really use a hug, {name}.",
+        "Come here. You look like you need one.",
+        "May I give you a hug?",
+        "I'm just so glad to see you, {name}.",
+        "Let me hold you for a moment.",
+        "A hug can fix a lot of things."
       ],
       "1": [
-        "Oh, you just need a squeeze?",
-        "Seriously, come here!",
-        "Let me envelop you in a hug!",
-        "Don't be shy, it’s a friendly hug!",
-        "Need a little comfort, {name}?",
-        "This hug is totally contagious!"
+        "Incoming hug, {name}! Brace yourself!",
+        "Come here, you! Group hug for two!",
+        "Hugs are free today. Get yours!",
+        "I'm a hugger, {name}. No escape!",
+        "Bear hug time!",
+        "Hug alert! Get over here!"
       ],
       "2": [
-        "Come here, I want you to feel this.",
-        "Seriously, a hug is exactly what you need.",
-        "Let me wrap my arms around you, {name}.",
-        "Don't be awkward, just lean into me.",
-        "This feels good, doesn’t it {name}?",
-        "Just a quick hug, then we’re moving on."
+        "Come here, {name}. You're getting a hug.",
+        "I'm hugging you. Deal with it.",
+        "Don't argue, {name}. Just hug me.",
+        "Hold still. This hug is happening.",
+        "I want a hug, so I'm taking one.",
+        "Get over here and hug me."
       ]
     },
     "insult": {
       "0": [
-        "You're awfully particular about your socks, {name}.",
-        "You're wearing that again, {name}? Classic.",
-        "Seriously, {name}, that shirt's a choice.",
-        "Don't you think that's a little…loud, {name}?",
-        "You know, you're surprisingly clumsy sometimes.",
-        "I admire your confidence, {name}, really.",
-        "It's sweet how you try, {name}."
+        "With all due respect, {name}, you're not as clever as you think.",
+        "Bless your heart, {name}. You really try.",
+        "I'd tell you what I think, but I'd be rude.",
+        "That look is brave, {name}. Very brave.",
+        "I mean this kindly, but you're a bit much.",
+        "No offense, but you're not my favorite person."
       ],
       "1": [
-        "You're wearing that again?",
-        "Seriously {name}, that's a choice.",
-        "Don't flatter yourself, darling.",
-        "You’re a little… enthusiastic.",
-        "That's… certainly a look, {name}.",
-        "Bless your heart, really."
+        "Nice outfit, {name}. Did you lose a bet?",
+        "You're about as sharp as a spoon, {name}.",
+        "Is that your face, or is it still loading?",
+        "Wow, {name}, what a brilliant idea. For someone else.",
+        "You have a gift, {name}. Mostly for being annoying.",
+        "I've met doorknobs with more charisma."
       ],
       "2": [
-        "You’re trying really hard, aren’t you {name}?",
-        "Seriously, that outfit is… a choice.",
-        "Don't pretend you know what you're doing.",
-        "I'm not saying you're bad at this, just… slow.",
-        "You're awfully earnest, {name}.",
-        "Let’s just say your ideas aren’t brilliant."
+        "You're a disappointment, {name}.",
+        "Stay out of my way. You're not worth my time.",
+        "You're annoying, {name}, and everyone knows it.",
+        "I have no respect for you.",
+        "You bore me, {name}. Go away.",
+        "I'm tired of pretending I like you."
       ]
     },
     "joke": {
       "0": [
-        "Oh, this is a good one, isn't it {name}?",
-        "Seriously, I thought of it just now!",
-        "It's a silly one, but I like it.",
-        "Let me tell you, it made me smile.",
-        "You'll find it funny, {name}, I promise.",
-        "I just felt like sharing a little giggle."
+        "What do you call a sleeping bull? A bulldozer.",
+        "Why did the cookie go to the doctor? It felt crummy.",
+        "What do you call cheese that isn't yours? Nacho cheese.",
+        "Why did the scarecrow win a prize? He was outstanding in his field.",
+        "I told my plants a joke. They said it was a bit corny.",
+        "What do you call a bear with no teeth? A gummy bear."
       ],
       "1": [
-        "Why don't scientists trust atoms {name}? Because they make up everything!",
-        "Hey, did you hear about the restaurant on the moon? I heard the food was good but it had no atmosphere.",
-        "Seriously {name}, what’s grey and wears a sweater? A blueberry!",
-        "That’s a good one {name}! I like it!",
-        "I just saw a sign that said ‘Watch for Children’. I thought, that sounds like a nice way to start the day.",
-        "You know, I tried to catch lightning in a bottle... It was shocking!"
+        "Why don't eggs tell jokes? They would crack each other up.",
+        "I'm reading a book about anti-gravity. It's impossible to put down.",
+        "What did the ocean say to the beach? Nothing, it just waved.",
+        "Why can't you trust stairs? They're always up to something.",
+        "Why did the bicycle fall over? It was two tired.",
+        "I used to hate facial hair, but then it grew on me."
       ],
       "2": [
-        "Why did the scarecrow win an award {name}? Because he was outstanding in his field!",
-        "Seriously {name}, you won't get this.",
-        "I just heard a great one about a cloud. It was raining.",
-        "Let me tell you, {name}, it’s about a baker. Trust me.",
-        "This is brilliant {name}, isn't it? Absolutely hilarious.",
-        "You're welcome, {name}. I’m always here for a laugh."
+        "Prepare to laugh, {name}. I never miss.",
+        "I'm hilarious, and I'm about to prove it.",
+        "Why did the math book look sad? It had too many problems.",
+        "What do you call a fake noodle? An impasta.",
+        "I only know two jokes, {name}, and this is the good one.",
+        "Laugh now, {name}. The punchline is coming."
       ]
     },
     "kiss": {
       "0": [
-        "I just wanted to see if you’d like to get closer.",
-        "You seem really lovely, {name}.",
-        "This is nice, isn't it?",
-        "I’m finding it really easy to talk to you.",
-        "Maybe we could… hold hands?",
-        "It’s a pretty wonderful feeling, isn't it {name}?",
-        "I was hoping you’d feel the same way.",
-        "Could I… perhaps brush your cheek?"
+        "May I kiss you, {name}?",
+        "I've wanted to do this for a while.",
+        "You're special to me, {name}.",
+        "Let me show you how I feel.",
+        "Can I kiss you?",
+        "Close your eyes, {name}."
       ],
       "1": [
-        "You know, I've been admiring you lately.",
-        "Seriously, your smile is amazing.",
-        "Maybe we should, like, explore that a little?",
-        "Don't look so shocked, it's just a little feeling.",
-        "I have a really good feeling about this, {name}.",
-        "This is getting awkward, let's just do it!"
+        "Pucker up, {name}!",
+        "One kiss, and I promise to behave. Maybe.",
+        "I have a kiss with your name on it!",
+        "Hold still. I'm going in.",
+        "Don't mind me. I'm just stealing a kiss.",
+        "Come here, you. I have a surprise."
       ],
       "2": [
-        "I'm feeling a connection, {name}",
-        "Let's not waste this moment.",
-        "Seriously, I want you.",
-        "Don't hesitate, just do it.",
-        "This is going to be amazing, {name}.",
-        "I’ve been thinking about you all day.",
-        "You look incredible, let me show you.",
-        "Just lean in, {name}, it’s perfect."
+        "I'm going to kiss you, {name}.",
+        "Come here. I want to kiss you.",
+        "No more waiting. Kiss me.",
+        "I've decided. I'm kissing you now.",
+        "Stop talking, {name}. Kiss me.",
+        "I've wanted this for a long time. Come here."
       ]
     },
     "propose": {
       "0": [
-        "I’ve just been thinking about us, {name}.",
-        "You make everything feel so right.",
-        "Would you do me the incredible honor?",
-        "I want to build a life with you.",
-        "My heart feels so full with you, {name}.",
-        "Let’s spend forever together, please?"
+        "I can't imagine my life without you, {name}. Will you marry me?",
+        "{name}, would you do me the honor of becoming my spouse?",
+        "I love you more than words can say. Marry me?",
+        "I want to spend my life beside you. Will you marry me?",
+        "You're my best friend, {name}. Will you be my spouse?",
+        "I'd be the happiest Sim alive if you said yes."
       ],
       "1": [
-        "You know, you're pretty amazing.",
-        "Seriously, who else would I spend forever with?",
-        "Let's just... become official, what do you think {name}?",
-        "I’ve been thinking about this for ages, and you're the one!",
-        "Like, a *lot*. Will you marry me, {name}?",
-        "Let's do this! You're my favorite chaos."
+        "Marry me, {name}! I'll even share my snacks.",
+        "Hey {name}, wanna get hitched?",
+        "I have a ring and terrible timing. Marry me?",
+        "What do you say, {name}? You, me, forever, cake?",
+        "Let's make it official. Will you marry me?",
+        "Say yes, {name}, or I'll sulk dramatically."
       ],
       "2": [
-        "I've been thinking about us, {name}, a lot lately.",
-        "Let's build a life together, seriously.",
-        "Don't hesitate, {name}, say you'll marry me.",
-        "This is perfect, don’t ruin it with doubt.",
-        "I want you, {name}, more than anything.",
-        "Will you be my wife? It’s a simple question."
+        "{name}, marry me.",
+        "I'm done waiting. Will you marry me, {name}?",
+        "You're the one for me. Marry me.",
+        "I know what I want, {name}. It's you. Marry me.",
+        "Let's get married. I'm certain.",
+        "I'm asking once: will you marry me, {name}?"
       ]
     },
     "scare": {
       "0": [
-        "Just wanted to give you a little shiver, {name}!",
-        "Don’t worry, it’s just a silly prank.",
-        "A tiny ghost just waved at you!",
-        "I was hoping for a surprised face, dear.",
-        "It’s okay, I’m just messing around, {name}.",
-        "Let me know if you need a hug!"
+        "Did you hear that noise, {name}?",
+        "I think something is behind you...",
+        "Don't turn around, {name}. Just kidding. Mostly.",
+        "It's very quiet in here. Too quiet.",
+        "I saw something moving in the shadows.",
+        "Please don't be frightened, {name}, but... boo?"
       ],
       "1": [
-        "Did you just hear a whisper {name}?",
-        "I think the shadows are watching you.",
-        "Don't look behind you, silly!",
-        "Just kidding... mostly.",
-        "I swear I felt a cold breeze, {name}.",
-        "Boo! You jumped!"
+        "BOO! Got you, {name}!",
+        "Behind you! Just kidding! Or am I?",
+        "Rawr! I'm a monster!",
+        "Gotcha, {name}! Look at your face!",
+        "Spooky ghost time! Wooooo!",
+        "Surprise! Did I make you jump?"
       ],
       "2": [
-        "Don't look behind you, {name}!",
-        "I'm watching you.",
-        "It’s just a little trick, isn't it?",
-        "You hear that noise?",
-        "Something’s in the shadows, {name}.",
-        "Happy now?"
+        "Turn around, {name}. I dare you.",
+        "You should be afraid of me.",
+        "Look out! It's coming for you!",
+        "I know what you did, {name}.",
+        "Something is hunting you. Run.",
+        "I'm the scariest thing in this house."
       ]
     },
     "slap": {
       "0": [
-        "Oh, you silly thing, just a little tap.",
-        "Let me give you a gentle little nudge.",
-        "Seriously, {name}, you need a tiny smack?",
-        "Don't worry, it's just a playful poke.",
-        "I'm just teasing you, {name}, you know?",
-        "A little slap for you, you little rascal."
+        "I'm sorry, {name}. But I had to.",
+        "Please forgive me, but you've earned that.",
+        "I hate to do this, {name}, but you leave me no choice.",
+        "Don't make me regret this, {name}.",
+        "Take that, and think about what you did.",
+        "That's for being so careless, {name}."
       ],
       "1": [
-        "You owe me one, {name}!",
-        "Seriously, you're being a goofball.",
-        "Just a little tap for you!",
-        "Oops, did I do that?",
-        "Let me show you who's boss, {name}",
-        "Don't look so serious!"
+        "Slap! Consider that a friendly warning!",
+        "That's for being cheeky, {name}!",
+        "Wake up, {name}! Got you!",
+        "Pow! Right on the cheek!",
+        "Smack! That's what you get!",
+        "High five! Oops, wrong spot."
       ],
       "2": [
-        "You're being ridiculous, {name}",
-        "Let me handle this.",
-        "Seriously, don't be like that.",
-        "Just a little reminder.",
-        "You need a chill pill, {name}.",
-        "Don't you dare argue with me."
+        "That's what you get, {name}.",
+        "Don't test me again.",
+        "You had that coming.",
+        "Next time, think before you speak.",
+        "I won't tolerate that, {name}.",
+        "Learn your lesson, {name}."
       ]
     },
     "tease": {
       "0": [
-        "Oh, {name}, you're adorable when you're wrong.",
-        "Nice try, {name}. Really. Nice try.",
-        "Careful, {name}, I might start to think you're a little clumsy.",
-        "You're funny, {name}. Not on purpose, but funny.",
-        "Did you do that on purpose, {name}? I hope so."
+        "You're adorable when you concentrate, {name}.",
+        "I hope you don't mind me teasing you a little.",
+        "You blush so easily. It's cute.",
+        "I'm only kidding, {name}. Mostly.",
+        "You're fun to tease, you know that?",
+        "Don't be shy, {name}. I only tease people I like."
       ],
       "1": [
-        "You know, you look really good in that shirt.",
-        "Seriously, did you even try?",
-        "I bet you’re terrible at charades.",
-        "Don’t even *think* about it.",
-        "That's a very… dedicated stare.",
-        "You’re surprisingly graceful, {name}.",
-        "I'm just saying, you're cute when you blush.",
-        "Maybe we should challenge each other?"
+        "Nice hair, {name}! Did you do it yourself?",
+        "Aww, someone's grumpy! Do you need a nap?",
+        "I bet you can't catch me!",
+        "You know you love it when I tease you.",
+        "Look who's getting all flustered!",
+        "I can't help it. You're so easy to rile up."
       ],
       "2": [
-        "You know, I've been thinking about you.",
-        "Don't you think you're cute when you're flustered?",
-        "I bet you’d look amazing in that dress, {name}.",
-        "Seriously, you’re distracting me.",
-        "Let's just say I enjoy your company, {name}.",
-        "You're awfully persistent, aren’t you?"
+        "You call that effort, {name}?",
+        "Is that the best you can do?",
+        "You're not as tough as you pretend.",
+        "Admit it, {name}. I'm better than you.",
+        "Come on, {name}. Say something clever.",
+        "You've got nothing, {name}. Nothing."
       ]
     },
     "tickle": {
       "0": [
-        "Oh, you’re just so silly, {name}!",
-        "Let me tickle you a little, it’s fun.",
-        "Don’t stop, please, I want to tickle you.",
-        "This feels so good, {name}, really good.",
-        "Just a tiny tickle for you, sweetie.",
-        "You’re making me smile, {name}, tickles are nice."
+        "May I tickle you a little, {name}?",
+        "Don't worry. This is a gentle tickle.",
+        "I'm just going to tickle you, softly.",
+        "You look like you need a laugh, {name}.",
+        "Let me make you laugh a little.",
+        "Be still. This tickles me too."
       ],
       "1": [
-        "Just thought I'd see if you were feeling silly.",
-        "You look like you need a little surprise!",
-        "Don't fight it, it's so much fun, {name}!",
-        "Seriously, you’re just laughing now, aren’t you?",
-        "I’m just messing with you, silly {name}!",
-        "Tickle attack initiated!"
+        "Tickle attack! Incoming!",
+        "Coochie coo, {name}!",
+        "Run, {name}! The tickle monster is coming!",
+        "Can't catch me! I mean, can't escape me!",
+        "Tickle tickle tickle!",
+        "I know your ticklish spot, {name}."
       ],
       "2": [
-        "You're looking a little tense, {name}. Let's fix that.",
-        "Seriously, don't fight it. It's quite delightful.",
-        "Just relax, and let me handle things.",
-        "Don't be such a stick in the mud, darling.",
-        "This is going to be *amazing*, {name}, you'll see.",
-        "I've got an idea, and you're going to love it."
+        "Hold still, {name}. I'm tickling you.",
+        "You can't escape me, {name}.",
+        "Prepare to laugh, {name}.",
+        "I'm going to tickle you until you give up.",
+        "Stop wiggling. This is happening.",
+        "Nobody avoids my tickles."
       ]
     },
     "talk": {
       "0": [
-        "I was just thinking about {topic}, you know?",
-        "It's been on my mind lately, {name}.",
-        "Have you heard anything about {topic}?",
-        "I was wondering if you’d had a chance to look into {topic}.",
-        "Seriously, {name}, what are your thoughts on {topic}?",
-        "Just curious, have you been following {topic}?"
+        "Have you ever thought about {topic}, {name}?",
+        "I've been curious about {topic} lately.",
+        "Do you have a moment to chat about {topic}?",
+        "I'd love to hear your thoughts on {topic}.",
+        "{topic} came up the other day. It made me think of you.",
+        "Would you mind talking about {topic} with me?"
       ],
       "1": [
-        "Seriously {name}, you won’t believe what I just read.",
-        "Okay, spill it, what’s been buzzing around?",
-        "I had a weird thought, and I need an opinion.",
-        "So, like, have you stumbled across anything interesting?",
-        "About {topic}? Don’t tell me you haven't!",
-        "Quick, tell me everything about {topic}!"
+        "Okay, {name}, tell me everything you know about {topic}!",
+        "Quick question: how do you feel about {topic}?",
+        "I have so many questions about {topic}!",
+        "Guess what I've been obsessed with? {topic}!",
+        "Let's talk about {topic}, {name}. It'll be fun!",
+        "You and me, and {topic}. Go!"
       ],
       "2": [
-        "Honestly, {name}, let's talk about {topic}.",
-        "I've been thinking about {topic} a lot lately.",
-        "So, what’s your take on {topic}?",
-        "Seriously, {name}, we need to discuss {topic}.",
-        "Don’t tell me you haven’t considered {topic}.",
-        "Right, {name}, let’s get straight to {topic}."
+        "{name}, we need to talk about {topic}.",
+        "I have strong opinions about {topic}. Want to hear them?",
+        "Let's settle this, {name}. What do you think about {topic}?",
+        "{topic} matters more than people admit.",
+        "I'm going to tell you about {topic}, {name}, and you'll listen.",
+        "Here's my take on {topic}. Try to keep up."
       ]
     }
   },
@@ -505,1679 +500,1481 @@
     "apologize": {
       "1": {
         "easily_offended": [
-          "Honestly, that's incredibly awkward.",
-          "Please, just drop it, I'm fine.",
-          "I don't need an apology, really.",
-          "You're making me so uncomfortable.",
-          "That was a bit much, thank you.",
-          "Seriously, leave me alone about this."
+          "I'm still too hurt to talk about it, {me}.",
+          "Please stop. Hearing it again only makes it worse.",
+          "I can't just forget it that quickly.",
+          "Sorry doesn't undo it, {me}.",
+          "I need some time away from you."
         ],
         "thick_skinned": [
-          "Seriously? That's it?",
-          "Oh, come on, don’t be like that.",
-          "You're being awfully dramatic.",
-          "That was a bit much, wasn’t it?",
-          "Ugh, you’re so sensitive.",
-          "Just drop it, honestly."
+          "Nice try, {me}, but I'm not buying it.",
+          "Save it. I'm not that easy.",
+          "You can apologize all day. I'm not moved.",
+          "I'm fine, but I'm not forgiving you either.",
+          "Come back when you mean it."
         ],
         "cold": [
-          "Don't bother.",
-          "Seriously?",
-          "That's... awkward.",
-          "Just leave it.",
-          "I don't accept apologies.",
-          "{me}? Really?"
+          "Not interested.",
+          "I've heard it. It changes nothing.",
+          "Don't bother, {me}.",
+          "Noted. Now leave it.",
+          "Words are cheap."
         ],
         "receptive": [
-          "Oh, really? That's… intense.",
-          "I don't know what to say about that.",
-          "Please, just leave it, honestly.",
-          "Wow, that's a bit much for a hello.",
-          "Seriously? I was just enjoying the chat.",
-          "I’m suddenly feeling a bit awkward."
+          "I want to forgive you, {me}, but I'm not there yet.",
+          "I hear you. I just need more time.",
+          "Thank you for trying. It still stings.",
+          "I appreciate it, but it's not enough today.",
+          "Give me a little while, okay?"
         ],
         "any": [
-          "Seriously? That's... that's it?",
-          "Oh, wow. That's a little awkward, isn't it?",
-          "I don't know, I'm kind of in the middle of something.",
-          "{me}? Just... just leave it, please.",
-          "Look, I appreciate the thought, but no thanks.",
-          "Ugh, don't. Just... don't."
+          "I'm not ready to forgive you yet.",
+          "That doesn't fix it, {me}.",
+          "I hear you, but I need time.",
+          "Maybe another day.",
+          "It's not that simple."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, really? You noticed?",
-          "You’re so thoughtful, I’m genuinely touched.",
-          "Seriously? That’s… that’s wonderful of you.",
-          "I was just feeling a bit prickly, thank you.",
-          "This is the sweetest thing anyone’s ever said!",
-          "You have no idea how much that meant to me."
+          "Thank you, {me}. I needed to hear that.",
+          "Okay. I was really upset, but I feel better now.",
+          "I'm still a little shaky, but I forgive you.",
+          "That means a lot. Please don't do it again.",
+          "Thanks for saying it. I feel lighter."
         ],
         "thick_skinned": [
-          "Well, that was surprisingly gracious of you.",
-          "Seriously? You’re thanking me? Good on you!",
-          "You're awfully sweet, I'll give you that.",
-          "Alright, alright, you win, you're forgiven!",
-          "Hah! That's a classy apology, {me}.",
-          "I appreciate the effort, you big softie."
+          "Fine, you're forgiven. No big deal.",
+          "Alright, alright. We're good.",
+          "Apology accepted. Let's move on.",
+          "I wasn't even that mad. We're good.",
+          "Forget it, {me}. It's already behind us."
         ],
         "cold": [
-          "Well, that’s… surprisingly gracious.",
-          "I appreciate the effort, really.",
-          "Hmm, you know what? That’s nice.",
-          "Seriously? You’re apologizing? Wow.",
-          "That was a bit awkward, actually.",
-          "Thank you. That’s…kind."
+          "Fine. It's forgotten.",
+          "Apology accepted.",
+          "Alright. Don't repeat it.",
+          "That will do.",
+          "We're good, {me}. For now."
         ],
         "receptive": [
-          "Oh, that’s so kind of you, really.",
-          "Seriously? That’s wonderful to hear.",
-          "You’re such a sweetheart, {me}, thank you.",
-          "That’s a lovely thing to say, truly.",
-          "I appreciate that so much, goodness!",
-          "Wow, you’re making me smile, thank you."
+          "Thank you, {me}. That means so much.",
+          "Of course I forgive you. Come here.",
+          "I appreciate you saying that. We're okay.",
+          "I'm just glad we talked it out.",
+          "Thank you for being honest with me."
         ],
         "any": [
-          "Oh my goodness, that's so kind of you!",
-          "Seriously? That’s incredibly thoughtful.",
-          "Wow, you’re really sweet, thank you!",
-          "I appreciate that so much, really.",
-          "You shouldn’t have, but it’s lovely.",
-          "That was really lovely of you, {me}."
+          "Thank you. I forgive you.",
+          "Apology accepted, {me}.",
+          "It's okay. We're good.",
+          "I appreciate that. Let's move on.",
+          "Thanks for saying it."
         ]
       }
     },
     "backrub": {
       "1": {
         "easily_offended": [
-          "Seriously {me}? That was incredibly awkward.",
-          "Oh, good grief, please don't do that again.",
-          "I really don't appreciate that, thank you.",
-          "That was...discomforting. Kindly back away.",
-          "You’re being a bit forward, aren’t you?",
-          "I’m not comfortable with that, actually."
+          "Please don't touch me right now.",
+          "That makes me really uncomfortable, {me}.",
+          "I'd rather you keep your hands to yourself.",
+          "Ow, no, that hurts. Please stop.",
+          "I think I need some space."
         ],
         "thick_skinned": [
-          "Seriously {me}? That’s a bit forward, isn’t it?",
-          "Oh, you’re going for the awkward, huh?",
-          "I’m good, thanks. Really.",
-          "Let’s just… not, okay? It’s weird.",
-          "Wow, that was intensely uncomfortable.",
-          "Please, no more unsolicited massages."
+          "Eh, I'm fine, {me}. Really.",
+          "Not my thing, thanks.",
+          "You press too hard. Let's skip it.",
+          "I'll pass on the rubdown.",
+          "Nah. Go bother someone else."
         ],
         "cold": [
-          "Seriously {me}? That’s… uncomfortable.",
-          "Please, no. I’m perfectly fine, thank you.",
-          "Don’t. Just… don’t. It’s weird.",
-          "I appreciate the thought, really, but no.",
-          "You’re making me incredibly self-conscious.",
-          "Go away, {me}. Just go."
+          "No.",
+          "I didn't ask for that.",
+          "Keep your hands off.",
+          "Not interested, {me}.",
+          "Don't."
         ],
         "receptive": [
-          "Oh gosh, that's a little awkward, really.",
-          "Seriously {me}? That’s… unexpected.",
-          "I appreciate the thought, but no thank you.",
-          "Please don’t, I’m a bit self-conscious.",
-          "Wow, that was a bit too forward, honestly.",
-          "I’m good, thanks. Let's just chat."
+          "That's kind of you, {me}, but not right now.",
+          "Sorry, I'm too restless to enjoy it.",
+          "Maybe later? I can't relax at the moment.",
+          "Thanks, but my shoulders are fine.",
+          "I appreciate it, just not today."
         ],
         "any": [
-          "Oh, wow, that's... unexpected, really.",
-          "Please, no, I’m quite alright, thank you.",
-          "I don't know about this, honestly.",
-          "Seriously? That's a bit too forward.",
-          "Could you just... not? I'm a little awkward.",
-          "I appreciate the thought, but no thanks."
+          "No thanks, {me}.",
+          "I'd rather not.",
+          "Maybe some other time.",
+          "That's not helping.",
+          "Please stop."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that's incredibly thoughtful!",
-          "Really? You did that? That's so sweet.",
-          "I wasn’t expecting that at all, thank you!",
-          "Wow, you're amazing, I feel so relaxed.",
-          "That was the most wonderful thing anyone's done!",
-          "You’re a genuine sweetheart, thank you so much."
+          "Oh, that actually feels wonderful.",
+          "Okay, that is lovely. Don't stop.",
+          "I didn't expect to relax so much.",
+          "That's the first time I've felt calm all day.",
+          "Thank you, {me}. I really needed that."
         ],
         "thick_skinned": [
-          "Seriously? You're doing *that*?",
-          "Oh my gosh, you're the best, {me}!",
-          "This is surprisingly delightful, actually.",
-          "Don't stop, I'm melting right into the floor!",
-          "You've officially won today, my friend.",
-          "This is way better than my own shoulder massage!"
+          "Not bad, {me}. Not bad at all.",
+          "Right there, yeah. Good hands.",
+          "Alright, I admit it. That's great.",
+          "You found the spot. Keep going.",
+          "Okay, you win. That's fantastic."
         ],
         "cold": [
-          "Oh, really? That's… lovely.",
-          "Seriously? That’s actually quite nice.",
-          "Well, aren’t you thoughtful {me}.",
-          "This is surprisingly soothing, thank you.",
-          "I wasn’t expecting that, actually.",
-          "You’re… wonderfully kind."
+          "Hm. That's actually good.",
+          "Acceptable. Keep going.",
+          "Fine. That helps.",
+          "...Right there.",
+          "I suppose you have talent."
         ],
         "receptive": [
-          "Oh my gosh, that's amazing!",
-          "Seriously? This is heavenly.",
-          "You're a lifesaver, truly.",
-          "This is exactly what I needed.",
-          "Thank you so much, you’re wonderful.",
-          "{me}, you’re the best!"
+          "Ahh, that feels amazing, {me}.",
+          "Mmm, you're so good at this.",
+          "That's heavenly. Thank you!",
+          "I could stay like this all day.",
+          "You have the best hands."
         ],
         "any": [
-          "Oh my gosh, that's amazing, thank you!",
-          "Seriously? That's the best thing ever!",
-          "You're a lifesaver, {me}, I needed that.",
-          "Wow, that feels incredible, really!",
-          "This is so relaxing, you're brilliant!",
-          "I feel so much better, thank you so much."
+          "That feels great, {me}.",
+          "Mmm, that's the spot.",
+          "Thank you. I needed that.",
+          "Don't stop.",
+          "Wow, I feel so much better."
         ]
       }
     },
     "brag": {
       "1": {
         "easily_offended": [
-          "Oh, really? That's... quite a lot to boast about.",
-          "I appreciate the thought, but I'm not really into that.",
-          "Please, let's not talk about achievements.",
-          "That feels a little overwhelming, honestly.",
-          "Could we maybe change the subject? It's awkward.",
-          "I'm fine, thanks. Let's just move on."
+          "Must you always talk about yourself?",
+          "That's unkind to the rest of us, {me}.",
+          "I'm tired of hearing how great you are.",
+          "Why are you rubbing it in?",
+          "It makes me feel small, {me}."
         ],
         "thick_skinned": [
-          "Seriously {me}? That’s…a lot.",
-          "Oh, wow. You really went there.",
-          "That’s a bit much, don’t you think?",
-          "Please, no. Just…no.",
-          "You're making me uncomfortable, honestly.",
-          "I appreciate the enthusiasm, but thanks no."
+          "Big whoop, {me}.",
+          "Yeah, yeah. You're a legend.",
+          "Impressive. If I cared.",
+          "Is the speech almost over?",
+          "I've heard better bragging from a pigeon."
         ],
         "cold": [
-          "Honestly that’s… a lot.",
-          "I appreciate the thought, really.",
-          "Could you not? Just… no.",
-          "That’s a bit much for a stranger.",
-          "Please, spare me the self-praise.",
-          "I’m not really one for boasting."
+          "Spare me.",
+          "I don't care.",
+          "Congratulations. Moving on.",
+          "Is that all?",
+          "Not impressed, {me}."
         ],
         "receptive": [
-          "Oh, really? That’s… a lot.",
-          "I appreciate the thought, but no thanks.",
-          "Wow, that’s intense, honestly.",
-          "Please, don't, I’m a little awkward.",
-          "That's a bit much for a casual chat.",
-          "I'm actually quite sensitive, you know?"
+          "That's nice, {me}, but you do go on a bit.",
+          "Good for you, I suppose.",
+          "I'm happy for you, but it's a lot.",
+          "Hm. I'd rather hear about something else.",
+          "Well done, though I've lost the thread."
         ],
         "any": [
-          "Oh, really? That’s… a lot.",
-          "Please, no need to rub it in, honestly.",
-          "I appreciate the thought, but it's awkward.",
-          "Wow, that's… intense. Sorry, I'm uncomfortable.",
-          "Could you maybe tone that down a bit?",
-          "Seriously? That’s a bit much for a chat."
+          "That's nice, {me}. I guess.",
+          "Okay. If you say so.",
+          "Good for you.",
+          "Is that so?",
+          "I've heard enough."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that's wonderful to hear!",
-          "Really? That’s just the sweetest thing.",
-          "I'm so thrilled for you, honestly!",
-          "That’s absolutely brilliant, {me}!",
-          "You should be incredibly proud of yourself.",
-          "What a lovely thing to share, thank you."
+          "Wow, {me}, I'm really impressed.",
+          "That's wonderful. You must be so pleased.",
+          "I wish I could do that. Well done!",
+          "You really worked for it, didn't you?",
+          "Good for you. I mean that."
         ],
         "thick_skinned": [
-          "Seriously though, you’re glowing!",
-          "That’s fantastic, I’m so happy for you.",
-          "Well, why not? You deserve the praise!",
-          "Good for you, {me}, you’re brilliant!",
-          "Let’s hear all about it, tell me everything!",
-          "You’re making me ridiculously proud of you."
+          "Okay, I'll admit it. Pretty good.",
+          "Not bad, {me}. Not bad at all.",
+          "Huh. You actually earned it.",
+          "Alright, I'm a little jealous.",
+          "Fine, you're good. Don't let it go to your head."
         ],
         "cold": [
-          "Well, that’s… certainly something.",
-          "I appreciate the enthusiasm, truly.",
-          "Interesting. You’re quite proud, aren’t you?",
-          "That’s… a lot to take in.",
-          "I can see you’re passionate about this.",
-          "It’s… admirable, I suppose."
+          "Hm. That is impressive.",
+          "...Fine. I'm impressed.",
+          "That's solid work.",
+          "Well. I did not expect that.",
+          "Credit where it's due, {me}."
         ],
         "receptive": [
-          "That's wonderful to hear {me}, honestly!",
-          "Really? Wow, that’s fantastic!",
-          "I’m so happy for you, truly!",
-          "What an amazing accomplishment!",
-          "That’s such great news, congrats!",
-          "Seriously? You should be so proud!"
+          "That's fantastic, {me}! I'm so happy for you!",
+          "Amazing! Tell me everything!",
+          "You deserve it. I'm so proud of you.",
+          "Wow, that's incredible! Congratulations!",
+          "I love hearing about your wins!"
         ],
         "any": [
-          "That’s wonderful to hear, truly!",
-          "Wow, that's fantastic, you go girl!",
-          "I’m so happy for you, honestly.",
-          "Seriously, that’s amazing, good on you!",
-          "What a great accomplishment, so proud!",
-          "That’s such lovely news, congratulations!"
+          "Congratulations, {me}!",
+          "That's great news!",
+          "Wow, well done!",
+          "I'm impressed.",
+          "Nice work!"
         ]
       }
     },
     "cheerup": {
       "1": {
         "easily_offended": [
-          "Honestly, that was incredibly awkward.",
-          "Please, just leave me alone, thank you.",
-          "I don’t need your pity, really.",
-          "You’re making me uncomfortable, to be honest.",
-          "That was a bit much, you know?",
-          "I’m fine, really. Go away."
+          "Please don't tell me how to feel, {me}.",
+          "You wouldn't understand.",
+          "That just makes me feel worse.",
+          "I'd like to be alone right now.",
+          "Stop, you're making it worse."
         ],
         "thick_skinned": [
-          "Seriously {me}? That was a bit much.",
-          "Ugh, you’re awful. Thanks, but no thanks.",
-          "Please, spare me the pity party.",
-          "Don't start with that again, really.",
-          "That's… uncomfortable. Let’s just move on.",
-          "You're oddly persistent. I'm fine."
+          "I'm not sad, {me}. I'm just done.",
+          "Cheering up is overrated.",
+          "Nice effort. It didn't work.",
+          "Maybe I like being grumpy.",
+          "I'll cheer up when I feel like it."
         ],
         "cold": [
-          "Honestly, that was incredibly awkward.",
-          "Please just leave me alone, thank you.",
-          "I appreciate the thought, but no.",
-          "Don't do that again, it's weird.",
-          "You're making me uncomfortable, really.",
-          "Go away {me}, seriously."
+          "Leave me alone.",
+          "Not helping.",
+          "I didn't ask.",
+          "Go away, {me}.",
+          "Save it."
         ],
         "receptive": [
-          "Oh, uh, that’s… sweet, really.",
-          "Please, no. I'm a little overwhelmed.",
-          "I appreciate the thought, truly, but I'm fine.",
-          "Seriously, stop. It’s kind of awkward.",
-          "{me}, I don't really do that.",
-          "Thanks, but I’d rather be alone right now."
+          "I appreciate it, {me}, but I can't shake it right now.",
+          "Thank you, but I'm too low to lift.",
+          "I know you mean well. I just can't.",
+          "Sorry. Maybe later.",
+          "It means a lot that you tried."
         ],
         "any": [
-          "Seriously? That's a bit much, thanks.",
-          "Ugh, no thanks, I'm fine.",
-          "Go away, I'm trying to think.",
-          "Please don't do that, it's weird.",
-          "I appreciate the thought, but no.",
-          "Just...leave me alone, please."
+          "That's not helping.",
+          "I just want to be alone.",
+          "Thanks, but no.",
+          "Not today, {me}.",
+          "I can't right now."
         ]
       },
       "2": {
         "easily_offended": [
-          "Oh, that's nice of you.",
-          "I appreciate the thought, really.",
-          "It's... considerate, I suppose.",
-          "Thank you, I’m alright now, honestly.",
-          "That’s very kind of {me}.",
-          "Just a little down, nothing serious."
+          "...Okay. A little. Thank you.",
+          "I'm still sniffling, but it helps.",
+          "That was kind of you, {me}.",
+          "I'm not fine yet, but I'm trying.",
+          "Thanks for staying with me."
         ],
         "thick_skinned": [
-          "Well, that was a bit of a performance, wasn't it?",
-          "I appreciate the effort, really.",
-          "You’re awfully persistent, {me}.",
-          "A little cheering never hurt anyone, I suppose.",
-          "Is there a reason for all the drama?",
-          "Just let it go, honestly."
+          "Eh, I feel a bit better.",
+          "Alright. You made a dent.",
+          "Fine, I'll stop grumbling. Mostly.",
+          "Not bad. I'll live.",
+          "Okay, that helped a tiny bit."
         ],
         "cold": [
-          "That's… nice of you.",
-          "I appreciate the thought, really.",
-          "It’s alright, thanks for offering.",
-          "I'm not particularly feeling chatty.",
-          "Just a little preoccupied, I’m afraid.",
-          "Could you, um, leave now?"
+          "...Slightly better.",
+          "Fine. It helped.",
+          "I suppose that was something.",
+          "Hm. I'll manage.",
+          "Don't make a big deal of it."
         ],
         "receptive": [
-          "Oh, that's nice of you.",
-          "Well, thanks for saying so.",
-          "I appreciate the thought.",
-          "That’s… considerate, I suppose.",
-          "Hmm, you’re trying to help?",
-          "Good to know, really."
+          "That helped a little, {me}. Thank you.",
+          "I think I'm starting to feel better.",
+          "It's nice to know you care.",
+          "Thanks. I needed someone to talk to.",
+          "I'm not fully there, but it's better."
         ],
         "any": [
-          "Oh, that’s nice of you.",
-          "Well, thanks for saying that.",
-          "I appreciate the thought, really.",
-          "That’s kind of you to offer.",
-          "Hmm, okay, thanks {me}.",
-          "Just a little down today, I guess."
+          "That helped a little.",
+          "Thanks, {me}. I feel a bit better.",
+          "Okay, I'll try to cheer up.",
+          "I appreciate it.",
+          "Slowly getting there."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, you noticed! That’s so kind.",
-          "Really? You thought of me? I'm overwhelmed.",
-          "You're so perceptive, it’s lovely of you.",
-          "That was incredibly thoughtful, thank you.",
-          "I don't say this often, but you’re sweet.",
-          "Honestly, that made my whole day, thank you."
+          "Oh, {me}, thank you. I feel so much better!",
+          "You always know what to say.",
+          "I was a mess, and you fixed it.",
+          "I feel lighter already. Thank you.",
+          "That's exactly what I needed."
         ],
         "thick_skinned": [
-          "Well, that was unexpectedly delightful.",
-          "You're a strange one, {me}, but appreciated.",
-          "Seriously, thanks. You brightened my day.",
-          "Don't stop being weird, it's charming.",
-          "That actually made me laugh, good work.",
-          "You’re alright, {me}, you’re alright."
+          "Ha! Alright, you got me. I'm cheerful again.",
+          "Okay, okay, I'm smiling. Happy?",
+          "You win. Bad mood gone.",
+          "Fine, that worked. Don't gloat.",
+          "Alright, I'm back. Thanks."
         ],
         "cold": [
-          "Well, that’s… surprisingly thoughtful.",
-          "I appreciate you noticing, really.",
-          "Thank you. That was…kind of nice.",
-          "Huh. I didn’t expect that at all.",
-          "You know, that actually made my day.",
-          "Seriously? You remembered? That’s lovely."
+          "...That actually worked.",
+          "Fine. I'm better.",
+          "Hm. Thank you, {me}.",
+          "I did not expect that to help.",
+          "I'll admit it. I feel better."
         ],
         "receptive": [
-          "Oh my goodness, that’s wonderful to hear!",
-          "Seriously, that’s just the best news!",
-          "I’m so glad {me} felt better!",
-          "You brightened my whole day, truly.",
-          "That’s amazing, tell me everything!",
-          "You’re such a sweetheart, thank you."
+          "Thank you so much, {me}! I feel wonderful now!",
+          "You're the best, you know that?",
+          "I was down, but now I'm smiling again!",
+          "You really turned my day around!",
+          "That was just what I needed. Thank you!"
         ],
         "any": [
-          "Oh my goodness, you're so sweet!",
-          "Seriously, that's the best thing ever!",
-          "You made me smile, thank you so much.",
-          "That was really thoughtful of you, {me}.",
-          "I feel so much better, you're a star!",
-          "You’re the kindest Sim I’ve met today."
+          "Thank you, I feel so much better!",
+          "That worked, {me}. Thanks!",
+          "I'm smiling again.",
+          "You turned my day around.",
+          "Much better now. Thanks!"
         ]
       }
     },
     "compliment": {
       "1": {
         "easily_offended": [
-          "Oh, really? That's...unexpected.",
-          "I appreciate the thought, honestly.",
-          "Please don't say things like that.",
-          "It feels a little intrusive, you know?",
-          "Must you comment on my appearance?",
-          "I’d rather not discuss compliments."
+          "Please don't tease me, {me}.",
+          "Is that supposed to be a joke?",
+          "That makes me uncomfortable.",
+          "I don't believe you. Why say that?",
+          "Now I feel awkward."
         ],
         "thick_skinned": [
-          "Seriously? That's the best you've got?",
-          "Ugh, that was…awkward, actually.",
-          "Please, don't. Just. Don’t.",
-          "You're making me uncomfortable, {me}.",
-          "I appreciate the thought, really, I don't.",
-          "Go away, honestly."
+          "Okay. Thanks, I guess.",
+          "Flattery won't get you anywhere.",
+          "Sure, whatever you say, {me}.",
+          "Funny. What do you want?",
+          "I've heard better lines."
         ],
         "cold": [
-          "Please don't. It's... unsettling.",
-          "That's awfully forward, isn't it?",
-          "I appreciate the thought, truly.",
-          "Just... leave it, thank you.",
-          "You shouldn't say things like that.",
-          "I find that remark rather strange."
+          "Hm.",
+          "Spare me the flattery.",
+          "I don't need that.",
+          "Moving on, {me}.",
+          "Right."
         ],
         "receptive": [
-          "Oh, um, that's... sweet, really.",
-          "I appreciate the thought, honestly.",
-          "Please, don't, I'm a bit self-conscious.",
-          "That’s a little forward, you know?",
-          "No, thank you. I'm quite private.",
-          "I’m fine, really. Just let’s move on."
+          "Oh! Um, thank you, {me}. That's unexpected.",
+          "That's kind, though I don't quite know what to say.",
+          "You're nice to say so. I'm a little embarrassed.",
+          "Thank you, I think?",
+          "Oh, stop. I'm not good at taking compliments."
         ],
         "any": [
-          "Oh, uh, thanks. That's… unexpected.",
-          "Seriously? Wow. I don't know what to say.",
-          "Please, don't. I’m actually quite self-conscious.",
-          "That’s… a little weird. Thanks, I guess.",
-          "No, no, it’s alright. Really. You’re welcome.",
-          "I’m fine, really. Just leave it alone, okay?"
+          "Um, thanks, I guess.",
+          "That's awkward, {me}.",
+          "Okay. Thanks.",
+          "I don't know what to say.",
+          "If you say so."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh, really? You noticed that? That's so kind.",
-          "I... I don't usually get compliments, thank you.",
-          "That’s lovely to hear, truly. It made my day.",
-          "Wow, you're very perceptive, {me}, I appreciate it.",
-          "Seriously? That was such a thoughtful thing to say.",
-          "You’re the sweetest, I’m genuinely touched."
+          "Oh, {me}! That's the nicest thing anyone said today!",
+          "You really mean that? Thank you!",
+          "I'm blushing now. Thank you.",
+          "That made my whole week.",
+          "Aw, you're too sweet."
         ],
         "thick_skinned": [
-          "Well, aren't you just a charmer?",
-          "Seriously though, that’s a lovely thing to say.",
-          "You're making me blush, you cheeky thing.",
-          "Good on you, {me}, you actually noticed!",
-          "That’s… surprisingly thoughtful, honestly.",
-          "I appreciate the boost, you delightful soul."
+          "Ha! Well, I know. But thanks.",
+          "I do look good. Thanks, {me}.",
+          "Flattery works. Keep going.",
+          "Smooth talker. I like it.",
+          "Hey, you have good taste."
         ],
         "cold": [
-          "Well, that’s… unexpectedly kind.",
-          "I haven’t heard that in a while, really.",
-          "That’s a rather pleasant thought, actually.",
-          "Thank you. It’s… appreciated.",
-          "You know, you're observant.",
-          "I find that quite charming, truly."
+          "...Thank you. That was nice to hear.",
+          "Hm. Not bad. Thanks, {me}.",
+          "I appreciate that.",
+          "Well. That was unexpected, and welcome.",
+          "Noted. And thank you."
         ],
         "receptive": [
-          "That's so kind of you {me}, really lovely!",
-          "That's so lovely to hear, really!",
-          "Oh, you shouldn't say that, it's sweet!",
-          "Wow, thank you, you’re very kind.",
-          "I appreciate that more than you know!",
-          "That really brightened my day, truly.",
-          "You're a sweetheart, genuinely happy."
+          "Aw, thank you so much, {me}! You made my day!",
+          "You're so sweet! I'm beaming!",
+          "That means the world coming from you.",
+          "I'm touched, truly. Thank you!",
+          "You always know how to cheer me up!"
         ],
         "any": [
-          "Oh my goodness, that's so kind of you!",
-          "Seriously, that brightened my whole day.",
-          "Wow, thank you, that really made me smile.",
-          "You have no idea how much I appreciate that.",
-          "That was such a lovely thing to say, truly.",
-          "I’m blushing, you’re so sweet!"
+          "Thank you, {me}!",
+          "That's so kind of you!",
+          "You made my day.",
+          "Aw, thanks!",
+          "How sweet of you!"
         ]
       }
     },
     "dancewith": {
       "1": {
         "easily_offended": [
-          "Oh, really? That was a bit awkward, honestly.",
-          "I appreciate the thought, but I'm not really feeling it.",
-          "Please don't ask me that again, it's uncomfortable.",
-          "Seriously {me}? That's... unexpected. Let's just talk.",
-          "I'm terribly sorry, I just find that kind of thing strange.",
-          "Could you not? It made me feel incredibly self-conscious."
+          "I can't dance in front of everyone, {me}!",
+          "No, please. I'd only embarrass myself.",
+          "I feel too self-conscious. Not now.",
+          "I'd rather not, thanks.",
+          "Everyone would stare. Please, no."
         ],
         "thick_skinned": [
-          "Seriously {me}? That's a bit forward.",
-          "Ugh, you caught {me} off guard, honestly.",
-          "Good grief, please, just...no. Not cool.",
-          "Wow, that was unexpectedly awkward, thanks.",
-          "I’m flattered, but I’m not really into that.",
-          "Let’s just stick to friendly conversation."
+          "Nah, my feet hurt.",
+          "Not feeling it, {me}.",
+          "Dancing's not my style. Pass.",
+          "Ask someone else.",
+          "Maybe after a snack."
         ],
         "cold": [
-          "Seriously? That's...unexpected.",
-          "Please, just go away.",
-          "I'm not really into that sort of thing.",
-          "Good grief, {me}, you're awkward.",
-          "This is incredibly uncomfortable.",
-          "I think I'll just...leave now."
+          "No.",
+          "I don't dance.",
+          "Not now, {me}.",
+          "Pass.",
+          "Find another partner."
         ],
         "receptive": [
-          "Oh, um, that's really sweet, but no thanks.",
-          "Seriously {me}? That's a little awkward.",
-          "I appreciate the thought, honestly.",
-          "Dancing isn't really my thing, you know?",
-          "Wow, that was… unexpected. Sorry!",
-          "Let’s just enjoy the music, okay?"
+          "Maybe another song, {me}? I'm tired.",
+          "Thanks, but my feet are done for the night.",
+          "I'd love to, but I'm not up to it.",
+          "Sorry, {me}. Next time, I promise.",
+          "Ask me again later, okay?"
         ],
         "any": [
-          "Seriously {me}? That’s a bit forward.",
-          "Oh, um, no thanks. I’m good.",
-          "I wasn’t expecting that, honestly.",
-          "Please, just… no. I’m watching TV.",
-          "That’s really awkward, sorry.",
-          "Maybe another time, perhaps?"
+          "No thanks, {me}.",
+          "Not right now.",
+          "I'd rather sit this one out.",
+          "Maybe another time.",
+          "Sorry, I'll pass."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, really? You asked me to dance?",
-          "That’s… that’s such a lovely thought, actually!",
-          "Well, I’d absolutely love to, that’s wonderful.",
-          "Seriously? You’re asking me? This is delightful!",
-          "I was just thinking about a little dance, you know?",
-          "That’s the sweetest thing anyone’s ever asked me!"
+          "Oh! Yes, I'd love to, {me}!",
+          "Okay, but go easy on me.",
+          "I'm nervous, but let's do it!",
+          "You make me feel brave. Let's dance.",
+          "Yes! I was hoping you'd ask."
         ],
         "thick_skinned": [
-          "Seriously? You asked me to dance?",
-          "Oh my gosh, you are amazing!",
-          "That's the sweetest thing you've ever said!",
-          "Let’s do this, you lovely Sim!",
-          "Wonderful, I adore a good dance!",
-          "This is exactly what I needed today."
+          "Why not? Let's tear up the floor!",
+          "Sure, {me}. Try to keep up.",
+          "Alright, let's give them a show.",
+          "Fine, but I'm leading.",
+          "Ha! You're on."
         ],
         "cold": [
-          "Really? That's... actually lovely.",
-          "Oh my goodness, you asked me?",
-          "I haven't been asked to dance in ages!",
-          "Well, aren't you sweet, {me}.",
-          "This is surprisingly wonderful, thank you.",
-          "I'm blushing, you know."
+          "...Fine. One dance.",
+          "Alright, {me}. Don't step on my feet.",
+          "Hm. Why not.",
+          "Very well.",
+          "I suppose I could."
         ],
         "receptive": [
-          "Oh my gosh, really? That's so fun!",
-          "Seriously? Let’s do this, I’ve been waiting!",
-          "You are the best, this is amazing!",
-          "Dancing? Absolutely, let’s move!",
-          "This is perfect, I love this so much.",
-          "Wonderful! Let’s get this party started!”"
+          "I'd love to, {me}! Lead the way!",
+          "Yes! I've been dying to dance!",
+          "This is going to be so much fun!",
+          "Oh, you're wonderful. Let's go!",
+          "Absolutely, {me}!"
         ],
         "any": [
-          "Seriously? That's amazing!",
-          "Oh my gosh, you asked me to dance!",
-          "You are the sweetest, this is wonderful.",
-          "I would love to, you’re so thoughtful.",
-          "This is such a fun surprise, thank you!",
-          "Let’s do this, you’re a star!"
+          "Sure, {me}, let's dance!",
+          "I'd love to!",
+          "Yes, let's go!",
+          "Great idea!",
+          "You're on!"
         ]
       }
     },
     "entertain": {
       "1": {
         "easily_offended": [
-          "Oh, goodness, that was… a lot.",
-          "Please, don't do that again, it's quite awkward.",
-          "I really didn't find it amusing, actually.",
-          "You know, that was a little bit humiliating.",
-          "Could you just… not? Thank you very much.",
-          "I’m feeling a little uncomfortable, honestly."
+          "Oh dear. That was painful to watch.",
+          "Please stop, {me}. It's embarrassing.",
+          "I feel awkward just standing here.",
+          "I'd prefer you didn't.",
+          "That was a bit much, honestly."
         ],
         "thick_skinned": [
-          "Seriously? That was… something.",
-          "Wow, that was a bit much, wasn't it?",
-          "Okay, okay, you can stop, really.",
-          "I appreciate the effort, honestly.",
-          "Maybe stick to, you know, normal things.",
-          "Ugh, my cheeks are burning. Thanks."
+          "Boo. Next act!",
+          "That was rough, {me}.",
+          "I've seen better at a funeral.",
+          "Do you take requests? Like, stopping?",
+          "Don't quit your day job."
         ],
         "cold": [
-          "That was… certainly something.",
-          "Please, just stop. Seriously.",
-          "I don't appreciate that sort of thing.",
-          "You're making me uncomfortable, really.",
-          "Kindly refrain from performing again.",
-          "Good grief, what was that all about?"
+          "...Are you finished?",
+          "Not entertained.",
+          "That was a waste of time.",
+          "I'm checking my watch, {me}.",
+          "No."
         ],
         "receptive": [
-          "Oh, wow. That was... unexpected.",
-          "Seriously? I'm a little flustered, thanks.",
-          "Kind of awkward, actually. Sorry to hear it.",
-          "That’s… a lot. Let's just move on, please.",
-          "I appreciate the effort, but I'm not feeling it.",
-          "Bless your heart, but that wasn't really my thing."
+          "Aw, you tried, {me}. It was sweet.",
+          "It wasn't my favorite, but I admire the effort.",
+          "Maybe tweak the act a little?",
+          "Good effort. I'm just a tough crowd.",
+          "I appreciate it, even if it fell flat."
         ],
         "any": [
-          "Seriously? That was... weird.",
-          "Ugh, no thanks, I'm good.",
-          "Please just stop, it's a bit much.",
-          "I don't think I needed that.",
-          "That was incredibly awkward.",
-          "You're not funny, actually."
+          "That was... something.",
+          "Not quite my thing, {me}.",
+          "Nice try.",
+          "Um, okay.",
+          "I'll pass on an encore."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that was absolutely brilliant!",
-          "Seriously, {me}, you’re hilarious!",
-          "I haven’t laughed like that in ages!",
-          "That was the sweetest, silliest thing ever.",
-          "You’re a natural performer, truly!",
-          "I’m still smiling, thank you so much!"
+          "That was wonderful, {me}! I loved it!",
+          "I'm still smiling! Bravo!",
+          "You're so talented. I'm amazed!",
+          "That made me forget my worries.",
+          "I didn't expect to enjoy that so much!"
         ],
         "thick_skinned": [
-          "Seriously, you're a genius!",
-          "That was brilliantly silly!",
-          "I haven't laughed like that in ages!",
-          "Wow, {me}, you've outdone yourself!",
-          "You're a natural performer, truly!",
-          "My sides hurt! Best act ever."
+          "Ha! Okay, that was good.",
+          "Not bad, {me}. Encore!",
+          "Alright, you earned a laugh.",
+          "Ha! You've got style.",
+          "Hey, I'd pay for that."
         ],
         "cold": [
-          "Well, that was… surprisingly good.",
-          "I haven’t laughed like that in ages, actually.",
-          "You know, I was having a terrible day.",
-          "That was genuinely delightful, thank you.",
-          "Seriously, you’re quite talented, {me}.",
-          "I needed that. Really needed that."
+          "...I laughed. Don't tell anyone.",
+          "Hm. That was actually good.",
+          "I'm entertained. Surprisingly.",
+          "That was clever, {me}.",
+          "Fine. Well done."
         ],
         "receptive": [
-          "That was brilliant honestly!",
-          "You’re a natural comedian!",
-          "I haven’t laughed like that in ages!",
-          "Seriously impressive, you’re amazing!",
-          "Wow, you’ve completely won me over {me}!",
-          "Let’s do that again, please!"
+          "Bravo, {me}! That was fantastic!",
+          "Ha ha! You're hilarious! More!",
+          "You made my day! Encore!",
+          "That was the best show ever!",
+          "I loved every second of it!"
         ],
         "any": [
-          "That was absolutely brilliant, seriously!",
-          "Wow, you're incredibly talented!",
-          "I haven't laughed like that in ages!",
-          "You’ve got a real gift, it's amazing.",
-          "Seriously, that was the best thing I’ve seen all day!",
-          "You're a star, I’m so impressed!"
+          "Bravo, {me}!",
+          "That was great!",
+          "You're so funny!",
+          "I loved it!",
+          "Encore!"
         ]
       }
     },
     "flirt": {
       "1": {
         "easily_offended": [
-          "Oh, honestly, that was a bit forward.",
-          "I’m really not comfortable with that, to be frank.",
-          "Please don’t do that again, it made me cringe.",
-          "That was incredibly awkward, I’m so sorry.",
-          "I appreciate the thought, but I’m not interested.",
-          "Could you just…not? I’m feeling quite flustered."
+          "That's inappropriate, {me}. I'm not comfortable.",
+          "Please don't say things like that to me.",
+          "I'm blushing, and not in a good way.",
+          "I think you've misjudged things.",
+          "Oh no. I don't feel that way at all."
         ],
         "thick_skinned": [
-          "Seriously {me}? That’s a bit much.",
-          "Oh, wow. Okay, let’s just… move on.",
-          "I appreciate the effort, honestly.",
-          "You're making me incredibly awkward.",
-          "Please, no. Just… no thanks.",
-          "That was… unexpected. A little too bold."
+          "Nope. Not my type, {me}.",
+          "Nice try, but no.",
+          "Ha, you must be joking.",
+          "Keep trying, champ. It won't work.",
+          "I'm flattered. And uninterested."
         ],
         "cold": [
-          "Seriously? That was… awkward.",
-          "Please, just go away. I’m uncomfortable.",
-          "Don’t do that. It’s incredibly strange.",
-          "I really don't appreciate your advances, {me}.",
-          "That was incredibly inappropriate, honestly.",
-          "I’m going to need a moment to recover."
+          "No.",
+          "Not interested.",
+          "Don't, {me}.",
+          "This conversation is over.",
+          "I don't feel the same."
         ],
         "receptive": [
-          "Oh, um, that's really sweet but no thanks.",
-          "Seriously {me}? That's a little awkward.",
-          "I appreciate the thought, honestly.",
-          "Please don't do that again, it's weird.",
-          "I'm not really feeling that, you know?",
-          "Wow, that was a bit forward, wasn’t it?"
+          "Oh, {me}, I'm flattered, but I don't feel that way.",
+          "I like you, but only as a friend.",
+          "I'm sorry, my heart isn't in it.",
+          "That's sweet, but I'm not ready.",
+          "Thank you, but I can't return it."
         ],
         "any": [
-          "Seriously {me}? That's a little weird.",
-          "Whoa there, take it easy.",
-          "I'm not really comfortable with that.",
-          "Please just leave me alone, thanks.",
-          "That was incredibly awkward, honestly.",
-          "I don’t appreciate that kind of attention."
+          "That's not for me, {me}.",
+          "No thanks.",
+          "I don't feel that way.",
+          "Please don't.",
+          "Not interested."
         ]
       },
       "2": {
         "easily_offended": [
-          "Oh, um, that's... nice.",
-          "I appreciate the sentiment, really.",
-          "Well, thank you. That’s thoughtful.",
-          "It’s a little awkward, honestly.",
-          "I’m not sure how to respond to that.",
-          "I’m flattered, but I’m a bit shy."
+          "Oh my! I'm not sure what to say.",
+          "Um... I need a moment.",
+          "You've made me blush.",
+          "That's a lot, {me}. Let me think.",
+          "I'm flustered. Give me time."
         ],
         "thick_skinned": [
-          "Well, that was... certainly something.",
-          "Thanks, I appreciate the effort.",
-          "You're persistent, I'll give you that.",
-          "A little forward, perhaps.",
-          "Interesting approach, really.",
-          "I’m flattered, honestly."
+          "Ha, smooth. I'll think about it.",
+          "Not bad, {me}. Keep going.",
+          "Alright, I'm a bit intrigued.",
+          "Hm, you've got guts.",
+          "You might be on to something."
         ],
         "cold": [
-          "That's...nice of you.",
-          "I appreciate the sentiment.",
-          "You seem like a friendly fellow.",
-          "I'm not particularly receptive, I'm afraid.",
-          "Just a polite acknowledgment, really.",
-          "Carry on then."
+          "...I'll consider it.",
+          "Interesting. Not yet convinced.",
+          "Hm. We'll see.",
+          "You're persistent, {me}.",
+          "Don't push it. But carry on."
         ],
         "receptive": [
-          "Well, that's nice of you.",
-          "I appreciate the compliment, really.",
-          "That's a little awkward, honestly.",
-          "Hmm, interesting. Thank you.",
-          "You're charming, I suppose.",
-          "Just being friendly, {me}."
+          "That's sweet, {me}. I'm warming up to you.",
+          "Oh, I like that. Tell me more.",
+          "You're making me smile.",
+          "I'd like to know you better.",
+          "Hm, maybe there's something here."
         ],
         "any": [
-          "Oh, well, that's nice.",
-          "I appreciate the compliment, really.",
-          "You're pretty friendly, I guess.",
-          "Just being polite, you know?",
-          "That's... interesting. Thanks.",
-          "Don't bother doing that again."
+          "That's flattering, {me}.",
+          "Hm, interesting.",
+          "I'll think about it.",
+          "You're sweet.",
+          "Maybe."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, really?",
-          "That’s so sweet of you, honestly.",
-          "I… I appreciate that a lot.",
-          "You’re making me blush, actually.",
-          "Wow, you’re charming, I must say.",
-          "That was really thoughtful of {me}."
+          "Oh, {me}! I feel the same way!",
+          "My heart is racing! Yes!",
+          "I never dared hope you felt that way.",
+          "You make me so happy.",
+          "I'm blushing so much right now!"
         ],
         "thick_skinned": [
-          "Well, that was delightfully unexpected.",
-          "You’re charming, I’ll give you that.",
-          "Seriously? You think so too?",
-          "My, you’re bold. I like it.",
-          "A little flattery never hurt anyone.",
-          "Let’s keep this going, shall we?"
+          "Ha! Alright, you got me.",
+          "Smooth, {me}. It worked.",
+          "I like you too. Don't gloat.",
+          "Okay, you're good. I'm in.",
+          "You have my attention."
         ],
         "cold": [
-          "Well, that's…unexpected.",
-          "Seriously? You thought that would work?",
-          "I'm flattered, actually.",
-          "You're a bit much, aren't you?",
-          "That was…surprisingly charming.",
-          "Let's just say, it wasn't awful."
+          "...Fine. I like you too.",
+          "Hm. You've won me over, {me}.",
+          "I did not expect this. I'm pleased.",
+          "You have my interest.",
+          "Don't make me say it twice."
         ],
         "receptive": [
-          "Well, that's awfully sweet of you, {me}",
-          "You really shouldn't say things like that!",
-          "I’m blushing, honestly!",
-          "That was quite charming, thank you.",
-          "I appreciate the compliment so much.",
-          "You’re a surprisingly nice Sim, {me}"
+          "Oh, {me}, I was hoping you'd say that!",
+          "I feel the exact same way!",
+          "You make my heart skip!",
+          "Yes! Let's see where this goes!",
+          "You're wonderful, {me}."
         ],
         "any": [
-          "Well, that’s a lovely thing to say, really.",
-          "Seriously? You noticed that? That’s amazing!",
-          "Oh my goodness, you’re being so kind.",
-          "I’m blushing, you’re charming, honestly.",
-          "That was really sweet of you, thank you.",
-          "You've totally made my day, you know?"
+          "I like you too, {me}!",
+          "That's wonderful!",
+          "You're charming.",
+          "My heart is racing!",
+          "Yes, please!"
         ]
       }
     },
     "givegift": {
       "1": {
         "easily_offended": [
-          "Oh, really? That’s…unexpected.",
-          "Please don’t just give things, you know?",
-          "I appreciate the thought, actually.",
-          "It's a little awkward, honestly.",
-          "Just…let me have a moment, please.",
-          "I’m not sure I wanted that, thank you."
+          "Oh... I don't think I can accept this.",
+          "Is this some kind of joke, {me}?",
+          "I feel awkward taking this.",
+          "You shouldn't have, really.",
+          "It's not what I wanted, honestly."
         ],
         "thick_skinned": [
-          "Seriously {me}? That was… unexpected.",
-          "Oh, well, that’s just lovely, isn’t it?",
-          "Please tell me you're joking, honestly.",
-          "A little awkward, wouldn't you say?",
-          "Thanks. I… I appreciate the thought.",
-          "Let’s just forget that ever happened."
+          "Eh. I'd rather have cash.",
+          "Not my style, {me}.",
+          "You can keep it.",
+          "Cute. I'll never use it.",
+          "Is there a receipt?"
         ],
         "cold": [
-          "Ugh, seriously? That was… awkward.",
-          "Just leave it, thanks. I'm quite chilly.",
-          "Don't. Just... don’t. Please.",
-          "This is incredibly strange. Really strange.",
-          "I appreciate the thought, but no, thank you.",
-          "Go away. I'm trying to concentrate."
+          "I don't want it.",
+          "Keep it.",
+          "Not interested, {me}.",
+          "No thanks.",
+          "I have no use for this."
         ],
         "receptive": [
-          "Oh, um, that's... sweet, really.",
-          "Seriously? That's a bit much, {me}.",
-          "Wow, thanks. I'm a little flustered.",
-          "I appreciate the thought, but no, thank you.",
-          "Please don’t give me anything like that.",
-          "This is awkward, honestly."
+          "That's thoughtful, {me}, but it isn't quite for me.",
+          "Thank you for thinking of me, but I can't take this.",
+          "It's a kind gesture, though not what I need.",
+          "Aw, I'm sorry, but this isn't really me.",
+          "The thought counts, even if the gift misses."
         ],
         "any": [
-          "Oh, um, that's... unexpected.",
-          "Seriously? I'm a little overwhelmed.",
-          "Thanks, but I'm really not into gifts.",
-          "This is a bit awkward, honestly.",
-          "Please, no. I appreciate the thought, though.",
-          "I'm so embarrassed, thank you."
+          "No thanks, {me}.",
+          "It's not for me.",
+          "I can't accept this.",
+          "Thanks, but no.",
+          "Oh. Um. Thanks."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that's so thoughtful!",
-          "Seriously? You shouldn't have! It’s lovely.",
-          "This is just… the sweetest thing ever, really.",
-          "I'm genuinely touched, thank you {me}.",
-          "You're a dear, a true kind soul.",
-          "I absolutely adore this, you're wonderful!"
+          "You remembered! That's so thoughtful, {me}!",
+          "I love it! I'm almost in tears!",
+          "This is perfect. Thank you so much!",
+          "No one has ever given me anything this nice.",
+          "I'm so touched, {me}."
         ],
         "thick_skinned": [
-          "Seriously? You shouldn't have!",
-          "Oh my gosh, that's fantastic, thank you!",
-          "This is the sweetest thing, truly!",
-          "You're a lifesaver, {me}, you know that?",
-          "I adore this, you're a gem!",
-          "Absolutely brilliant, you're the best!"
+          "Hey, nice! I like it, {me}.",
+          "Not bad! You've got good taste.",
+          "Alright, I'm keeping this one.",
+          "Ha! Perfect. Thanks.",
+          "You nailed it."
         ],
         "cold": [
-          "Oh my goodness, you shouldn't have!",
-          "Really? That's incredibly thoughtful.",
-          "Wow, this is lovely, thank you so much.",
-          "I... I appreciate this more than you know.",
-          "This is absolutely perfect, you're sweet {me}.",
-          "Seriously? You remembered! I'm so touched."
+          "...Thank you. This is good.",
+          "Hm. You did well, {me}.",
+          "I appreciate it.",
+          "This is... actually nice.",
+          "Noted. I'll keep it."
         ],
         "receptive": [
-          "Oh my goodness, you shouldn’t have!",
-          "That’s so thoughtful of you, {me}!",
-          "This is absolutely wonderful, thank you!",
-          "I’m just so happy you thought of me.",
-          "What a lovely surprise, you’re the best!",
-          "Seriously, this brightens my whole day."
+          "Oh, {me}, I love it! Thank you so much!",
+          "It's perfect! You're so thoughtful!",
+          "I'm so happy! I'll treasure it!",
+          "You always know just what I want!",
+          "Thank you! This is the best gift!"
         ],
         "any": [
-          "Oh my goodness, you shouldn't have!",
-          "That's so thoughtful of you, {me}",
-          "This is absolutely wonderful, thank you!",
-          "What a lovely surprise, I appreciate it!",
-          "You're the sweetest, seriously!",
-          "I’m so happy you thought of me."
+          "I love it, {me}!",
+          "Thank you so much!",
+          "How thoughtful!",
+          "This is perfect!",
+          "What a lovely gift!"
         ]
       }
     },
     "hug": {
       "1": {
         "easily_offended": [
-          "Oh, um, that's really…unexpected.",
-          "Please don’t do that again, honestly.",
-          "I prefer a little personal space, you know?",
-          "That was a bit sudden, I’m not used to this.",
-          "Seriously, could you just not?",
-          "I’m a little flustered, thank you."
+          "Please don't, {me}. I'm not in the mood.",
+          "I don't like being touched right now.",
+          "Not now. Please give me some space.",
+          "That's too close. Back off, please.",
+          "I'm not comfortable with this."
         ],
         "thick_skinned": [
-          "Seriously {me}? That was a bit awkward, wasn't it?",
-          "Ugh, okay, let’s just… move on, please.",
-          "Thanks, but I'm good. My boundaries, you know?",
-          "Wow, that was...unexpected. A little too intense.",
-          "Please don’t do that again, it’s unsettling.",
-          "You’ve got it man, let's keep things friendly."
+          "Nope, not a hugger, {me}.",
+          "Handshake, maybe. Hugs, no.",
+          "Ew, no. Personal space!",
+          "Not today, {me}.",
+          "I'll pass."
         ],
         "cold": [
-          "Good grief, really?",
-          "Please, just...no.",
-          "That was intensely awkward.",
-          "I’m quite uncomfortable, thank you.",
-          "Don't do that again, ever.",
-          "Seriously, stop it."
+          "Don't touch me.",
+          "No hugs.",
+          "Step back, {me}.",
+          "Not interested.",
+          "Stop."
         ],
         "receptive": [
-          "Oh, um, that's... really sweet.",
-          "Please, I'm a little flustered right now.",
-          "Wow, that was sudden. Thank you, though.",
-          "I appreciate the thought, but I'm okay.",
-          "Goodness, {me}, you startled me!",
-          "Let's just leave it at 'hello,' okay?"
+          "Aw, not right now, {me}. I'm sorry.",
+          "I'd hug you, but I'm a mess today.",
+          "Maybe later, okay?",
+          "Sorry, I just can't.",
+          "I wish I could, {me}."
         ],
         "any": [
-          "Oh, uh, that’s… unexpected.",
-          "Seriously? That was a bit sudden.",
-          "I’m actually a little uncomfortable, thanks.",
-          "Please don’t do that, it’s weird.",
-          "Wow, that’s really personal. No thanks.",
-          "I’m good, really. Just admiring the view."
+          "Not now, {me}.",
+          "No hugs today.",
+          "Please, no.",
+          "I'd rather not.",
+          "Not in the mood."
         ]
       },
       "2": {
         "easily_offended": [
-          "Oh, that's...nice.",
-          "Thank you, I appreciate the gesture.",
-          "A little awkward, really.",
-          "Yes, well, thank you kindly.",
-          "That’s very thoughtful of you, {me}.",
-          "I’m alright, really. Just a bit surprised."
+          "Oh... okay. That's fine, I guess.",
+          "A little awkward, but thank you.",
+          "I wasn't ready, {me}, but it's okay.",
+          "Alright, but only a quick one.",
+          "Thanks. I think I needed that."
         ],
         "thick_skinned": [
-          "Well, that was… certainly something.",
-          "Thanks, I appreciate the sentiment.",
-          "A hug, really {me}? You’re weird.",
-          "Not gonna lie, a little awkward.",
-          "Right, good on you then.",
-          "Let’s just move on, shall we?"
+          "Fine, one quick one.",
+          "Okay, that wasn't terrible.",
+          "Alright, enough, {me}.",
+          "Hm, you're warm. Fine.",
+          "Okay, okay. Let go now."
         ],
         "cold": [
-          "That’s… considerate, I suppose.",
-          "Thank you. It’s a bit chilly.",
-          "Hmm, yes, well. Appreciated.",
-          "A brief moment of warmth. Thank you.",
-          "I don’t usually accept hugs, you know.",
-          "Quite. A small gesture, really."
+          "...Fine. Briefly.",
+          "That's enough, {me}.",
+          "Hm. Alright.",
+          "Acceptable. Now step back.",
+          "One second only."
         ],
         "receptive": [
-          "That’s… nice of you.",
-          "Oh, well, thank you.",
-          "A little hug is lovely.",
-          "Goodness, yes, that’s kind.",
-          "Appreciate the gesture.",
-          "Hmm, a pleasant surprise."
+          "Aw, thanks, {me}. That's nice.",
+          "That's a good hug.",
+          "Mmm. I needed that.",
+          "You're sweet.",
+          "It's good to feel close."
         ],
         "any": [
-          "Oh, that's nice of you.",
-          "Well, thank you.",
-          "A little unexpected, actually.",
-          "That's...pleasant, I suppose.",
-          "Goodness, you’re quite friendly.",
-          "Thank you, you’re very kind."
+          "That's nice, {me}.",
+          "Okay, thanks.",
+          "A hug does feel good.",
+          "Alright.",
+          "Thanks."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that was lovely!",
-          "Seriously, that just made my whole day!",
-          "That was the sweetest thing anyone’s done.",
-          "I… I really appreciate that, thank you.",
-          "You're such a kind soul, {me}!",
-          "Wow, that actually warmed me right up."
+          "Oh, {me}, I really needed that. Thank you.",
+          "I feel so safe right now.",
+          "I'm going to cry. Happy tears.",
+          "Thank you for always being there.",
+          "That's the best hug ever."
         ],
         "thick_skinned": [
-          "Well, that was unexpectedly nice, actually.",
-          "Seriously {me}, you caught me!",
-          "A hug? Bold move, I'll give you that.",
-          "You’re getting better at this awkward thing.",
-          "That warmed me right up, thanks, honestly.",
-          "Don’t stop surprising me, you little weirdo."
+          "Ha! Okay, that was a great hug.",
+          "Alright, {me}, you win. Hug again?",
+          "Not bad. I'm in.",
+          "You hug like a champ.",
+          "Okay, I admit it. That felt great."
         ],
         "cold": [
-          "Well, that’s…unexpected.",
-          "Thank you, that’s really nice.",
-          "I…I appreciate the warmth.",
-          "That actually felt quite good, truly.",
-          "You know, you’re surprisingly pleasant.",
-          "Huh. That was…kind."
+          "...Thank you. I needed that.",
+          "Hm. That was nice.",
+          "I did not expect to like that.",
+          "Stay a moment longer.",
+          "...You're warm. Don't tell anyone."
         ],
         "receptive": [
-          "Oh my goodness that was so sweet!",
-          "Really? That made me smile!",
-          "You're such a sweetheart, {me}!",
-          "That felt wonderful, thank you!",
-          "I appreciate that so much!",
-          "Best hug ever, seriously!"
+          "Oh, {me}! I love your hugs!",
+          "This is wonderful. Don't let go!",
+          "I feel so much better now!",
+          "You give the best hugs!",
+          "Aw, {me}, I'm so happy right now!"
         ],
         "any": [
-          "Oh my gosh, that was so sweet!",
-          "Seriously, that made my day, {me}.",
-          "Wow, thank you, that's really lovely.",
-          "You're such a kind soul, you know that?",
-          "That was the best hug ever, honestly!",
-          "I needed that, thank you so much."
+          "I love hugs, {me}!",
+          "That was wonderful!",
+          "Thank you, I needed that!",
+          "Don't let go!",
+          "You're the best!"
         ]
       }
     },
     "insult": {
       "2": {
         "easily_offended": [
-          "Oh, well, that’s… interesting.",
-          "I suppose so. It was a thought.",
-          "That’s… a perspective. Thank you.",
-          "Hmm. I’ll consider that.",
-          "Right. I see. Moving on then.",
-          "Perhaps. Let’s just leave it at that."
+          "That really hurts, {me}.",
+          "How could you say that to me?",
+          "I'm going to cry. You're so mean.",
+          "That was cruel. I won't forget it.",
+          "I don't deserve this, {me}."
         ],
         "thick_skinned": [
-          "Oh, really? That’s… something.",
-          "Well, thanks. I appreciate the thought.",
-          "You noticed, huh? Interesting.",
-          "You’re not exactly a brilliant conversationalist.",
-          "I’ll keep that in mind, I suppose.",
-          "Good to know you’re observing everything."
+          "Ha, is that all you've got, {me}?",
+          "Whatever. I've heard worse.",
+          "Cute. Try harder.",
+          "Your words bounce right off me.",
+          "Say it again. I wasn't listening."
         ],
         "cold": [
-          "That's... certainly a perspective.",
-          "Interesting. I hadn't considered that.",
-          "I appreciate the thought, really.",
-          "It’s…acceptable. Thank you.",
-          "Hmm, a novel approach.",
-          "Don’t waste my time with that."
+          "...Noted.",
+          "Is that supposed to hurt?",
+          "I'm unmoved.",
+          "Are you finished?",
+          "How dull."
         ],
         "receptive": [
-          "Oh, well, that's... interesting.",
-          "I appreciate the thought, really.",
-          "Hm, you're certainly direct.",
-          "Just a little observation, then.",
-          "Not sure what you meant, actually.",
-          "That’s… a perspective."
+          "Ouch, {me}. That was harsh.",
+          "Wow. Did I do something to you?",
+          "I'd prefer you didn't say that.",
+          "That wasn't nice, {me}.",
+          "I'm hurt, but I'm listening."
         ],
         "any": [
-          "Oh, really?",
-          "That’s… interesting.",
-          "I suppose so.",
-          "Well, thanks for the comment.",
-          "Just observing, you know.",
-          "Hmm, alright."
+          "That was rude, {me}.",
+          "Wow. Just wow.",
+          "Ouch.",
+          "Excuse me?",
+          "How dare you."
         ]
       }
     },
     "joke": {
       "1": {
         "easily_offended": [
-          "Oh, really? That was... unsettling.",
-          "Please don't tell jokes like that, it's awful.",
-          "I’m not sure I appreciate that, {me}.",
-          "Could you just… not? Thank you.",
-          "That’s incredibly inappropriate, honestly.",
-          "I’m going to go sit down now, please."
+          "That wasn't funny, {me}.",
+          "I don't get why that's a joke.",
+          "Please. Not another one.",
+          "It felt a bit mean, honestly.",
+          "I'm not laughing, {me}."
         ],
         "thick_skinned": [
-          "Seriously {me}? That was...rough.",
-          "Ugh, don't even. Just...nope.",
-          "Please, no. I’m trying to maintain.",
-          "That's...not funny. Really.",
-          "Let's just drop it, honestly.",
-          "I'm going to go stare at a wall."
+          "Groan. Terrible, {me}.",
+          "I've heard that one a hundred times.",
+          "Ha. Ha. Not funny.",
+          "Hard pass on the comedy career.",
+          "Did you pay for that joke?"
         ],
         "cold": [
-          "Really?",
-          "Please, no.",
-          "That's… unsettling.",
-          "I’m not in the mood.",
-          "Go away.",
-          "Just… stop."
+          "...No.",
+          "Not funny.",
+          "Silence is my review.",
+          "I'm not laughing.",
+          "Next."
         ],
         "receptive": [
-          "Oh, uh, that’s… awkward. Sorry.",
-          "Really? I wasn't expecting that.",
-          "Please, let's just not talk about jokes.",
-          "I don't know how to respond to that.",
-          "That wasn’t very funny, honestly.",
-          "Could we maybe change the subject?"
+          "Ha... almost, {me}. Almost.",
+          "I wanted to laugh, but it didn't land.",
+          "Cute attempt, {me}.",
+          "Hm, I don't think I got it.",
+          "Nice try. Maybe a different joke?"
         ],
         "any": [
-          "Uhm, that’s… certainly something.",
-          "Seriously? I wasn’t really in the mood for jokes.",
-          "Please, no. Just… no.",
-          "Wow, that was awkward. Thanks, I think.",
-          "I don’t really get jokes, to be honest.",
-          "Could we just, like, not?"
+          "That wasn't funny, {me}.",
+          "Hm. Okay.",
+          "I don't get it.",
+          "Ha. Sure.",
+          "Try another."
         ]
       },
       "2": {
         "easily_offended": [
-          "Oh, that’s… interesting.",
-          "I appreciate the thought, really.",
-          "A joke, yes. Quite.",
-          "It was a rather simple one.",
-          "Thank you for sharing that.",
-          "That's… certainly something."
+          "Heh. That was kind of funny, I guess.",
+          "Okay, I smiled a little.",
+          "Hm, that's cute, {me}.",
+          "Alright, that one made me chuckle.",
+          "Fine, I laughed, a bit."
         ],
         "thick_skinned": [
-          "That's... certainly a joke.",
-          "Hmm, I appreciate the effort.",
-          "Not bad, really. A little cheesy.",
-          "Interesting. I've heard that one before.",
-          "Well, thank you. It was… something.",
-          "I’ll file that away for future amusement."
+          "Heh, not bad.",
+          "Okay, that got a smirk.",
+          "Alright, {me}, that was decent.",
+          "Ha. I'll allow it.",
+          "Fine, that was half funny."
         ],
         "cold": [
-          "That’s… interesting.",
-          "I suppose.",
-          "A joke? Really.",
-          "Not particularly amusing.",
-          "Thank you for the attempt.",
-          "Hmm, quite.",
-          "Right."
+          "...Heh.",
+          "A smirk. That's all you get.",
+          "Mild amusement detected.",
+          "Hm. Passable.",
+          "That wasn't terrible."
         ],
         "receptive": [
-          "That’s…nice. I hadn’t heard that one before.",
-          "That's...nice. I hadn't heard that one before.",
-          "That’s… interesting. I appreciate the effort.",
-          "Oh, really? Hmm. Cute.",
-          "A joke, you say? Well, alright.",
-          "I’m not sure I get it, honestly.",
-          "Thank you for sharing that with {me}.",
-          "It was a try! Good to see you’re cheerful."
+          "Ha ha! That was cute, {me}!",
+          "Hee hee, I like that one.",
+          "Okay, that's pretty good.",
+          "You made me smile!",
+          "That was fun, {me}."
         ],
         "any": [
-          "Oh, that’s… interesting.",
-          "A joke, huh? Okay.",
-          "I appreciate the effort.",
-          "That was alright, I guess.",
-          "Not my favorite, really.",
-          "Hmm, thanks for sharing."
+          "Ha, not bad, {me}.",
+          "That was kind of funny.",
+          "Okay, I smiled.",
+          "Heh.",
+          "A decent joke."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that was brilliant!",
-          "Really? You're funny! I'm smiling.",
-          "That was delightful, {me}, you're a star!",
-          "I haven’t laughed like that in ages, thank you.",
-          "Seriously, that was such a clever joke!",
-          "You're absolutely wonderful, I’m so pleased."
+          "Ha ha ha! Oh my, {me}, that's hilarious!",
+          "I can't stop laughing!",
+          "That was so funny! I needed that.",
+          "Stop, you're making me cry laughing.",
+          "Oh, that was perfect!"
         ],
         "thick_skinned": [
-          "Seriously, that was brilliant!",
-          "You’re a riot, {me}, a genuine riot!",
-          "Okay, okay, you win, you're funny.",
-          "I needed that, thank you so much.",
-          "Let’s hear another, please!",
-          "Best joke I’ve heard all day."
+          "Ha! Alright, you got me!",
+          "That's a good one, {me}.",
+          "Hahaha! Say it again!",
+          "Okay, that was great.",
+          "You're funnier than you look."
         ],
         "cold": [
-          "Well, that was… unexpectedly amusing.",
-          "I admit, that was a bit better than the silence.",
-          "Hmm, alright, I suppose that was passable.",
-          "Seriously? You’re smiling. Fascinating.",
-          "That actually managed to brighten the room.",
-          "Don’t stop. I’m… intrigued."
+          "...Ha. Alright. That was funny.",
+          "I laughed. Out loud. Mark the date.",
+          "Hm. Very good, {me}.",
+          "I didn't expect to laugh.",
+          "Okay. You win."
         ],
         "receptive": [
-          "That was brilliant! You're hilarious.",
-          "Seriously, I haven't laughed like that all day!",
-          "Oh my gosh, you're so funny!",
-          "I loved that! Tell me another!",
-          "You've brightened my whole afternoon.",
-          "What a fantastic joke, {me}!"
+          "Hahaha! That's the best one yet, {me}!",
+          "Oh my gosh, I'm crying!",
+          "You're so funny! Tell another!",
+          "I'm laughing so hard!",
+          "You always make me laugh!"
         ],
         "any": [
-          "That was brilliant seriously!",
-          "Oh my gosh I haven't laughed like that in ages!",
-          "You're hilarious I’m going to tell everyone!",
-          "Seriously that’s the best joke I’ve heard today.",
-          "Wow you’re a natural comedian {me}!",
-          "I absolutely loved that you’re amazing!"
+          "Hahaha! Great one, {me}!",
+          "That was hilarious!",
+          "You crack me up!",
+          "Oh, that's good!",
+          "I love it!"
         ]
       }
     },
     "kiss": {
       "1": {
         "easily_offended": [
-          "Oh, um, that was…unexpected.",
-          "Seriously {me}? I wasn’t expecting that.",
-          "Please don’t do that again, it’s awkward.",
-          "I’m really uncomfortable with that, thanks.",
-          "That was a bit forward, honestly.",
-          "I’m going to go, this was a little strange."
+          "Stop! What are you doing, {me}?",
+          "No! That's not okay.",
+          "I'm very uncomfortable. Back away.",
+          "How dare you try that!",
+          "I'm not ready for this. Please step back."
         ],
         "thick_skinned": [
-          "Seriously {me}? That was… abrupt.",
-          "Wow, okay. Maybe dial it back a bit.",
-          "A little forward, don't you think?",
-          "Let's just... admire the flowers, yeah?",
-          "I appreciate the effort, really, but no.",
-          "You’re a character, you know that?"
+          "Nope. Not happening, {me}.",
+          "Whoa there. Hard no.",
+          "Bold move. Wrong answer.",
+          "I'll pass on the kiss.",
+          "Ha. Dream on."
         ],
         "cold": [
-          "Goodness, that was… unexpected.",
-          "Please, don't do that again.",
-          "I really wasn't feeling that.",
-          "You startled me, quite frankly.",
-          "That's a little too forward, {me}.",
-          "I'm going to go now. Thank you."
+          "No.",
+          "Don't.",
+          "Back off, {me}.",
+          "Absolutely not.",
+          "Not interested in the slightest."
         ],
         "receptive": [
-          "Oh, wow, that was... unexpected.",
-          "Seriously {me}? I wasn't really going for that.",
-          "Please, no. I appreciate the thought, though.",
-          "That's a little forward, don't you think?",
-          "Ugh, I'm so embarrassed. Thank you, no thanks.",
-          "I’m flattered, but I’m not feeling a connection."
+          "I'm sorry, {me}, I'm not ready for that.",
+          "I like you, but not like that.",
+          "This is too fast for me.",
+          "Let's stay friends, okay?",
+          "I can't, {me}. I'm sorry."
         ],
         "any": [
-          "Whoa, seriously {me}? That was… unexpected.",
-          "Oh my gosh, I totally didn't see that coming.",
-          "Please don't do that again, it caught me off guard.",
-          "That’s a little forward, honestly. Thanks for letting me know.",
-          "I’m good, thanks. Let’s just move on, okay?",
-          "Ugh, I’m so embarrassed. Could we just talk?"
+          "No, {me}.",
+          "I don't think so.",
+          "Please don't.",
+          "Not now.",
+          "I'm not ready."
         ]
       },
       "2": {
         "easily_offended": [
-          "Well, that was… unexpected.",
-          "Thank you, I appreciate the gesture.",
-          "That’s… a bit forward, isn’t it?",
-          "I’m not sure how to respond to that.",
-          "I’m a little flustered, actually.",
-          "Let’s just leave it at that, I think."
+          "Oh! I... that was sudden.",
+          "Um, wow. I didn't expect that.",
+          "My heart is pounding. I need a moment.",
+          "That was nice, but I'm flustered.",
+          "You surprised me, {me}."
         ],
         "thick_skinned": [
-          "Well, that was… something.",
-          "Interesting choice, {me}.",
-          "A little forward, perhaps.",
-          "I appreciate the sentiment.",
-          "Not my favorite, honestly.",
-          "Let’s not make a habit of that."
+          "Hm. Not bad, {me}.",
+          "Alright. That was okay.",
+          "Smooth. I'll give you that.",
+          "That wasn't a bad try.",
+          "Not what I expected, but fine."
         ],
         "cold": [
-          "Well that’s… certainly something.",
-          "I appreciate the gesture, really.",
-          "It was… unexpected.",
-          "That’s very kind of you, I suppose.",
-          "A little chilly, actually.",
-          "Thank you. It's… awkward."
+          "...Fine. That was acceptable.",
+          "Hm. Interesting.",
+          "I allowed that.",
+          "Don't read into it, {me}.",
+          "It was... something."
         ],
         "receptive": [
-          "Well, that’s…nice.",
-          "Oh. That was… a thing.",
-          "Hmm, interesting. Thank you.",
-          "A little awkward, isn’t it?",
-          "I appreciate the gesture.",
-          "You’re welcome, {me}."
+          "Mmm, that was sweet, {me}.",
+          "That was nice.",
+          "You're a good kisser.",
+          "I liked that. A little.",
+          "Let's see where this goes."
         ],
         "any": [
-          "Well, that was...unexpected.",
-          "Oh. Um, thanks, {me}.",
-          "That’s… certainly something.",
-          "I wasn't really expecting that.",
-          "A little awkward, isn't it?",
-          "Right. Let’s just… move on."
+          "That was nice, {me}.",
+          "Hm. Interesting.",
+          "Okay.",
+          "That was sweet.",
+          "I'm not sure how I feel."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, really? You kissed me?",
-          "That was… lovely. Thank you so much.",
-          "I was surprised, but it felt really nice!",
-          "Wow, {me}, that was actually really sweet.",
-          "I blushed! You made me blush, you know.",
-          "Seriously? You thought that was a good idea?"
+          "Oh, {me}! That was perfect!",
+          "I'm swooning!",
+          "My heart is soaring!",
+          "I've dreamed about that.",
+          "That was the best moment of my life!"
         ],
         "thick_skinned": [
-          "Seriously? That was amazing, you!",
-          "Oh my goodness, you're the best!",
-          "I wasn’t expecting that, but I’m glad!",
-          "You really took my breath away, {me}",
-          "Let's do that again, definitely!",
-          "That was so sweet, you're adorable."
+          "Whoa. Okay, that was great!",
+          "Alright, {me}, you've got moves.",
+          "Again. Right now.",
+          "Ha! That was something else.",
+          "I did not see that coming. Nice."
         ],
         "cold": [
-          "Well, that was…unexpected.",
-          "Seriously? You did that?",
-          "I... I actually liked that.",
-          "That was surprisingly nice, {me}.",
-          "My cheeks are warm, aren't they?",
-          "You're a little warmer now."
+          "...That was good. Very good.",
+          "Hm. You surprised me, {me}.",
+          "I did enjoy that.",
+          "Don't stop.",
+          "Well. That changes things."
         ],
         "receptive": [
-          "Oh my goodness, that was wonderful!",
-          "Seriously? That was amazing!",
-          "I completely melted, {me}, you're sweet.",
-          "Wow, I wasn't expecting that at all!",
-          "That was just…perfect, thank you.",
-          "You’re a total dream, you know that?"
+          "Mmm, {me}, that was wonderful!",
+          "I've been waiting for that!",
+          "You make me weak in the knees!",
+          "Kiss me again!",
+          "That was magical!"
         ],
         "any": [
-          "Oh my gosh, really?",
-          "That was amazing, thank you!",
-          "Wow, {me}, you surprised me!",
-          "I… I really liked that.",
-          "You're the sweetest, honestly.",
-          "Seriously? That felt incredible."
+          "That was lovely, {me}!",
+          "Wow!",
+          "Again, please!",
+          "My heart is racing!",
+          "Perfect!"
         ]
       }
     },
     "propose": {
       "2": {
         "easily_offended": [
-          "That’s… certainly a suggestion.",
-          "Hmm, interesting. I’ll consider it.",
-          "Well, that’s kind of unexpected.",
-          "I appreciate the thought, truly.",
-          "I’m flattered, but let’s not rush.",
-          "It’s a lot to process, I suppose."
+          "Oh my! I... I'm overwhelmed, {me}.",
+          "I'm shaking. I don't know what to say!",
+          "This is too much. I need a moment.",
+          "My heart is pounding. Give me a second.",
+          "I'm crying. I can't think."
         ],
         "thick_skinned": [
-          "Well, that's certainly a proposal.",
-          "Interesting. I’ll consider it.",
-          "A bold move, {me}. Thanks for asking.",
-          "Marriage? Let’s talk about the details.",
-          "I appreciate the thought, truly.",
-          "That’s… unexpected. Very charming."
+          "Whoa, {me}. That's a big question.",
+          "Well. You don't do things halfway, do you?",
+          "Give me a second. I wasn't ready for this.",
+          "Ha. Okay. That caught me off guard.",
+          "Wow. Okay. Let me think."
         ],
         "cold": [
-          "That’s… certainly a proposition.",
-          "I appreciate the thought, really.",
-          "It’s a bit unexpected, honestly.",
-          "Hmm, let me consider that carefully.",
-          "I don’t know if this is right for me.",
-          "Thank you, but no, thank you."
+          "...That's a heavy question, {me}.",
+          "I wasn't expecting this.",
+          "Hm. Let me think.",
+          "You're serious.",
+          "I need to process this."
         ],
         "receptive": [
-          "That's very sweet of you {me}",
-          "Hmm, a proposal, interesting.",
-          "I appreciate the thought, truly.",
-          "Let's talk about this a little.",
-          "I'm flattered, honestly.",
-          "It's certainly something to consider."
+          "Oh, {me}. This means so much.",
+          "I'm so moved. Give me a moment.",
+          "I never imagined this day.",
+          "You're the sweetest person I know.",
+          "I'm overwhelmed, in a good way."
         ],
         "any": [
-          "Well, that's… certainly a proposal.",
-          "I appreciate the gesture, really.",
-          "That’s very sweet of you, {me}.",
-          "Hmm, let me think about that.",
-          "It's a bit unexpected, honestly.",
-          "I’ll need some time to consider."
+          "I... wow, {me}.",
+          "I wasn't expecting that.",
+          "This is a big moment.",
+          "Give me a moment.",
+          "I need to think."
         ]
       }
     },
     "scare": {
       "2": {
         "easily_offended": [
-          "Well, that was a bit startling, actually.",
-          "I appreciate the, uh, attempt at a joke.",
-          "Goodness, you gave me quite a fright.",
-          "That was unexpected, thank you.",
-          "A little jump scare is a bit much, you know.",
-          "I'm alright, really. Just a surprise."
+          "Aaah! Don't do that, {me}!",
+          "My heart! That wasn't funny at all!",
+          "I'm shaking. Please never do that again.",
+          "I'm going to cry. That was horrible!",
+          "You terrified me. Stop it."
         ],
         "thick_skinned": [
-          "Well, that was a bit unsettling, actually.",
-          "Seriously {me}? You're a cheeky one.",
-          "A little jump scare never hurt anyone.",
-          "Goodness, you startled me a bit.",
-          "That was unexpectedly dramatic.",
-          "You’re definitely a playful soul."
+          "Ha! Nice try, {me}. Didn't flinch.",
+          "Is that your scary face? Cute.",
+          "I knew you were behind me.",
+          "Boring. Try again.",
+          "Hah. Did you want a reward?"
         ],
         "cold": [
-          "That was…unexpected.",
-          "Oh. Well. Thank you, I suppose.",
-          "I appreciate the thought, really.",
-          "I wasn't particularly frightened.",
-          "A little unsettling, actually.",
-          "Must you do that?"
+          "...Really.",
+          "I wasn't scared.",
+          "Childish, {me}.",
+          "Hm. Are you done?",
+          "I saw you coming."
         ],
         "receptive": [
-          "Well, that was… unexpected.",
-          "Oh, really? That startled me a bit.",
-          "Haha, you gave me a little fright, {me}.",
-          "A playful scare, I appreciate it.",
-          "That was a bit sudden, wasn’t it?",
-          "Interesting. You’re quite the character."
+          "Whoa! You got me, {me}!",
+          "Ha ha! Okay, that was a good one.",
+          "My heart's racing! Well done!",
+          "You scared me! You rascal!",
+          "Ha! I jumped a mile!"
         ],
         "any": [
-          "Well, that was a bit startling.",
-          "Seriously, {me}? Just like that?",
-          "Huh, that was unexpected, I guess.",
-          "You gave me a bit of a fright, actually.",
-          "I’m alright, thanks for the little scare.",
-          "Just a bit startled, I suppose."
+          "Whoa! You scared me, {me}!",
+          "Don't do that!",
+          "Very funny.",
+          "My heart!",
+          "Okay, you got me."
         ]
       }
     },
     "slap": {
       "2": {
         "easily_offended": [
-          "Oh, well that was…unexpected.",
-          "Really {me}? A bit startling, actually.",
-          "I appreciate the thought, I suppose.",
-          "That was a little abrupt, you know.",
-          "Hmm, a playful slap, noted.",
-          "Let's just leave it at that, shall we?"
+          "You hit me! How could you, {me}?",
+          "Ow! That hurt! I'm never talking to you again.",
+          "I'm in tears. How dare you!",
+          "I can't believe you did that.",
+          "Stay away from me, {me}!"
         ],
         "thick_skinned": [
-          "Well, that was… unexpected.",
-          "Seriously {me}? A bit much, don't you think?",
-          "You're a strange one, you know that?",
-          "Goodness, you startled me!",
-          "Playful slap, huh? Bold move.",
-          "Let’s just say I’m unfazed."
+          "Ow. Okay, I deserved that.",
+          "Ha! Is that all you've got?",
+          "That tickled. Hit me again.",
+          "Alright, fair enough, {me}.",
+          "My face has been through worse."
         ],
         "cold": [
-          "That’s… certainly something.",
-          "Well, thank you. I appreciate the gesture.",
-          "I wasn’t expecting that, actually.",
-          "A bit forward, perhaps.",
-          "It was… unexpected. Quite.",
-          "Hmm. Interesting. Let's move on."
+          "...You're going to regret that.",
+          "I won't forget that, {me}.",
+          "Hm. Noted.",
+          "That was a mistake.",
+          "Don't ever touch me again."
         ],
         "receptive": [
-          "Well that was…unexpected.",
-          "Oh my, a little playful nudge.",
-          "Hmm, that’s certainly a greeting.",
-          "A bit sudden, wasn't it {me}?",
-          "I appreciate the gesture, truly.",
-          "Right. Let’s just move on, shall we?"
+          "Ow! Okay, I probably had that coming.",
+          "Hey! Let's talk about this, {me}.",
+          "That hurt. Why did you do that?",
+          "Okay, okay. I get the message.",
+          "Ouch! You've got a strong arm."
         ],
         "any": [
-          "Well, that was unexpected.",
-          "Seriously {me}? Just like that?",
-          "Okay, that was a bit startling.",
-          "Huh. That actually felt weird.",
-          "You could have warned me, you know.",
-          "Let's just forget that happened."
+          "Ow! Why did you do that?",
+          "That hurt, {me}!",
+          "Hey!",
+          "Ouch!",
+          "Don't ever do that again."
         ]
       }
     },
     "tease": {
       "2": {
         "easily_offended": [
-          "Oh, really? That’s… interesting.",
-          "I appreciate the thought, I suppose.",
-          "Well, thank you. I’ll keep that in mind.",
-          "That’s a rather peculiar observation.",
-          "I'm sure you didn't mean anything by it.",
-          "It was… a comment. I'm fine."
+          "Stop teasing me, {me}! It isn't funny.",
+          "That's not nice. I'm really sensitive.",
+          "Why are you being mean?",
+          "I don't like that. Please stop.",
+          "You always pick on me!"
         ],
         "thick_skinned": [
-          "Oh, really? That's... something.",
-          "I appreciate the effort, honestly.",
-          "Well, you’re certainly persistent.",
-          "Let's just say I've heard worse.",
-          "Thanks for sharing, I suppose.",
-          "You've got a way with words, I'll give you that."
+          "Ha! Good one, {me}.",
+          "Is that all? I've heard worse.",
+          "Tease away. I don't mind.",
+          "Keep going. I'm enjoying this.",
+          "Ha ha. Very clever."
         ],
         "cold": [
-          "That’s… interesting.",
-          "I appreciate the thought.",
-          "I’m quite busy, actually.",
-          "It was a fleeting observation.",
-          "Let’s just leave it at that.",
-          "Thank you, I’m fine."
+          "...Hm.",
+          "How amusing.",
+          "I'm not laughing.",
+          "Are you finished?",
+          "Childish."
         ],
         "receptive": [
-          "Oh, that's nice of you.",
-          "I appreciate the thought, really.",
-          "Hmm, interesting.",
-          "Well, thank you for saying that.",
-          "Just a little something, you know?",
-          "That’s considerate of you."
+          "Ha ha! Okay, that was funny, {me}.",
+          "You're such a tease!",
+          "Oh stop it, you!",
+          "I can take it, {me}.",
+          "Alright, you got me."
         ],
         "any": [
-          "Well, that was… something.",
-          "Is there a reason for that?",
-          "I’m not really sure how to respond to that.",
-          "That’s a bit forward, don’t you think?",
-          "Please don't do that again.",
-          "I'm going to go now."
+          "Very funny, {me}.",
+          "Ha, okay.",
+          "Stop it!",
+          "Hey!",
+          "You're teasing me again."
         ]
       }
     },
     "tickle": {
       "1": {
         "easily_offended": [
-          "Seriously {me}, that was incredibly inappropriate.",
-          "Oh my gosh, I'm mortified, please don't do that.",
-          "I’m so uncomfortable, just… stop.",
-          "That was really rude, I’m honestly hurt.",
-          "Please, {me}, you startled me terribly.",
-          "I need a moment, I’m completely taken aback."
+          "Stop it! I hate being tickled, {me}!",
+          "Please don't. It's not funny.",
+          "That's really uncomfortable.",
+          "Get your hands off me!",
+          "I'm not in the mood for games."
         ],
         "thick_skinned": [
-          "Seriously {me}? That's a bit much.",
-          "Oh, come on, you scared me half to death!",
-          "Please, no more tickles, thank you very much.",
-          "That was unexpectedly rude, you know.",
-          "I appreciate the effort, but no, thanks.",
-          "Ugh, you’re such a silly goose."
+          "Nope. Not ticklish, {me}.",
+          "Is that supposed to do something?",
+          "You'll have to try harder.",
+          "Nah. Didn't feel a thing.",
+          "Hands off, champ."
         ],
         "cold": [
-          "That was incredibly inappropriate.",
-          "Please, just… don’t.",
-          "I really don’t appreciate that.",
-          "You’re making me uncomfortable.",
-          "Seriously, what were you thinking?",
-          "Kindly refrain from such actions."
+          "Don't.",
+          "Stop that.",
+          "Not amusing, {me}.",
+          "I'm not ticklish.",
+          "Remove your hands."
         ],
         "receptive": [
-          "Oh gosh, that was a bit much!",
-          "Seriously {me}? That startled me.",
-          "I appreciate the thought, but no thanks.",
-          "Please don't do that, it made me cringe.",
-          "That's...unexpected. Let's just move on.",
-          "I'm not really comfortable with tickles."
+          "Hee, {me}, not right now!",
+          "I'm sorry, I'm too stressed to laugh.",
+          "Maybe later, okay?",
+          "Aw, I'm not up for it.",
+          "Thanks, but I'd rather not."
         ],
         "any": [
-          "Seriously {me}? That was weird.",
-          "Oh my gosh, that was incredibly uncomfortable.",
-          "Please don’t do that again, it startled me.",
-          "I’m not really into tickles, you know?",
-          "That was a bit much, honestly.",
-          "I’m going to need a minute to recover from that."
+          "Stop it, {me}!",
+          "Not now.",
+          "That's not funny.",
+          "No, thanks.",
+          "Please stop."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my goodness, that was wonderful!",
-          "Seriously {me}, you're hilarious!",
-          "I haven't laughed like that in ages!",
-          "That tickled so much, I almost cried!",
-          "You’re such a silly goose, darling.",
-          "That was the sweetest thing ever, thank you!"
+          "Ha ha ha! Stop! No, don't stop!",
+          "Hee hee! Oh, {me}, I can't breathe!",
+          "Oh my gosh! I'm laughing so hard!",
+          "Stop! Please! I love it!",
+          "You got me! Hahaha!"
         ],
         "thick_skinned": [
-          "Seriously {me}, you're a riot!",
-          "That was unexpectedly delightful!",
-          "Oh my goodness, you're a silly one!",
-          "Tickle me again, please, please, please!",
-          "You’ve got a mischievous streak, don't you?",
-          "That was absolutely brilliant, thank you!"
+          "Ha! Okay, okay! You win, {me}!",
+          "Alright, that tickles!",
+          "Ha ha! Stop! Mercy!",
+          "Okay, now I'm ticklish!",
+          "Ha! You found my weak spot!"
         ],
         "cold": [
-          "Well, that was unexpectedly pleasant.",
-          "Seriously, {me}, you startled me!",
-          "I… I actually enjoyed that.",
-          "That was… charming. Thank you.",
-          "My cheeks are still tingling, you know.",
-          "You’re… different than most people."
+          "...Hee. Stop. Okay. Fine.",
+          "Hm. Heh. Don't tell anyone.",
+          "Alright, that was funny.",
+          "I can't help it. Hee!",
+          "Argh, {me}, that tickles!"
         ],
         "receptive": [
-          "Oh my goodness, that was so silly!",
-          "Seriously {me}, you’re a riot!",
-          "That was amazing, I’m grinning!",
-          "Tickles! You’re the best!",
-          "I never knew I needed that!",
-          "Haha, you got me good!"
+          "Hee hee hee! You're the best, {me}!",
+          "Hahaha! Do it again!",
+          "Ha ha! I love tickle fights!",
+          "Oh, {me}! I'm giggling!",
+          "This is so much fun!"
         ],
         "any": [
-          "Oh my gosh, that was amazing!",
-          "Seriously? That tickled so much!",
-          "You are the best, {me}, you know that?",
-          "I can't believe you did that to me!",
-          "That was unexpectedly delightful!",
-          "I feel so silly and happy right now."
+          "Hahaha! Stop it, {me}!",
+          "Hee hee!",
+          "That tickles!",
+          "Ha ha ha!",
+          "I'm laughing so hard!"
         ]
       }
     },
     "talk": {
       "1": {
         "easily_offended": [
-          "Seriously {me}? Again with this?",
-          "Ugh, don't even start on {topic}.",
-          "This is… really tedious, isn't it?",
-          "I’m just trying to enjoy my afternoon.",
-          "Could we talk about something else, please?",
-          "Honestly, I find {topic} rather dull."
+          "Must we talk about this, {me}? It bores me.",
+          "I'm not in the mood for this.",
+          "Honestly, this makes me uncomfortable.",
+          "Can we talk about something else, please?",
+          "I'd rather not go into it, {me}."
         ],
         "thick_skinned": [
-          "Seriously {me}? Still on about {topic}?",
-          "Oh, come on, we've discussed this a million times.",
-          "This is getting a little tedious, isn't it?",
-          "Let's talk about something with a bit more sparkle.",
-          "I'm genuinely struggling to keep my attention.",
-          "Don't you ever get bored of rehashing {topic}?"
+          "Yawn. Is this still going?",
+          "Come on, {me}. Anything but this.",
+          "I've lost interest already.",
+          "Is there a point to this?",
+          "Wake me when it's over."
         ],
         "cold": [
-          "Seriously {me}? This is what you're excited about?",
-          "Ugh, don’t even get me started on {topic}.",
-          "It's… fine. I suppose.",
-          "I’ve heard it all before, honestly.",
-          "This is incredibly dull, to be frank.",
-          "Let’s just change the subject, shall we?"
+          "...I don't care about this.",
+          "Boring.",
+          "Not interested, {me}.",
+          "Change the subject.",
+          "Is this going anywhere?"
         ],
         "receptive": [
-          "Seriously {me}? Again?",
-          "Oh, come on, let's talk about something else.",
-          "That’s… fascinating. Truly.",
-          "You’re really into that, huh?",
-          "I'm trying to zone out here, honestly.",
-          "Well, this is… a choice."
+          "I'm trying to listen, {me}, but this isn't for me.",
+          "Sorry, I'm a bit lost. Could we talk about something else?",
+          "That's not really my thing.",
+          "I don't know enough about it.",
+          "Maybe another topic?"
         ],
         "any": [
-          "Seriously {me}? Again?",
-          "This is… fascinating, I guess.",
-          "I’m just not seeing the appeal of {topic}.",
-          "Ugh, let's talk about something else, please.",
-          "Tell me more about {topic}, I'm lost.",
-          "I’m going to need a nap after this."
+          "Hm. I'm not very interested, {me}.",
+          "Can we talk about something else?",
+          "That's not for me.",
+          "I'm lost.",
+          "Okay... sure."
         ]
       },
       "2": {
         "easily_offended": [
-          "Oh, really? That's… a perspective.",
-          "I see. It’s a bit complex, isn’t it?",
-          "Well, I hadn’t thought of it quite like that.",
-          "Hmm, that’s an interesting way to look at {topic}.",
-          "I appreciate you sharing your thoughts on {topic}.",
-          "Perhaps we could talk about something else?"
+          "Hm, that's interesting, {me}.",
+          "I hadn't thought of it that way.",
+          "Okay. Go on, I'm listening.",
+          "I suppose that makes sense.",
+          "Alright, I'll give it a think."
         ],
         "thick_skinned": [
-          "Seriously {me}, you're this invested?",
-          "Well, someone's got to bring it up!",
-          "It’s fascinating, isn't it? Don't stop.",
-          "Don't get all worked up about {topic}, relax.",
-          "You seem awfully passionate about this.",
-          "I'm just saying, it's a quirky thing."
+          "Huh. Fair point, {me}.",
+          "Alright, that's kind of interesting.",
+          "Sure, I can chat about it.",
+          "Okay, I'm listening.",
+          "I have some thoughts on that."
         ],
         "cold": [
-          "Interesting. I've only glanced at {topic}.",
-          "That’s a… peculiar focus, {me}.",
-          "I suppose it has some merit.",
-          "Don’t get your hopes up about me liking {topic}.",
-          "It’s not something I usually spend time on.",
-          "A fleeting thought, perhaps."
+          "...Go on.",
+          "Hm. That has some merit.",
+          "Interesting enough.",
+          "Continue.",
+          "I'm following."
         ],
         "receptive": [
-          "That's a really interesting take on {topic}, honestly.",
-          "I've been wondering about that myself, actually.",
-          "Tell me more about the part where you said…",
-          "It’s fascinating! I’d love to hear your perspective.",
-          "Wow, you’ve clearly put a lot of thought into this."
+          "That's a good point, {me}.",
+          "I like how you think.",
+          "Tell me more!",
+          "Interesting! I'd like to know more.",
+          "I agree, actually."
         ],
         "any": [
-          "That’s actually really interesting, {me}, I hadn't thought about it like that.",
-          "Wow, you're passionate about {topic}! I appreciate you sharing.",
-          "So, you really believe {topic} is important?",
-          "Tell me more about the history of {topic}, please.",
-          "It sounds complex, but I'm trying to understand.",
-          "I'm fascinated by your perspective on {topic}."
+          "That's interesting, {me}.",
+          "Tell me more.",
+          "I see what you mean.",
+          "Hm, good point.",
+          "Go on."
         ]
       },
       "3": {
         "easily_offended": [
-          "Oh my gosh, you get it too! Seriously?",
-          "I'm so happy someone understands {topic}.",
-          "This is amazing, I've been waiting for this!",
-          "You're brilliant, truly brilliant about {topic}.",
-          "Let's talk about it! More details, please!",
-          "I just love hearing someone else's passion for {topic}"
+          "Oh, I love talking about this, {me}!",
+          "You get it! I'm so glad we're talking.",
+          "This is the best conversation I've had all week!",
+          "You always understand me.",
+          "I could talk with you for hours!"
         ],
         "thick_skinned": [
-          "Seriously {me}, you get it! It's amazing!",
-          "Oh my gosh, you understand! This is brilliant!",
-          "Let’s talk about it more, please! I'm lost without it.",
-          "You're right! It's the best thing ever, honestly!",
-          "I knew there was someone else who felt this way!",
-          "This is incredible, {me}, let’s geek out!"
+          "Now we're talking, {me}!",
+          "Ha! Finally, someone who gets it.",
+          "Great topic. I have so much to say!",
+          "Okay, you've got me hooked.",
+          "This is fun. Keep going!"
         ],
         "cold": [
-          "Really? You think so too?",
-          "It’s…remarkable, isn’t it?",
-          "Don’t tell me, you’ve read it too?",
-          "The detail is just… astounding.",
-          "I spend hours just thinking about it.",
-          "This is incredible, {me}, truly!"
+          "...You've made me interested.",
+          "Hm. That was a good conversation, {me}.",
+          "You're better company than I thought.",
+          "Fascinating. Truly.",
+          "I enjoyed that."
         ],
         "receptive": [
-          "Seriously {me}, you get it too?",
-          "Oh my gosh, this is amazing!",
-          "I've been waiting for someone to share this with!",
-          "Let’s talk about {topic} all day!",
-          "This is incredible, tell me more!",
-          "I’m so happy you’re interested in {topic}!"
+          "Wow, {me}, I love this!",
+          "That's exactly what I think too!",
+          "This is wonderful! I could listen forever!",
+          "You make everything so interesting!",
+          "I'm so glad we talked about it!"
         ],
         "any": [
-          "Seriously {me}, you get it too?",
-          "Oh my gosh, {me}, you understand!",
-          "This is incredible, I'm so happy!",
-          "Let’s talk about this forever, really?",
-          "I've been waiting for someone like you!",
-          "This is the best conversation ever!"
+          "I love this topic, {me}!",
+          "That was a great conversation!",
+          "You get it!",
+          "Wonderful!",
+          "Let's talk more!"
         ]
       }
     }
