@@ -8,11 +8,11 @@ We need Sims in the same room to carry on natural, autonomous Laya-driven conver
 
 ## Goals
 
-- [ ] Sims in the same room autonomously initiate and sustain parallel verbal conversations whenever a Sim's Social motive is at or below 60% (`<= +20` on the `-100..+100` scale), without interrupting or cancelling either Sim's active VM interaction queue.
-- [ ] Laya selects both the parallel social interaction and the AI talk subject, modulated by the speaker's knowledge of the listener, both Sims' skills (especially Charisma and shared/known skills), and both Sims' moods.
-- [ ] Per-pair social memory records bad outcomes and prevents all-negative interaction loops via failed-option penalties, de-escalation shifts, and cool-down backoff.
-- [ ] Manual Sim-to-Sim pie menus expose only two top-level social bubbles—**Talk** and **Romance**—when AI conversations are enabled, and 100% of Talk subjects (manual and autonomous) come from the AI subject catalog rather than hardcoded Sims 1 interest labels.
-- [ ] Zero game-thread stalls (all Laya calls run off the VM thread) and graceful degradation when Laya is unavailable or the feature is toggled off.
+- [x] Sims in the same room autonomously initiate and sustain parallel verbal conversations whenever a Sim's Social motive is at or below 60% (`<= +20` on the `-100..+100` scale), without interrupting or cancelling either Sim's active VM interaction queue.
+- [x] Laya selects both the parallel social interaction and the AI talk subject, modulated by the speaker's knowledge of the listener, both Sims' skills (especially Charisma and shared/known skills), and both Sims' moods.
+- [x] Per-pair social memory records bad outcomes and prevents all-negative interaction loops via failed-option penalties, de-escalation shifts, and cool-down backoff.
+- [x] Manual Sim-to-Sim pie menus expose only two top-level social bubbles—**Talk** and **Romance**—when AI conversations are enabled, and 100% of Talk subjects (manual and autonomous) come from the AI subject catalog rather than hardcoded Sims 1 interest labels.
+- [x] Zero game-thread stalls (all Laya calls run off the VM thread) and graceful degradation when Laya is unavailable or the feature is toggled off.
 
 ## Out of Scope
 
@@ -131,19 +131,19 @@ We need Sims in the same room to carry on natural, autonomous Laya-driven conver
 
 | ID | Story | Component(s) | Status |
 | --- | --- | --- | --- |
-| APS-01 | P1 Parallel room trigger when Social <= 60% without interrupting queue | `ParallelSocialPlanner`, `ParallelSocialDriver`, `SpriteCardsPatch` | Planned |
-| APS-02 | P1 Same-room detection (indoor room equality, outdoor proximity) & Sim eligibility (awake, adult, human, not busy in social/dialog) | `ParallelSocialDriver`, `ParallelSocialPlanner` | Planned |
-| APS-03 | P1 Parallel resolution: speech balloons, Social motive delta, STR/LTR updates | `ParallelSocialDriver`, `ConvoOverlay` | Planned |
-| APS-04 | P1 Laya async scoring for interaction + AI topic selection | `LayaClient`, `ParallelSocialPlanner` | Planned |
-| APS-05 | P1 Knowledge of other Sim (LTR/STR + observed history) impacts visibility & accuracy | `SocialIntelligence`, `SocialMemory` | Planned |
-| APS-06 | P1 Skills (Charisma accuracy + Cooking/Mechanical/Creativity/Logic/Body affinity) impact choice quality & resonance | `SocialIntelligence`, `Traits`, `AiSubjectBank` | Planned |
-| APS-07 | P1 Mood (speaker mood tact/error + perceived listener mood) impacts choice quality | `SocialIntelligence` | Planned |
-| APS-08 | P1 Learning from bad interactions (per-pair penalty for failed interaction/tone/topic) | `SocialMemory`, `ParallelSocialPlanner`, `ConvoPrimitive`, `ConvoTalkPrimitive` | Planned |
-| APS-09 | P1 Anti-negative-loop guard (streak >= 2 de-escalation, streak >= 3 pair backoff, positive reset) | `SocialMemory`, `ParallelSocialPlanner` | Planned |
-| APS-10 | P1 SocialMemory JSON persistence | `SocialMemory`, `Boot` | Planned |
-| APS-11 | P1 Manual pie menu filtered to only `Talk` and `Romance` (with safe edge fallbacks & off switch) | `PieMenuLogic`, `ConvoPieMenu`, `SpriteCardsPatch` | Planned |
-| APS-12 | P1 100% AI Talk subjects (manual & autonomous) with `bank.json` catalog + `ConvoBank --subjects` | `AiSubjectBank`, `ConvoTalkPrimitive`, `bank.json`, `ConvoBank` | Planned |
-| APS-13 | P2 `simtool convo` diagnostics & test triggers | `Boot`, `ParallelSocialDriver` | Planned |
-| APS-14 | P2 Full unit tests, Cecil patch tests, and `Tools/ci.ps1` green gate | `Conversations.Tests`, `PatchTests`, `ci.ps1` | Planned |
+| APS-01 | P1 Parallel room trigger when Social <= 60% without interrupting queue | `ParallelSocialPlanner`, `ParallelSocialDriver`, `SpriteCardsPatch` | Done |
+| APS-02 | P1 Same-room detection (indoor room equality, outdoor proximity) & Sim eligibility (awake, adult, human, not busy in social/dialog) | `ParallelSocialDriver`, `ParallelSocialPlanner` | Done |
+| APS-03 | P1 Parallel resolution: speech balloons, Social motive delta, STR/LTR updates | `ParallelSocialDriver`, `ConvoOverlay` | Done |
+| APS-04 | P1 Laya async scoring for interaction + AI topic selection | `LayaClient`, `ParallelSocialPlanner` | Done |
+| APS-05 | P1 Knowledge of other Sim (LTR/STR + observed history) impacts visibility & accuracy | `SocialIntelligence`, `SocialMemory` | Done |
+| APS-06 | P1 Skills (Charisma accuracy + Cooking/Mechanical/Creativity/Logic/Body affinity) impact choice quality & resonance | `SocialIntelligence`, `Traits`, `AiSubjectBank` | Done |
+| APS-07 | P1 Mood (speaker mood tact/error + perceived listener mood) impacts choice quality | `SocialIntelligence` | Done |
+| APS-08 | P1 Learning from bad interactions (per-pair penalty for failed interaction/tone/topic) | `SocialMemory`, `ParallelSocialPlanner`, `ConvoPrimitive`, `ConvoTalkPrimitive` | Done |
+| APS-09 | P1 Anti-negative-loop guard (streak >= 2 de-escalation, streak >= 3 pair backoff, positive reset) | `SocialMemory`, `ParallelSocialPlanner` | Done |
+| APS-10 | P1 SocialMemory JSON persistence | `SocialMemory`, `Boot` | Done |
+| APS-11 | P1 Manual pie menu filtered to only `Talk` and `Romance` (with safe edge fallbacks & off switch) | `PieMenuLogic`, `ConvoPieMenu`, `SpriteCardsPatch` | Done |
+| APS-12 | P1 100% AI Talk subjects (manual & autonomous) with `bank.json` catalog + `ConvoBank --subjects` | `AiSubjectBank`, `ConvoTalkPrimitive`, `bank.json`, `ConvoBank` | Done |
+| APS-13 | P2 `simtool convo` diagnostics & test triggers | `Boot`, `ParallelSocialDriver` | Done |
+| APS-14 | P2 Full unit tests, Cecil patch tests, and `Tools/ci.ps1` green gate | `Conversations.Tests`, `PatchTests`, `ci.ps1` | Done |
 
 **Coverage:** 14 total requirements mapped to design and tasks.
