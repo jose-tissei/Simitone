@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -63,7 +63,7 @@ public static class GameControl
 
     static string Execute(string[] p)
     {
-        var vm = (p[0] == "convo" || p[0] == "families" || p[0] == "playhouse" || p[0] == "alerts" || p[0] == "dismiss") ? null : GetVM();   // convo commands also work on the neighbourhood map
+        var vm = (p[0] == "convo" || p[0] == "lotname" || p[0] == "families" || p[0] == "playhouse" || p[0] == "alerts" || p[0] == "dismiss") ? null : GetVM();   // convo commands also work on the neighbourhood map
         switch (p[0])
         {
             case "sims": return Sims(vm);
@@ -143,7 +143,7 @@ public static class GameControl
                     foreach (var d in toClose) uiScreen.GetMethod("RemoveDialog").Invoke(null, new object[] { d });
                     return "ok closed " + toClose.Count;
                 }
-                return "ok " + found.Count + (found.Count > 0 ? " | " + string.Join(" || ", found.Select(x => x.Replace((char)10, (char)32))) : "");
+                return "ok " + found.Count + (found.Count > 0 ? " | " + string.Join(" || ", found.Select(x => x.Replace((char)10, (char)32).Replace((char)13, (char)32))) : "");
             }
             case "families":
             {
@@ -182,8 +182,42 @@ public static class GameControl
                 }
                 var m = screen.GetType().GetMethod("VMLotSwitch", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
                 if (m == null) throw new Exception("this screen has no VMLotSwitch");
+                {
+                    // what the Hole in the Ground's primitive (ChangeToLotInTemp0) records before it asks for the switch: the objects of the lot
+                    // downtown read it back (the Sim to spawn, the family, whether the whole family travels), and fail with a null reference without it
+                    var gm = GetVM();
+                    var ct = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+                    var nb = ct.GetField("Neighborhood").GetValue(ct.GetMethod("Get", Type.EmptyTypes).Invoke(null, null));
+                    var state = nb.GetType().GetField("GameState")?.GetValue(nb) ?? nb.GetType().GetProperty("GameState").GetValue(nb, null);
+                    var st = state.GetType();
+                    uint target = uint.Parse(p[1]);
+                    var avatar = gm.GetObjectById(gm.GetGlobalValue(3)) as VMAvatar ?? Avatars(gm).FirstOrDefault();
+                    st.GetField("ActiveFamily").SetValue(state, gm.TS1State.CurrentFamily);
+                    if (avatar != null) st.GetField("DowntownSimGUID").SetValue(state, avatar.Object.OBJ.GUID);
+                    st.GetField("LotTransitInfo").SetValue(state, (target >= 40 && target < 50) ? (short)1 : gm.GetGlobalValue(34));
+                }
                 m.Invoke(screen, new object[] { uint.Parse(p[1]) });
                 return "ok lot switch requested: " + p[1];
+            }
+            case "lotname":
+            {
+                // lotname <n>: the name and description the game gives house n (e.g. in the neighbourhood and magic town lists)
+                var ct2 = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Content.Content", false)).First(x => x != null);
+                var nb2 = ct2.GetField("Neighborhood").GetValue(ct2.GetMethod("Get", Type.EmptyTypes).Invoke(null, null));
+                var nd = nb2.GetType().GetMethod("GetHouseNameDesc").Invoke(nb2, new object[] { int.Parse(p[1]) });
+                return "ok " + nd.GetType().GetProperty("Item1").GetValue(nd, null) + " | " + ((string)nd.GetType().GetProperty("Item2").GetValue(nd, null)).Replace((char)10, (char)32).Replace((char)13, (char)32);
+            }
+            case "camera":
+            {
+                // camera: where the world camera looks, whether the world is drawn, and where the controlled Sim stands
+                var w = vm.Context.World;
+                // camera <x> <y>: look at that tile (a lot with no Sim on it keeps the camera at its corner)
+                if (p.Length > 2) w.State.CenterTile = new Microsoft.Xna.Framework.Vector2(float.Parse(p[1]), float.Parse(p[2]));
+                var c = vm.GetObjectById(vm.GetGlobalValue(3));
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                var lc = screen.GetType().GetProperty("LotControl")?.GetValue(screen, null) as FSO.Client.UI.Framework.UIElement;
+                return "ok center=" + w.State.CenterTile + " zoom=" + w.State.Zoom + " worldVisible=" + w.Visible + " lotControlVisible=" + lc?.Visible +
+                       " sim=" + (c == null ? "none" : c.Position + " lvl " + c.Position.Level) + " speed=" + vm.SpeedMultiplier + " cutaway=" + w.State.Level;
             }
             case "time":
                 // time [hours [minutes]]: read the clock, or set it (the light follows on the next simulation ticks)

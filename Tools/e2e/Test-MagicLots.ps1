@@ -20,6 +20,14 @@ $before = Hashes $docs
 Write-Host "save copied to $backup ($($before.Count) files)" -ForegroundColor DarkGray
 
 $failures = New-Object System.Collections.Generic.List[string]
+Add-Type -AssemblyName System.Drawing
+# distinct colours (5 bits per channel) in the middle of the frame: a flat sky or a black screen has a few dozen, a lot with objects thousands
+function ImageColors([string]$path) {
+    $bmp = New-Object System.Drawing.Bitmap $path
+    try { $set = New-Object 'System.Collections.Generic.HashSet[int]'
+        for ($y = 150; $y -lt $bmp.Height - 150; $y += 6) { for ($x = 320; $x -lt $bmp.Width - 120; $x += 6) { $c = $bmp.GetPixel($x, $y); [void]$set.Add((($c.R -shr 3) -shl 10) -bor (($c.G -shr 3) -shl 5) -bor ($c.B -shr 3)) } }
+        return $set.Count } finally { $bmp.Dispose() }
+}
 function Sim { (& $SimTool @args 2>&1) -join ' ' }
 function Alive([string]$what) {
     # a fatal-error dialog stops the game thread, so a command that needs it times out
@@ -41,6 +49,7 @@ try {
     $sims = Sim sims
     $homeInfo = Sim lotinfo
     $simCount = ([regex]::Matches($sims, 'neighbor')).Count
+    $familyNames = @([regex]::Matches($sims, '\d+:(\w+)\(neighbor') | ForEach-Object { $_.Groups[1].Value })
     if ($simCount -lt 1) { $failures.Add("no Sim in house $House ($sims)"); Write-Host "  FAIL  a Sim is in the lot - $sims" -ForegroundColor Red } else { Write-Host "  PASS  $simCount Sim(s) in house ${House}: $sims | $homeInfo" -ForegroundColor Green }
     & $SimTool shot (Join-Path $Shots "home.png") | Out-Null
     $warnings = New-Object System.Collections.Generic.List[string]
@@ -49,19 +58,38 @@ try {
         $r = Sim gotolot $n
         Sim wait 15 | Out-Null
         if (-not (Alive "lot $n")) { break }
+        # a paused game does not draw the freshly loaded lot (only sky), so let it run for a moment, close the welcome message, then look
+        # (the hook's idle mouse sits at a screen edge, which scrolls the camera off the lot once the welcome message is closed, so it is parked mid-screen)
+        Sim move 960 540 | Out-Null; Sim speed 1 | Out-Null; Sim wait 8 | Out-Null
         $info = Sim lotinfo
         $objs = if ($info -match 'objects=(\d+)') { [int]$Matches[1] } else { 0 }
         $al = Sim alerts
+        $lotSims = Sim sims
+        $famHere = @($familyNames | Where-Object { $lotSims -match [regex]::Escape($_) }).Count
+        # lots 90-92 are vacant houses to move into (EverAfter Oaks, Alfred's B&B, Old Man Lum's): the game puts nobody on them and leaves the camera at the corner,
+        # so there the camera is moved to the middle of the lot instead; every other lot must have the family's Sim on it
+        if ($n -le 92) {
+            if ($info -match 'size=(\d+)x(\d+)') { Sim camera ([int]([int]$Matches[1] / 2)) ([int]([int]$Matches[2] / 2)) | Out-Null; Sim wait 2 | Out-Null }
+            Write-Host "  note  lot ${n} is a vacant house, so no Sim is expected" -ForegroundColor DarkGray
+        }
+        elseif ($famHere -lt 1) { $failures.Add("lot ${n}: none of the family's Sims is on the lot ($lotSims)"); Write-Host "  FAIL  lot $n has none of $($familyNames -join ', ') on it" -ForegroundColor Red }
+        else { Write-Host "  PASS  lot ${n}: $famHere of the family's Sims are on it" -ForegroundColor Green }
+        Sim dismiss | Out-Null; Sim wait 2 | Out-Null
         & $SimTool shot (Join-Path $Shots "lot$n.png") | Out-Null
+        Sim speed 0 | Out-Null
+        $colors = ImageColors (Join-Path $Shots "lot$n.png")
+        if ($colors -lt 90) { $failures.Add("lot ${n}: the screenshot is flat ($colors distinct colours), the lot is not on screen"); Write-Host "  FAIL  lot $n is not visible on screen ($colors distinct colours)" -ForegroundColor Red }
+        else { Write-Host "  PASS  lot $n is visible on screen ($colors distinct colours)" -ForegroundColor Green }
         if ($objs -lt 50 -or $info -notmatch 'downtown=True') { $failures.Add("lot ${n}: not loaded ($info)"); Write-Host "  FAIL  lot $n did not load - $info" -ForegroundColor Red }
         else { Write-Host "  PASS  lot $n loaded: $info" -ForegroundColor Green }
-        # SimAntics exception boxes are the engine's own suppressed errors in the magic-town objects (they also happen with the original, unpatched FSO.SimAntics.dll); they are reported, not hidden
-        if ($al -match 'SimAntics Exception') { $warnings.Add("lot ${n}: the game showed a (suppressed) SimAntics exception box"); Write-Host "  WARN  lot $n showed a SimAntics exception box (engine behaviour, also without my patches)" -ForegroundColor Yellow }
+        # a SimAntics exception box is a failure: the lot's objects read the travel state the Hole in the Ground records (gotolot records it the same way), so none should appear
+        if ($al -match 'SimAntics Exception') { $failures.Add("lot ${n}: SimAntics exception: $al"); Write-Host "  FAIL  lot $n showed a SimAntics exception box - $al" -ForegroundColor Red }
         Sim dismiss | Out-Null
         Sim gotolot 65535 | Out-Null     # (short)-1 = back to the family's own lot, as leaving through the hole does
         Sim wait 15 | Out-Null
         if (-not (Alive "back home from lot $n")) { break }
         $homeNow = Sim lotinfo
+        if ((Sim alerts) -match 'Exception') { $failures.Add("exception box after returning home from lot $n"); Write-Host "  FAIL  exception box back home after lot $n" -ForegroundColor Red }
         $homeSims = if ($homeNow -match 'sims=(\d+)') { [int]$Matches[1] } else { 0 }
         $homeObjs = if ($homeNow -match 'objects=(\d+)') { [int]$Matches[1] } else { 0 }
         if ($homeSims -lt 1 -or $homeObjs -lt 50 -or $homeNow -notmatch 'downtown=False') { $failures.Add("home after lot ${n}: $homeNow"); Write-Host "  FAIL  home after lot $n - $homeNow" -ForegroundColor Red }
