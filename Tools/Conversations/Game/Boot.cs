@@ -136,6 +136,44 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("memory menu error: " + e.Message); }
         }
 
+        public static void CloseMemoryMenu()
+        {
+            try { SimMemoryMenu.Close(); }
+            catch { }
+        }
+
+        public static object CreateMemoryStrip(float width)
+        {
+            try { return new SimMemoryStrip(width); }
+            catch (Exception e) { Log("memory strip error: " + e.Message); return null; }
+        }
+
+        static string OpenLiveMemoryTab(bool expandSwitcher)
+        {
+            try
+            {
+                var screen = FSO.Client.UI.Framework.UIScreen.Current;
+                if (screen == null) return "no screen";
+                var frontend = screen.GetType().GetProperty("Frontend")?.GetValue(screen, null);
+                var main = frontend?.GetType().GetField("MainPanel")?.GetValue(frontend)
+                           ?? screen.GetType().GetField("MainPanel")?.GetValue(screen);
+                if (main == null) return "no main panel";
+                // Ensure panel is open in LIVE mode (0)
+                var setMode = main.GetType().GetMethod("SetMode");
+                var modeField = main.GetType().GetField("Mode");
+                var liveVal = modeField != null ? Enum.ToObject(modeField.FieldType, 0) : null;
+                if (setMode != null && liveVal != null) setMode.Invoke(main, new[] { liveVal });
+                var openMethod = main.GetType().GetMethod("Open");
+                if (openMethod != null && openMethod.GetParameters().Length == 0) openMethod.Invoke(main, null);
+                var switcher = main.GetType().GetField("Switcher")?.GetValue(main);
+                if (switcher == null) return "no switcher";
+                switcher.GetType().GetMethod("Select")?.Invoke(switcher, new object[] { 5 });
+                if (expandSwitcher) switcher.GetType().GetMethod("Open")?.Invoke(switcher, null);
+                return expandSwitcher ? "tab=5 switcher=open" : "tab=5";
+            }
+            catch (Exception e) { return "error: " + (e.InnerException ?? e).Message; }
+        }
+
         public static void Log(string msg)
         {
             try { File.AppendAllText(Path.Combine(GameDir, "Content", "conversations.log"), DateTime.Now.ToString("HH:mm:ss") + " " + msg + Environment.NewLine); }
@@ -169,6 +207,8 @@ namespace Simitone.Conversations
                     var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "open";
                     if (sub == "close" || sub == "off") return SimMemoryMenu.Close();
                     if (sub == "status") return SimMemoryMenu.Status();
+                    if (sub == "tab") return OpenLiveMemoryTab(false);
+                    if (sub == "switcher") return OpenLiveMemoryTab(true);
                     if (sub == "select") return SimMemoryMenu.SelectKnown(a.Length > 2 ? string.Join(" ", a.Skip(2)) : "");
                     if (sub == "toggle") { SimMemoryMenu.Toggle(); return SimMemoryMenu.Status(); }
                     return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
@@ -176,7 +216,7 @@ namespace Simitone.Conversations
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
-                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|select|status]|trigger A B|last|log");
+                default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|trigger A B|last|log");
             }
         }
     }

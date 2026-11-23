@@ -13,7 +13,10 @@ using FSO.LotView;
 using FSO.LotView.Components;
 using FSO.LotView.Model;
 using FSO.SimAntics;
+using Simitone.Client.UI.Controls;
 using Simitone.Client.UI.Panels;
+using Simitone.Client.UI.Panels.LiveSubpanels;
+using Simitone.Client.UI.Screens;
 
 // Display modes for Simitone: how the world is drawn (2D sprites vs 3D meshes) and how the camera behaves.
 // Patched into the release assemblies by SpriteCardsPatch; see README.md.
@@ -119,10 +122,50 @@ public static class SpriteCards
         Refresh();
     }
 
-    public static void MenuSimMemory()
+    // ---------------------------------------------------------------- Live Sim panel (Sim Memory tab alongside Needs, Career, Personality, Relationships, Inventory)
+    public static void InitLiveCategories(List<UICategory> categories)
     {
-        ConvoLoader.ToggleMemoryMenu();
-        Refresh();
+        if (categories == null || !ConvoLoader.Installed) return;
+        foreach (var c in categories) if (c != null && c.ID == 5) return;
+        categories.Add(new UICategory { ID = 5, IconName = "live_memory.png" });
+    }
+
+    public static UISubpanel ResolveSubpanel(UISubpanel existing, UIMainPanel main, int category)
+    {
+        if (existing != null || main == null || main.Mode != UIMainPanelMode.LIVE || category != 5 || !ConvoLoader.Installed)
+            return existing;
+        return new SimMemorySubpanelHost(main.Game);
+    }
+
+    sealed class SimMemorySubpanelHost : UISubpanel
+    {
+        readonly UIElement strip;
+
+        public SimMemorySubpanelHost(TS1GameScreen game) : base(game)
+        {
+            strip = ConvoLoader.CreateMemoryStrip(Size.X) as UIElement;
+            if (strip != null) Add(strip);
+            Invalidate();
+        }
+
+        public override void GameResized()
+        {
+            base.GameResized();
+            try { strip?.GetType().GetMethod("SetStripWidth")?.Invoke(strip, new object[] { Size.X }); } catch { }
+            Invalidate();
+        }
+
+        public override void Update(UpdateState state)
+        {
+            base.Update(state);
+            Invalidate();
+        }
+
+        public override void Kill()
+        {
+            ConvoLoader.CloseMemoryMenu();
+            base.Kill();
+        }
     }
 
     static void SetMode(ModeDef m)
@@ -144,8 +187,8 @@ public static class SpriteCards
 
     // ---------------------------------------------------------------- Options menu
     // entries: 0 2D mode, 1 3D with 2D list, 2 3D architecture + 2D objects, 3 Full 3D, 4 Reload list,
-    //          5 AI conversations (toggle), 8 Sim memory (overlay), 6 Anti-aliasing, 7 Dynamic lighting
-    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null, null, null, null, null };
+    //          5 AI conversations (toggle), 6 Anti-aliasing, 7 Dynamic lighting
+    static readonly string[] modeOfEntry = { "2d", "list", "arch", "full3d", null, null, null, null };
     static object menuPanel; // the Options subpanel currently shown
 
     public static void Menu2D() { SetMode(Modes[0]); Refresh(); }
@@ -159,7 +202,6 @@ public static class SpriteCards
         if (id == 5) return "AI conversations";
         if (id == 6) return "Anti-aliasing: " + RenderLoader.Label;
         if (id == 7) return "Dynamic lighting: " + RenderLoader.LightLabel;
-        if (id == 8) return "Sim memory";
         return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 
@@ -192,10 +234,9 @@ public static class SpriteCards
                 }
                 if (k.GetType().Name != "UICatButton") continue;
                 int entry = i - 3; // after Save, Neighborhood, Quit
-                // order when installed: 5=AI conversations, 6=Sim memory, 7=Anti-aliasing, 8=Dynamic lighting
-                if (entry >= 5 && !ConvoLoader.Installed) entry += 2;
+                if (entry >= 5 && !ConvoLoader.Installed) entry++; // skip the AI conversations slot when it was not patched in
                 var sel = k.GetType().GetProperty("Selected");
-                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? ConvoLoader.MemoryMenuOpen : entry == 7 ? RenderLoader.AaOn : entry == 8 ? RenderLoader.LightOn : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
+                if (sel != null) sel.SetValue(k, entry == 5 ? ConvoLoader.Enabled : entry == 6 ? RenderLoader.AaOn : entry == 7 ? RenderLoader.LightOn : (entry >= 0 && entry < modeOfEntry.Length && modeOfEntry[entry] == Current.Id), null);
                 i++;
             }
         }

@@ -175,17 +175,21 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
     }
 
     [SkippableFact]
-    public void OptionsMenu_GetsConversationsAndSimMemoryEntries()
+    public void OptionsMenu_AndLiveSimPanel_GetConversationsAndSimMemoryHooks()
     {
         NeedsRelease();
         using (var m = Open("Simitone.Client.dll"))
         {
             var panel = m.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UIMainPanel");
             var sw = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
+            var ctor = panel.Methods.First(x => x.IsConstructor && !x.IsStatic && x.HasBody);
+            // Options keeps AI conversations toggle only (Sim Memory lives in the selected Sim Live panel)
             Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_convo.png");
             Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "MenuConversations");
-            Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_memory.png");
-            Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "MenuSimMemory");
+            Assert.DoesNotContain(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_memory.png");
+            // Live Sim panel gets Sim Memory category (ID 5) + subpanel resolver
+            Assert.Contains(ctor.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "InitLiveCategories");
+            Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == "ResolveSubpanel");
         }
     }
 

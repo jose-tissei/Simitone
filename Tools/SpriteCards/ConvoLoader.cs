@@ -56,16 +56,13 @@ static class ConvoLoader
         try { Look(); if (boot != null) boot.GetProperty("Enabled").SetValue(null, !Enabled, null); } catch { }
     }
 
-    public static bool MemoryMenuOpen
+    public static object CreateMemoryStrip(float width)
     {
-        get
-        {
-            try { Look(); return boot != null && (bool)boot.GetProperty("MemoryMenuOpen").GetValue(null, null); } catch { return false; }
-        }
+        try { Look(); return boot == null ? null : boot.GetMethod("CreateMemoryStrip").Invoke(null, new object[] { width }); } catch { return null; }
     }
 
-    public static void ToggleMemoryMenu()
+    public static void CloseMemoryMenu()
     {
-        try { Look(); if (boot != null) boot.GetMethod("ToggleMemoryMenu").Invoke(null, null); } catch { }
+        try { Look(); if (boot != null) boot.GetMethod("CloseMemoryMenu").Invoke(null, null); } catch { }
     }
 }

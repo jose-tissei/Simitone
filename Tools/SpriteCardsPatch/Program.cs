@@ -135,12 +135,8 @@ int total = 0;
             (3, "opt_cam_free.png", "MenuFull3D"),
             (4, "opt_cam_reload.png", "MenuReload"),
         };
-        // the AI conversations toggle and Sim memory viewer only exist when the conversations library is being installed
-        if (conversationsPath != null)
-        {
-            entryList.Add((5, "opt_convo.png", "MenuConversations"));
-            entryList.Add((8, "opt_memory.png", "MenuSimMemory"));
-        }
+        // the AI conversations toggle only exists when the conversations library is being installed
+        if (conversationsPath != null) entryList.Add((5, "opt_convo.png", "MenuConversations"));
         // likewise the anti-aliasing button, which exists only with the render library
         if (renderPath != null) { entryList.Add((6, "opt_aa.png", "MenuAntiAlias")); entryList.Add((7, "opt_light.png", "MenuLighting")); }
         var entries = entryList.ToArray();
@@ -168,6 +164,44 @@ int total = 0;
         il.InsertAfter(decorateCall, il.Create(OpCodes.Castclass, ((MethodReference)anchor.Operand).DeclaringType));
         Console.WriteLine($"patched {m.FullName}: options menu {oldSize} -> {oldSize + entries.Length} entries");
         nClient++;
+    }
+    // Live Sim panel: add the Sim Memory tab (ID = 5, live_memory.png) alongside Needs, Career, Personality, Relationships, Inventory
+    if (conversationsPath != null)
+    {
+        var mainCtor = panel.Methods.First(x => x.IsConstructor && !x.IsStatic && x.HasBody);
+        if (mainCtor.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "InitLiveCategories"))
+            Console.WriteLine("live Sim Memory category already patched");
+        else
+        {
+            var stLive = mainCtor.Body.Instructions.FirstOrDefault(i => i.OpCode == OpCodes.Stfld && i.Operand is FieldReference f && f.Name == "LiveCategories");
+            if (stLive == null) throw new Exception("UIMainPanel.LiveCategories field store not found");
+            var liveField = (FieldReference)stLive.Operand;
+            var ilc = mainCtor.Body.GetILProcessor();
+            var initRef = mod.ImportReference(Hook("InitLiveCategories", 1));
+            var ld0 = ilc.Create(OpCodes.Ldarg_0);
+            var ldf = ilc.Create(OpCodes.Ldfld, liveField);
+            var call = ilc.Create(OpCodes.Call, initRef);
+            ilc.InsertAfter(stLive, ld0);
+            ilc.InsertAfter(ld0, ldf);
+            ilc.InsertAfter(ldf, call);
+            Console.WriteLine("patched " + mainCtor.FullName + ": InitLiveCategories(LiveCategories)");
+            nClient++;
+        }
+
+        if (m.Body.Instructions.Any(i => i.Operand is MethodReference r && r.Name == "ResolveSubpanel"))
+            Console.WriteLine("live Sim Memory subpanel resolver already patched");
+        else
+        {
+            var setSub = m.Body.Instructions.FirstOrDefault(i => (i.OpCode == OpCodes.Call || i.OpCode == OpCodes.Callvirt) && i.Operand is MethodReference r && r.Name == "SetSubpanel");
+            if (setSub == null) throw new Exception("UIMainPanel.SetSubpanel call not found");
+            var ilr = m.Body.GetILProcessor();
+            var resolveRef = mod.ImportReference(Hook("ResolveSubpanel", 3));
+            ilr.InsertBefore(setSub, ilr.Create(OpCodes.Ldarg_0));
+            ilr.InsertBefore(setSub, ilr.Create(OpCodes.Ldarg_1));
+            ilr.InsertBefore(setSub, ilr.Create(OpCodes.Call, resolveRef));
+            Console.WriteLine("patched " + m.FullName + ": ResolveSubpanel(panel, this, obj) before SetSubpanel");
+            nClient++;
+        }
     }
     // Ctrl+click on an object: UILotControl.ShowPieMenu(pt, state) starts with "if (SpriteCards.CtrlClick(this, pt, state)) return;"
     var lot = mod.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UILotControl");
