@@ -268,7 +268,7 @@ namespace Simitone.Conversations
             if (c == null) return "";
             var parts = new List<string>
             {
-                c.ListenerName + " (" + c.FamiliarityLabel + " " + c.KnowledgePercent + "%, " + c.Exchanges + " chats, STR " + c.LastStr + "/LTR " + c.LastLtr + ")"
+                c.ListenerName + " (" + c.FamiliarityLabel + " " + c.KnowledgePercent + "%, " + c.Exchanges + " chats, Daily " + c.LastStr + "/Lifetime " + c.LastLtr + ")"
             };
             if (c.Traits.Count > 0) parts.Add("traits=[" + string.Join(", ", c.Traits) + "]");
             if (!string.IsNullOrEmpty(c.Temperament)) parts.Add("temper=" + c.Temperament);

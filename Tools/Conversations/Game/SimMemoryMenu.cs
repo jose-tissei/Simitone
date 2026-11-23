@@ -402,7 +402,7 @@ namespace Simitone.Conversations
 
             // Dossier Header + Familiarity bar
             DrawLocalString(batch, card.ListenerName, new Vector2(cx, cy), titleStyle);
-            string relText = "STR " + Signed(card.LastStr) + "   LTR " + Signed(card.LastLtr) + "   (" + card.PositiveCount + " great / " + card.NeutralCount + " ok / " + card.NegativeCount + " awkward)";
+            string relText = "Daily " + Signed(card.LastStr) + "  |  Lifetime " + Signed(card.LastLtr) + "  (" + card.PositiveCount + " great / " + card.NeutralCount + " ok / " + card.NegativeCount + " awkward)";
             DrawLocalString(batch, relText, new Vector2(cx, cy + 26), subtitleStyle);
 
             // Knowledge progress bar on top right
