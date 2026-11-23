@@ -21,10 +21,14 @@ namespace Simitone.Render
         public static string LastError = "";
         public static float TilesReach = 3f;   // how far light bounces, in tiles
         public static float Gain = 0.6f;       // how much of the gathered light is added
-        public static float RcGain = 1.2f;     // the same for radiance cascades
-        public static float RcStart = 2f;      // length of the first cascade's rays, in scene pixels (each cascade reaches 4x farther)
-        public const int PxPerTile = 4;        // resolution of the cascade scene
+        public static float RcGain = 150f;     // the same for radiance cascades
+        public static float EmitScale = 1f;  // radiance of a lamp's glowing disc
+        public static float DiscTiles = 3f;      // radius of that disc, in tiles at most
+        public static float RcStart = 4f;      // length of the first cascade's rays, in scene pixels (each cascade reaches 4x farther)
+        public const int PxPerTile = 8;        // resolution of the cascade scene
         public const int CascadeCount = 3;
+        const int MaxLights = 48;
+        static int lampCount;
         static Effect rc;
         static GraphicsDevice rcDevice;
         static RenderTarget2D scene;
@@ -43,6 +47,7 @@ namespace Simitone.Render
                 var light = state.Light;
                 var map = light == null ? null : light.LightMap;
                 if (map == null || map.IsDisposed) return;
+                lastMap = map; lastState = state;
                 var gd = map.GraphicsDevice;
                 if (gd == null || gd.IsDisposed || gd.GraphicsProfile != GraphicsProfile.HiDef) return;   // the effect needs feature level 10
                 Prepare(gd, map.Width, map.Height);
@@ -84,7 +89,7 @@ namespace Simitone.Render
         // walls of a floor as flags per tile, doors left open
         static int FlagsAt(Blueprint bp, int floor, int x, int y)
         {
-            if (bp.Walls == null || floor >= bp.Walls.Length) return 0;
+            if (ignoreWalls || bp.Walls == null || floor >= bp.Walls.Length) return 0;
             var arr = bp.Walls[floor];
             int off = y * bp.Width + x;
             if (arr == null || off >= arr.Length) return 0;
@@ -117,7 +122,7 @@ namespace Simitone.Render
             }
 
             // the wall picture only changes when the walls do
-            int hash = tiles * 31 + floors;
+            int hash = tiles * 31 + floors + (ignoreWalls ? 7777 : 0);
             for (int f = 0; f < floors; f++)
             {
                 var arr = bp.Walls[f];
@@ -135,11 +140,33 @@ namespace Simitone.Render
                 wallHash = hash;
             }
 
+            // the lamps: point lights of rooms (not the window lights, which carry the sun and moon)
+            var posR = new Vector4[MaxLights]; var cols = new Vector4[MaxLights]; int nLights = 0;
+            if (bp.Light != null)
+                foreach (var room in bp.Light)
+                {
+                    if (room == null) continue;
+                    foreach (var ld in room.Lights)
+                    {
+                        if (nLights >= MaxLights) break;
+                        if (ld.LightType != FSO.LotView.LMap.LightType.ROOM || ld.OutdoorsColor || ld.Level < 0 || ld.Level >= floors) continue;
+                        float ox = (ld.Level % LightGrid.AtlasWidth) * fp, oy = (ld.Level / LightGrid.AtlasWidth) * fp;
+                        posR[nLights] = new Vector4(ox + ld.LightPos.X / 16f * PxPerTile, oy + ld.LightPos.Y / 16f * PxPerTile, Math.Max(1f, Math.Min(DiscTiles, ld.LightSize / 16f) * PxPerTile), 0);
+                        var c = ld.LightColor.ToVector3() * ld.LightIntensity;
+                        cols[nLights] = new Vector4(c, 0);
+                        nLights++;
+                    }
+                }
+
             var previous = gd.GetRenderTargets();
             var viewport = gd.Viewport;
             gd.BlendState = BlendState.Opaque;
             gd.DepthStencilState = DepthStencilState.None;
             gd.RasterizerState = RasterizerState.CullNone;
+            rc.Parameters["LightCount"].SetValue((float)nLights);
+            rc.Parameters["LightPosR"].SetValue(posR);
+            rc.Parameters["LightColor"].SetValue(cols);
+            rc.Parameters["EmitScale"].SetValue(EmitScale);
             rc.Parameters["SceneSize"].SetValue(new Vector2(sw, sh));
             rc.Parameters["FloorPx"].SetValue((float)fp);
             rc.Parameters["Tiles"].SetValue((float)tiles);
@@ -176,10 +203,12 @@ namespace Simitone.Render
 
             // simtool render light walls: show the wall picture instead of the light, to check it against the floor plan
             foreach (var e in WorldContent.LightEffects) e.AdvancedLight = combined;
-            RcInfo = "scene=" + sw + "x" + sh + " floors=" + floors + " reachPx=" + reach;
+            lampCount = nLights;
+            RcInfo = "lamps=" + nLights + " scene=" + sw + "x" + sh + " floors=" + floors + " reachPx=" + reach;
             Runs++;
         }
 
+        static bool ignoreWalls;   // simtool render light walls off: lets light through every wall, to show what the walls change
         static int debugView;   // simtool render light view walls|gather|off
 
         static void RcPass(string technique)
@@ -230,9 +259,84 @@ namespace Simitone.Render
             }
         }
 
+        // simtool render light probe: reads the engine's light map back and prints a coarse grid of floor 0 (r,g,b,a averages, 0-255),
+        // to see what the light map really holds (ambient level, lamp spill)
+        static string Probe()
+        {
+            var map = lastMap;
+            if (map == null) return "no light map seen yet";
+            var data = new Color[map.Width * map.Height];
+            map.GetData(data);
+            int fw = map.Width / 3, fh = map.Height / 2;
+            var sb = new System.Text.StringBuilder("lightmap " + map.Width + "x" + map.Height + " floor0 grid 12x8 (r,g,b,a): | ");
+            for (int gy = 0; gy < 8; gy++)
+            {
+                for (int gx = 0; gx < 12; gx++)
+                {
+                    long r = 0, g = 0, b = 0, a = 0, n = 0;
+                    for (int y = gy * fh / 8; y < (gy + 1) * fh / 8; y += 4)
+                        for (int x = gx * fw / 12; x < (gx + 1) * fw / 12; x += 4) { var c = data[y * map.Width + x]; r += c.R; g += c.G; b += c.B; a += c.A; n++; }
+                    sb.Append(r / n + "," + g / n + "," + b / n + "," + a / n + " ");
+                }
+                sb.Append(" | ");
+            }
+            return sb.ToString();
+        }
+
+        static WorldState lastState;
+
+        // simtool render light dirprobe: the engine's light direction map (xyz = direction the light travels, w = total intensity), 12x8 grid of floor 0
+        static string DirProbe()
+        {
+            var map = lastState == null ? null : lastState.Light.LightMapDirection;
+            if (map == null) return "no direction map (directional lighting off?)";
+            var data = new Microsoft.Xna.Framework.Graphics.PackedVector.HalfVector4[map.Width * map.Height];
+            map.GetData(data);
+            int fw = map.Width / 3, fh = map.Height / 2;
+            var sb = new System.Text.StringBuilder("dirmap " + map.Width + "x" + map.Height + " " + map.Format + " (x,y,z,w x100): | ");
+            for (int gy = 0; gy < 8; gy++)
+            {
+                for (int gx = 0; gx < 12; gx++)
+                {
+                    float x = 0, y = 0, z = 0, w = 0; int n = 0;
+                    for (int py = gy * fh / 8; py < (gy + 1) * fh / 8; py += 2)
+                        for (int px = gx * fw / 12; px < (gx + 1) * fw / 12; px += 2) { var v = data[py * map.Width + px].ToVector4(); x += v.X; y += v.Y; z += v.Z; w += v.W; n++; }
+                    sb.Append((int)(100 * x / n) + "," + (int)(100 * y / n) + "," + (int)(100 * z / n) + "," + (int)(100 * w / n) + " ");
+                }
+                sb.Append(" | ");
+            }
+            return sb.ToString();
+        }
+
+        // simtool render light wallmap: the wall flags of floor 0 as text over the box that holds any wall (L = top-left edge, R = top-right,
+        // B = both, + = other edges or diagonals, o = a door in the way), one row per tile row
+        static string WallMap()
+        {
+            var bp = lastState == null ? null : lastState.Light.Blueprint;
+            if (bp == null) return "no lot seen yet";
+            int tiles = bp.Width - 1, x0 = tiles, y0 = tiles, x1 = -1, y1 = -1;
+            for (int y = 0; y < tiles; y++) for (int x = 0; x < tiles; x++) if (FlagsAt(bp, 0, x, y) != 0) { x0 = Math.Min(x0, x); x1 = Math.Max(x1, x); y0 = Math.Min(y0, y); y1 = Math.Max(y1, y); }
+            if (x1 < 0) return "no walls on floor 0";
+            var sb = new System.Text.StringBuilder("tiles x " + x0 + ".." + x1 + " y " + y0 + ".." + y1 + " | ");
+            for (int y = y0; y <= y1; y++)
+            {
+                for (int x = x0; x <= x1; x++)
+                {
+                    int f = FlagsAt(bp, 0, x, y);
+                    var w = bp.Walls[0][y * bp.Width + x];
+                    bool door = w.TopLeftDoor || w.TopRightDoor;
+                    sb.Append(door ? 'o' : f == 0 ? '.' : f == LightGrid.TopLeft ? 'L' : f == LightGrid.TopRight ? 'R' : f == (LightGrid.TopLeft | LightGrid.TopRight) ? 'B' : '+');
+                }
+                sb.Append(" | ");
+            }
+            return sb.ToString();
+        }
+
+        static RenderTarget2D lastMap;
+
         public static string Status
         {
-            get { return "light=" + RenderSettings.LightName(PostAA.Settings.Light) + " runs=" + Runs + " reach=" + TilesReach + " gain=" + Gain + " broken=" + broken + " err=" + LastError; }
+            get { return "light=" + RenderSettings.LightName(PostAA.Settings.Light) + " " + RcInfo + " runs=" + Runs + " reach=" + TilesReach + " gain=" + Gain + " broken=" + broken + " err=" + LastError; }
         }
 
         public static string Command(string[] a)
@@ -243,9 +347,15 @@ namespace Simitone.Render
             {
                 case "status": return Status;
                 case "mode": PostAA.Settings.Light = RenderSettings.ParseLight(a.Length > 1 ? a[1] : "off"); PostAA.Settings.Save(); broken = false; return Status;
+                case "walls": ignoreWalls = a.Length > 1 && a[1] == "off"; return "walls " + (ignoreWalls ? "ignored" : "used");
+                case "probe": return Probe();
+                case "dirprobe": return DirProbe();
+                case "wallmap": return WallMap();
                 case "rc":
                     if (a.Length > 1) RcGain = float.Parse(a[1], inv);
                     if (a.Length > 2) RcStart = float.Parse(a[2], inv);
+                    if (a.Length > 3) EmitScale = float.Parse(a[3], inv);
+                    if (a.Length > 4) DiscTiles = float.Parse(a[4], inv);
                     return Status + " rcGain=" + RcGain + " rcStart=" + RcStart;
                 case "view": debugView = a.Length > 1 && a[1] == "walls" ? 1 : (a.Length > 1 && a[1] == "gather" ? 2 : 0); return "view=" + debugView;
                 case "tune":

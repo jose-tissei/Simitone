@@ -30,11 +30,17 @@ The engine bakes the lot's lighting into a plan-view light map and gives it to e
 surrounding light to texels that are not fully lit, then replaces the texture the shaders sample. Needs the HiDef profile. Off by default. Tune with
 `simtool render light tune <tiles> <gain>` (defaults 3 tiles, 0.6). Known limits: no occlusion yet (light can bleed through walls), recomputed every call.
 
-## Radiance cascades and directional shading
-- **Options > "Dynamic lighting: Off / On"** switches both halves together (`light=rc`, `shade=on` in `render.profile`; `simtool render light mode off|bounce|rc`, `render shade on|off`,
-  `render light rc <gain> <startPx>`, `render light view walls|gather|off` for debugging). Needs the HiDef profile for the cascades.
-- **Cascades** (`Shaders/Cascades.fx`, `Game/Lighting.cs`, `Logic/LightGrid.cs`): the lot's walls are rasterised at 4 px per tile into an atlas shaped like the engine's light map; three
-  cascades of pixel-shader ray marching gather the light around every texel, blocked by walls, and the result is added where the light map is not fully lit.
-- **Directional shading** (`Make-WorldEffect.py`, `Shaders/World2D.xnb`, `Game/Normals.cs`): re-enables the engine's own disabled third sprite pass; the installer replaces
-  `Content\DX\Effects\2DWorldBatch.xnb` (original saved in the backup folder) and a patch on `WorldConfig.DirPassOffset` selects the pass.
-- The hardware depth buffer cannot be sampled by shaders in this engine, which is why normals come from the sprite shader's derivatives instead of a depth pre-pass.
+## Radiance cascades (Options > "Dynamic lighting")
+- `light=rc` in `render.profile`; `simtool render light mode off|bounce|rc`, `render light rc <gain> <startPx>` (defaults 150 and 4; optional 3rd and 4th values: lamp brightness 1 and glow disc radius 3 tiles), `render light walls on|off` (off = ignore all walls, to see what
+  they block), `render light view walls|gather|off`, `render light probe|dirprobe|wallmap` (dump light map, direction map, wall tiles as text). Needs the HiDef profile.
+- `Logic/LightGrid.cs` rasterises the lot's walls at 8 px per tile into an atlas shaped like the engine's light map. `Shaders/Cascades.fx` runs three cascades of pixel-shader ray
+  marching; only the engine's lamp lights (its list of room point lights, not the sun and moon that fill the light map) are sources, as small glowing discs, so lamps spill into dark areas and stop at walls. Plan view only: no vertical occlusion.
+
+## Anti-aliasing (Options > "Anti-aliasing")
+SMAA 1x (`aa=smaa`). Edge sensitivity `simtool render smaa <threshold> <contrast>` (default 0.2, 2). FXAA (`aa=fxaa`) is still there but blurs textures. `Measure-AA.py off.png aa.png [whole]`
+prints texture sharpness and hard-edge ratios from two screenshots of the paused game.
+
+## Directional sprite shading (experimental, not installed)
+`Make-WorldEffect.py` re-enables the engine's own disabled third sprite pass (normals from the depth sprite through `ddx/ddy`, shaded by the engine's direction light map) and
+`Shaders/World2D.xnb` is the compiled result. To try it: copy it over `Content\DX\EffectsDWorldBatch.xnb` (keep the original) and set `shade=on`. Measured effect: almost nothing visible.
+The hardware depth buffer cannot be sampled by shaders in this engine, which is why normals come from the sprite shader's derivatives instead of a depth pre-pass.

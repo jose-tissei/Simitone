@@ -37,16 +37,15 @@ namespace Simitone.Render
 
         public static string LightName(LightMode m) { return m == LightMode.Bounce ? "bounce" : (m == LightMode.Cascades ? "rc" : "off"); }
 
-        // the order the Options menu button cycles through
-        public static AaMode Next(AaMode m) { return m == AaMode.Off ? AaMode.Fxaa : (m == AaMode.Fxaa ? AaMode.Smaa : AaMode.Off); }
+        // the Options menu button: SMAA on or off. FXAA stays available through render.profile and simtool, but it blurs the game's textures
+        // (measured: 74% of the lawn detail kept, against 97% for SMAA), so the button does not offer it
+        public static AaMode Next(AaMode m) { return m == AaMode.Off ? AaMode.Smaa : AaMode.Off; }
 
-        // the Options button "Dynamic lighting": off, or radiance cascades with directional shading together (the bounce prototype and
-        // the two halves separately stay available through simtool and render.profile)
+        // the Options button "Dynamic lighting": radiance cascades on or off. (Directional sprite shading and the bounce prototype stay
+        // available through render.profile and simtool; shading changed almost nothing visible when measured, so the button leaves it alone.)
         public void CycleDynamicLighting()
         {
-            bool on = Light != LightMode.Off || Shading;
-            Light = on ? LightMode.Off : LightMode.Cascades;
-            Shading = !on;
+            Light = Light == LightMode.Off ? LightMode.Cascades : LightMode.Off;
         }
 
         public static string AaName(AaMode m) { return m == AaMode.Fxaa ? "fxaa" : (m == AaMode.Smaa ? "smaa" : "off"); }

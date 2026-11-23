@@ -51,8 +51,8 @@ namespace Simitone.Render
         // for the Options menu: the mode name, whether anything is on, and the next mode in the cycle
         public static string ModeLabel { get { return Mode == AaMode.Fxaa ? "FXAA" : (Mode == AaMode.Smaa ? "SMAA" : "Off"); } }
         public static bool AaOn { get { return Mode != AaMode.Off; } }
-        public static string LightLabel { get { return Settings.Light == LightMode.Off && !Settings.Shading ? "Off" : (Settings.Light == LightMode.Cascades && Settings.Shading ? "On" : "Custom"); } }
-        public static bool LightOn { get { return Settings.Light != LightMode.Off || Settings.Shading; } }
+        public static string LightLabel { get { return Settings.Light == LightMode.Off ? "Off" : (Settings.Light == LightMode.Cascades ? "On" : "Bounce"); } }
+        public static bool LightOn { get { return Settings.Light != LightMode.Off; } }
         public static void CycleLight() { Settings.CycleDynamicLighting(); Settings.Save(); Lighting.Reset(); Normals.Reset(); }
         public static void Cycle() { Mode = RenderSettings.Next(Mode); broken = false; }
 
@@ -174,6 +174,22 @@ namespace Simitone.Render
                 case "status": return "aa=" + RenderSettings.AaName(Mode) + " draws=" + Draws + " broken=" + broken + " err=" + LastError;
                 case "aa": Mode = RenderSettings.ParseAa(a.Length > 1 ? a[1] : "off"); broken = false; return "aa=" + RenderSettings.AaName(Mode);
                 case "repeat": Repeat = Math.Max(1, a.Length > 1 ? int.Parse(a[1]) : 1); return "repeat=" + Repeat;
+                case "smaa": if (a.Length > 1) SmaaPass.Threshold = float.Parse(a[1], System.Globalization.CultureInfo.InvariantCulture); if (a.Length > 2) SmaaPass.Contrast = float.Parse(a[2], System.Globalization.CultureInfo.InvariantCulture); return "smaa threshold=" + SmaaPass.Threshold + " contrast=" + SmaaPass.Contrast;
+                case "blend": SmaaPass.BlendOverride = a.Length > 1 ? int.Parse(a[1]) : 0; return "blend=" + SmaaPass.BlendOverride + " withOpacity=" + PPXDepthEngine.WithOpacity;
+                case "bb":
+                {
+                    var bb = PPXDepthEngine.GetBackbuffer();
+                    var data = new Color[bb.Width * bb.Height];
+                    bb.GetData(data);
+                    var sb = new System.Text.StringBuilder(bb.Width + "x" + bb.Height + " fmt=" + bb.Format + " msaa=" + bb.MultiSampleCount + " ssaa=" + PPXDepthEngine.SSAA + ":");
+                    for (int i = 1; i + 1 < a.Length; i += 2)
+                    {
+                        int x = int.Parse(a[i]), y = int.Parse(a[i + 1]);
+                        var c = data[y * bb.Width + x];
+                        sb.Append(" (" + x + "," + y + ")=" + c.R + "," + c.G + "," + c.B + "," + c.A);
+                    }
+                    return sb.ToString();
+                }
                 case "shade": if (a.Length > 1) { Settings.Shading = a[1] == "on"; Settings.Save(); Normals.Reset(); } return "shade=" + Settings.Shading + " asks=" + Normals.Asks;
                 case "light": return Lighting.Command(a.Skip(1).ToArray());
                 case "frames": return "calls=" + Calls + " ms=" + clock.ElapsedMilliseconds;

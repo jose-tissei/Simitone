@@ -208,42 +208,44 @@ try {
     $rs = (& $SimTool render status 2>&1) -join ' '
     if ($rs -notmatch 'aa=') { Write-Host "`n== anti-aliasing: not installed, skipped" -ForegroundColor Yellow }
     else {
-        Write-Host "`n== anti-aliasing (FXAA)"
+        Write-Host "`n== anti-aliasing (SMAA)"
         $aaBefore = if ($rs -match 'aa=(\w+)') { $Matches[1] } else { 'off' }
+        $measure = Join-Path $PSScriptRoot '..\Render\Measure-AA.py'
         Sim speed 0; Sim wait 2                              # freeze the game so the screenshots show the same frame
         & $SimTool render aa off | Out-Null; Sim wait 1; $off = Shot 'aa-off'
-        & $SimTool render aa fxaa | Out-Null; Sim wait 1; $on = Shot 'aa-fxaa'
-        $st = ImageStats $off $on
-        Check 'FXAA draws frames' ((& $SimTool render status) -join ' ' -match 'draws=[1-9]\d*') ((& $SimTool render status) -join ' ')
-        Check 'FXAA changes edge pixels only (1% to 40% of the picture)' (($st.Changed -gt 0.01) -and ($st.Changed -lt 0.40)) ('changed ' + [math]::Round($st.Changed * 100, 2) + '%')
-        Check 'FXAA does not brighten or darken the picture' ([math]::Abs($st.MeanSigned) -lt 1.0) ('mean change ' + [math]::Round($st.MeanSigned, 3))
-        & $SimTool render aa off | Out-Null; Sim wait 1; $off2 = Shot 'aa-off-again'
-        $st2 = ImageStats $off $off2
-        Check 'turning FXAA off restores the original frame' ($st2.Changed -lt 0.001) ('changed ' + [math]::Round($st2.Changed * 100, 3) + '%')
-        # SMAA: needs the HiDef graphics profile, which the render library asks for at start
-        & $SimTool render aa smaa | Out-Null; Sim wait 1
+        # with edge detection switched off the pass must reproduce the original frame exactly (this caught a screen-clearing bug)
+        & $SimTool render aa smaa | Out-Null; & $SimTool render smaa 100 2 | Out-Null; Sim wait 2; $none = Shot 'aa-smaa-passthrough'
+        $stn = ImageStats $off $none
+        Check 'SMAA with edge detection off reproduces the original frame (under 0.05% of pixels differ)' ($stn.Changed -lt 0.0005) ('changed ' + [math]::Round($stn.Changed * 100, 3) + '%')
+        & $SimTool render smaa 0.2 2 | Out-Null; Sim wait 1
         $smStatus1 = (& $SimTool render status) -join ' '; Sim wait 2; $smStatus2 = (& $SimTool render status) -join ' '
         $dA = if ($smStatus1 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }; $dB = if ($smStatus2 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }
         $smaa = Shot 'aa-smaa'; $st3 = ImageStats $off $smaa
         Check 'SMAA draws frames and stays healthy' (($dB -gt $dA) -and ($smStatus2 -match 'aa=smaa') -and ($smStatus2 -match 'broken=False')) $smStatus2
-        Check 'SMAA changes edge pixels only (1% to 40% of the picture)' (($st3.Changed -gt 0.01) -and ($st3.Changed -lt 0.40)) ('changed ' + [math]::Round($st3.Changed * 100, 2) + '%')
-        Check 'SMAA does not brighten or darken the picture' ([math]::Abs($st3.MeanSigned) -lt 2.0) ('mean change ' + [math]::Round($st3.MeanSigned, 3))
-        # the Options menu button (last button, x = 1604) switches it and keeps the choice
-        & $SimTool render aa off | Out-Null
+        Check 'SMAA changes edge pixels only (0.2% to 40% of the picture)' (($st3.Changed -gt 0.002) -and ($st3.Changed -lt 0.40)) ('changed ' + [math]::Round($st3.Changed * 100, 2) + '%')
+        Check 'SMAA does not brighten or darken the picture' ([math]::Abs($st3.MeanSigned) -lt 1.0) ('mean change ' + [math]::Round($st3.MeanSigned, 3))
+        $q = (& python -X utf8 $measure $off $smaa whole 2>&1) -join ' '
+        if ($q -match 'lawn_sharpness ratio ([\d.]+)\s+edge_hardness ratio ([\d.]+)') {
+            $sharp = [double]::Parse($Matches[1], [Globalization.CultureInfo]::InvariantCulture); $hardE = [double]::Parse($Matches[2], [Globalization.CultureInfo]::InvariantCulture)
+            Check 'SMAA keeps texture detail (at least 93% of the sharpness)' ($sharp -ge 0.93) $q
+            Check 'SMAA smooths edges (hard-edge pixels drop by at least 15%)' ($hardE -le 0.85) $q
+        } else { Write-Host "  SKIP  SMAA quality numbers (python with Pillow and numpy not available): $q" -ForegroundColor Yellow }
+        & $SimTool render aa off | Out-Null; Sim wait 1; $off2 = Shot 'aa-off-again'
+        $st2 = ImageStats $off $off2
+        Check 'turning SMAA off restores the original frame' ($st2.Changed -lt 0.001) ('changed ' + [math]::Round($st2.Changed * 100, 3) + '%')
+        # the Options menu button (x = 1604) switches it and keeps the choice
         OpenMenu; Sim click 1604 985; Sim wait 2
-        Check 'the Options button turns FXAA on' ((& $SimTool render status) -join ' ' -match 'aa=fxaa') ((& $SimTool render status) -join ' ')
-        Check 'the Options button is highlighted while FXAA is on' ((GreenCount (Shot 'aa-menu-on') 1604) -gt 150) ''
-        Check 'the choice is saved for the next start' ((Get-Content $renderFile -Raw) -match 'aa=fxaa') (Get-Content $renderFile -Raw)
-        # FXAA keeps working through every graphics mode switch (the render targets are rebuilt each time)
+        Check 'the Options button turns SMAA on' ((& $SimTool render status) -join ' ' -match 'aa=smaa') ((& $SimTool render status) -join ' ')
+        Check 'the Options button is highlighted while SMAA is on' ((GreenCount (Shot 'aa-menu-on') 1604) -gt 150) ''
+        Check 'the choice is saved for the next start' ((Get-Content $renderFile -Raw) -match 'aa=smaa') (Get-Content $renderFile -Raw)
+        # SMAA keeps working through every graphics mode switch (the render targets are rebuilt each time)
         foreach ($m in '2d', 'arch', 'full3d', 'list') {
             ChooseMode $m 10
             $s1 = (& $SimTool render status) -join ' '; Sim wait 3; $s2 = (& $SimTool render status) -join ' '
             $d1 = if ($s1 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }; $d2 = if ($s2 -match 'draws=(\d+)') { [long]$Matches[1] } else { 0 }
-            if ($m -eq '2d') { Check "FXAA is still on and healthy in '$m'" (($s2 -match 'aa=fxaa') -and ($s2 -match 'broken=False')) $s2 }
-            else { Check "FXAA keeps drawing in '$m'" (($d2 -gt $d1) -and ($s2 -match 'broken=False')) "$s1 -> $s2" }
+            if ($m -eq '2d') { Check "SMAA is still on and healthy in '$m'" (($s2 -match 'aa=smaa') -and ($s2 -match 'broken=False')) $s2 }
+            else { Check "SMAA keeps drawing in '$m'" (($d2 -gt $d1) -and ($s2 -match 'broken=False')) "$s1 -> $s2" }
         }
-        OpenMenu; Sim click 1604 985; Sim wait 2
-        Check 'the Options button goes on to SMAA' ((& $SimTool render status) -join ' ' -match 'aa=smaa') ((& $SimTool render status) -join ' ')
         OpenMenu; Sim click 1604 985; Sim wait 2
         Check 'the Options button turns anti-aliasing off again' ((& $SimTool render status) -join ' ' -match 'aa=off') ((& $SimTool render status) -join ' ')
         & $SimTool render aa $aaBefore | Out-Null
@@ -262,35 +264,40 @@ try {
         $lst2 = ImageStats $lOff $lOff2
         Check 'turning bounce light off restores the original lighting' ($lst2.Changed -lt 0.005) ('changed ' + [math]::Round($lst2.Changed * 100, 3) + '%')
 
-        # radiance cascades and directional shading, at night so the lamps matter
-        Write-Host "`n== lighting (radiance cascades, directional shading)"
-        $shadeBefore = (& $SimTool render shade) -join ' '
-        & $SimTool time 22 0 | Out-Null; Sim speed 1; Sim wait 6; Sim speed 0; Sim wait 2
-        & $SimTool render light mode off | Out-Null; & $SimTool render shade off | Out-Null; Sim wait 2; $nOff = Shot 'night-off'
-        & $SimTool render light mode rc | Out-Null; Sim wait 3; $nRc = Shot 'night-rc'
+        # radiance cascades, at night so the lamps matter
+        Write-Host "`n== lighting (radiance cascades)"
+        $measure = Join-Path $PSScriptRoot '..\Render\Measure-AA.py'
+        # wait until it is really night: the light map's ambient level (first grid cell of the probe) must be dark, or the pass rightly does nothing
+        & $SimTool render light mode rc | Out-Null
+        $dark = $false
+        for ($try = 0; $try -lt 4 -and -not $dark; $try++) {
+            & $SimTool time 23 0 | Out-Null; Sim speed 1; Sim wait 8; Sim speed 0; Sim wait 3
+            $pr = (& $SimTool render light probe) -join ' '
+            if ($pr -match ': \| (\d+),(\d+),(\d+),') { $dark = ((0.299 * [int]$Matches[1] + 0.587 * [int]$Matches[2] + 0.114 * [int]$Matches[3]) / 255) -lt 0.35 }
+        }
+        Check 'the lot is dark for the lighting measurements' $dark $pr
+        & $SimTool render light mode off | Out-Null; Sim wait 2; $nOff = Shot 'night-off'
+        & $SimTool render light mode rc | Out-Null; & $SimTool render light walls on | Out-Null; Sim wait 3; $nRc = Shot 'night-rc'
         $rcs = (& $SimTool render light status) -join ' '
         $rst = ImageStats $nOff $nRc
         Check 'radiance cascades run and stay healthy' (($rcs -match 'light=rc') -and ($rcs -match 'runs=[1-9]\d*') -and ($rcs -match 'broken=False')) $rcs
-        Check 'radiance cascades change the lit picture (the soft lift touches most pixels a little)' ($rst.Changed -gt 0.003) ('changed ' + [math]::Round($rst.Changed * 100, 2) + '%')
-        Check 'radiance cascades only add light (mean change 0 to 15)' (($rst.MeanSigned -gt 0) -and ($rst.MeanSigned -lt 15)) ('mean change ' + [math]::Round($rst.MeanSigned, 3))
+        Check 'radiance cascades visibly change the night picture (1% to 85% of pixels)' (($rst.Changed -gt 0.01) -and ($rst.Changed -lt 0.85)) ('changed ' + [math]::Round($rst.Changed * 100, 2) + '%')
+        Check 'radiance cascades only add light, and not too much (mean change 0.1 to 15)' (($rst.MeanSigned -gt 0.1) -and ($rst.MeanSigned -lt 15)) ('mean change ' + [math]::Round($rst.MeanSigned, 3))
+        # walls must block the light: the same pass with every wall ignored floods far more of the picture
+        & $SimTool render light walls off | Out-Null; Sim wait 3; $nNo = Shot 'night-rc-nowalls'
+        $nst = ImageStats $nOff $nNo
+        Check 'walls block the spilled light (ignoring walls adds at least 30% more light overall)' ($nst.MeanSigned -gt 1.3 * $rst.MeanSigned) ('mean added with walls ' + [math]::Round($rst.MeanSigned, 3) + ', ignoring walls ' + [math]::Round($nst.MeanSigned, 3))
+        & $SimTool render light walls on | Out-Null
         & $SimTool render light mode off | Out-Null; Sim wait 3
         $rst2 = ImageStats $nOff (Shot 'night-rc-off-again')
-        Check 'turning radiance cascades off restores the original lighting' ($rst2.Changed -lt 0.005) ('changed ' + [math]::Round($rst2.Changed * 100, 3) + '%')
-        & $SimTool render shade on | Out-Null; Sim wait 3; $nSh = Shot 'night-shade'
-        $shs = (& $SimTool render shade) -join ' '
-        $sst = ImageStats $nOff $nSh
-        Check 'directional shading changes the sprites (0.2% to 40% of pixels)' (($sst.Changed -gt 0.002) -and ($sst.Changed -lt 0.40)) ('changed ' + [math]::Round($sst.Changed * 100, 2) + '%')
-        Check 'directional shading picks the effect pass and stays healthy' ($shs -match 'shade=True') $shs
-        & $SimTool render shade off | Out-Null; Sim wait 3
-        $sst2 = ImageStats $nOff (Shot 'night-shade-off-again')
-        Check 'turning directional shading off restores the sprites' ($sst2.Changed -lt 0.005) ('changed ' + [math]::Round($sst2.Changed * 100, 3) + '%')
+        Check 'turning radiance cascades off restores the original lighting exactly' ($rst2.Changed -lt 0.0005) ('changed ' + [math]::Round($rst2.Changed * 100, 3) + '%')
         # the Options menu button after the anti-aliasing one (x = 1724)
         OpenMenu; Sim click 1724 985; Sim wait 3
-        Check 'the Options button turns dynamic lighting on (cascades and shading)' (((& $SimTool render light status) -join ' ' -match 'light=rc') -and ((& $SimTool render shade) -join ' ' -match 'shade=True')) ((& $SimTool render light status) -join ' ')
+        Check 'the Options button turns dynamic lighting on' ((& $SimTool render light status) -join ' ' -match 'light=rc') ((& $SimTool render light status) -join ' ')
         Check 'the dynamic lighting button is highlighted while on' ((GreenCount (Shot 'light-menu-on') 1724) -gt 150) ''
-        Check 'the dynamic lighting choice is saved' (((Get-Content $renderFile -Raw) -match 'light=rc') -and ((Get-Content $renderFile -Raw) -match 'shade=on')) (Get-Content $renderFile -Raw)
+        Check 'the dynamic lighting choice is saved' ((Get-Content $renderFile -Raw) -match 'light=rc') (Get-Content $renderFile -Raw)
         OpenMenu; Sim click 1724 985; Sim wait 3
-        Check 'the Options button turns dynamic lighting off again' (((& $SimTool render light status) -join ' ' -match 'light=off') -and ((& $SimTool render shade) -join ' ' -match 'shade=False')) ((& $SimTool render light status) -join ' ')
+        Check 'the Options button turns dynamic lighting off again' ((& $SimTool render light status) -join ' ' -match 'light=off') ((& $SimTool render light status) -join ' ')
         & $SimTool time 10 30 | Out-Null
         Sim speed 1
     }

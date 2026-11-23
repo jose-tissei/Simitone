@@ -6,7 +6,17 @@ float4 SmaaMetrics;    // (1/width, 1/height, width, height) of the world render
 
 #define SMAA_RT_METRICS SmaaMetrics
 #define SMAA_HLSL_3 1
-#define SMAA_PRESET_HIGH 1
+// settings that were the HIGH preset, except that edge sensitivity and local contrast adaptation are set at run time:
+// the game's textures are full of fine detail, and a sensitive edge detector blurs that detail
+float SmaaThreshold;
+float SmaaContrast;
+#define SMAA_THRESHOLD SmaaThreshold
+#define SMAA_LOCAL_CONTRAST_ADAPTATION_FACTOR SmaaContrast
+#define SMAA_MAX_SEARCH_STEPS 16
+#define SMAA_MAX_SEARCH_STEPS_DIAG 8
+#define SMAA_CORNER_ROUNDING 25
+// the area table is stored in red and green (alpha is 255); the HLSL 3 default of the reference reads red and alpha
+#define SMAA_AREATEX_SELECT(sample) sample.rg
 #include "SMAA.hlsl"
 
 texture colorTexture;

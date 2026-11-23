@@ -22,6 +22,13 @@ namespace Simitone.Render
                 }
             }
             catch (System.Exception e) { PostAA.Log("HiDef request failed: " + e.Message); }
+            // The anti-aliasing passes draw into other render targets in the middle of the frame; switching back to the screen would
+            // throw away what the game already drew on it (its clear colour, which the world blends over). Keep the screen contents.
+            try
+            {
+                graphics.PreparingDeviceSettings += (s, e) => e.GraphicsDeviceInformation.PresentationParameters.RenderTargetUsage = RenderTargetUsage.PreserveContents;
+            }
+            catch (System.Exception e) { PostAA.Log("preserve-contents request failed: " + e.Message); }
         }
     }
 }

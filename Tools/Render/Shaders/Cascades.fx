@@ -58,7 +58,14 @@ float2 LightToScene(float2 uv)
     return fl * FloorPx + (a - fl) * (PxPerTile * Tiles);
 }
 
-// pass 1: scene = light map (averaged to scene resolution) + walls + everything outside a floor counts as wall
+// pass 1: scene = the lamps (small glowing discs, so the sun and moon, which fill the light map, are never sources) + walls
+// everything outside a floor counts as wall
+#define MAX_LIGHTS 48
+float LightCount;
+float4 LightPosR[MAX_LIGHTS];    // x, y in scene pixels, radius in scene pixels
+float4 LightColor[MAX_LIGHTS];   // rgb (already multiplied by the light's intensity)
+float EmitScale;
+
 float4 ScenePS(VSOut i) : COLOR0
 {
     float2 spx = floor(i.Coord * SceneSize) + 0.5;
@@ -66,11 +73,16 @@ float4 ScenePS(VSOut i) : COLOR0
     float2 local = spx - fl * FloorPx;
     float wall = tex2D(wallTex, i.Coord).a;
     if (local.x >= Tiles * PxPerTile || local.y >= Tiles * PxPerTile) return float4(0, 0, 0, 1);
-    float2 uv = SceneToLight(spx);
-    float2 d = LightTexel * 1.0;
-    float3 c = tex2D(lightTex, uv + float2(-d.x, -d.y)).rgb + tex2D(lightTex, uv + float2(d.x, -d.y)).rgb
-             + tex2D(lightTex, uv + float2(-d.x, d.y)).rgb + tex2D(lightTex, uv + float2(d.x, d.y)).rgb;
-    return float4(c * 0.25, wall);
+    float3 e = 0;
+    [loop]
+    for (int k = 0; k < MAX_LIGHTS; k++)
+    {
+        if (k >= LightCount) break;
+        float4 a = LightPosR[k];
+        float r = length(spx - a.xy) / a.z;
+        if (r < 1) e += LightColor[k].rgb * ((1 - r) * (1 - r));
+    }
+    return float4(e * EmitScale, wall);
 }
 
 // pass 2 (once per cascade): every pixel is one ray of one probe
@@ -97,7 +109,8 @@ float4 CascadePS(VSOut i) : COLOR0
         float2 p = origin + dir * t;
         if (p.x < lo.x || p.y < lo.y || p.x >= hi.x || p.y >= hi.y) { trans = 0; break; }
         float4 s = tex2Dlod(sceneTex, float4(p / SceneSize, 0, 0));
-        rad += s.rgb * (step / Reach);
+        float taper = saturate(1 - t / Reach);     // fade to nothing at the total reach, so the glow has no visible rim
+        rad += s.rgb * (step / Reach) * (taper * taper);
         if (s.a > 0.5) { trans = 0; break; }
     }
 

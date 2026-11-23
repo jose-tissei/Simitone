@@ -9,6 +9,9 @@ namespace Simitone.Render
     // The reference shader and its two lookup tables are the MIT-licensed ones from github.com/iryoku/smaa.
     public class SmaaPass
     {
+        public static float Threshold = 0.2f;   // edge sensitivity (reference HIGH preset: 0.1; 0.2 keeps texture detail, measured)
+        public static int BlendOverride;        // diagnostics: 0 = like the engine, 1 = alpha blend, 2 = opaque
+        public static float Contrast = 2f;      // local contrast adaptation (reference: 2)
         Effect fx;
         Texture2D areaTex, searchTex;
         RenderTarget2D edges, weights;
@@ -68,6 +71,8 @@ namespace Simitone.Render
             var viewport = gd.Viewport;
             gd.DepthStencilState = DepthStencilState.None;
             gd.RasterizerState = RasterizerState.CullNone;
+            fx.Parameters["SmaaThreshold"].SetValue(Threshold);
+            fx.Parameters["SmaaContrast"].SetValue(Contrast);
             fx.Parameters["SmaaMetrics"].SetValue(new Vector4(1f / world.Width, 1f / world.Height, world.Width, world.Height));
             fx.Parameters["colorTexture"].SetValue(world);
             fx.Parameters["areaTexture"].SetValue(areaTex);
@@ -85,7 +90,7 @@ namespace Simitone.Render
 
             if (previous == null || previous.Length == 0) gd.SetRenderTarget(null); else gd.SetRenderTargets(previous);
             gd.Viewport = viewport;
-            gd.BlendState = opaque ? BlendState.Opaque : BlendState.AlphaBlend;
+            gd.BlendState = (BlendOverride == 1 ? false : BlendOverride == 2 ? true : opaque) ? BlendState.Opaque : BlendState.AlphaBlend;
             gd.DepthStencilState = DepthStencilState.None;
             gd.RasterizerState = RasterizerState.CullNone;
             fx.Parameters["blendTexture"].SetValue(weights);

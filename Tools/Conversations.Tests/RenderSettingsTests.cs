@@ -17,7 +17,8 @@ public class RenderSettingsTests
         var m = AaMode.Off;
         var seen = new System.Collections.Generic.List<AaMode>();
         for (int i = 0; i < 3; i++) { m = RenderSettings.Next(m); seen.Add(m); }
-        Assert.Equal(new[] { AaMode.Fxaa, AaMode.Smaa, AaMode.Off }, seen.ToArray());
+        Assert.Equal(new[] { AaMode.Smaa, AaMode.Off, AaMode.Smaa }, seen.ToArray());
+        Assert.Equal(AaMode.Off, RenderSettings.Next(AaMode.Fxaa));   // a profile that says fxaa goes to off, not to a mode the button does not offer
     }
 
     [Fact]
@@ -103,23 +104,21 @@ public class RenderSettingsTests
     }
 
     [Fact]
-    public void TheDynamicLightingButtonSwitchesBothHalvesTogether()
+    public void TheDynamicLightingButtonTogglesCascades()
     {
         var s = new RenderSettings();
         s.CycleDynamicLighting();
         Assert.Equal(LightMode.Cascades, s.Light);
-        Assert.True(s.Shading);
+        Assert.False(s.Shading);   // the experimental shading is not touched by the button
         s.CycleDynamicLighting();
         Assert.Equal(LightMode.Off, s.Light);
-        Assert.False(s.Shading);
     }
 
     [Fact]
-    public void TheButtonTurnsOffAHalfOnState()
+    public void TheButtonLeavesTheShadingChoiceAlone()
     {
-        var s = new RenderSettings { Shading = true };   // only one half on: the next click turns everything off
+        var s = new RenderSettings { Shading = true };
         s.CycleDynamicLighting();
-        Assert.Equal(LightMode.Off, s.Light);
-        Assert.False(s.Shading);
+        Assert.True(s.Shading);
     }
 }

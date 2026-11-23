@@ -24,8 +24,8 @@ Each task ends with an atomic commit.
 ## Phase 2: lighting (RND-07..09)
 | ID | Task | Depends | Done when |
 |---|---|---|---|
-| L1 | **DONE (via the engine pass, see Progress)** Depth-to-normal for the 2D path; debug view of normals | S3 | normals visible and stable on the Newbie lot |
-| L2 | **DONE** N.L shading from room lights in the sprite shaders (effect replacement) | L1 | a lamp visibly lights facing surfaces more than the back |
+| L1 | **DROPPED, see Correction** (depth buffer unreadable; engine derivative pass built) Depth-to-normal for the 2D path; debug view of normals | S3 | normals visible and stable on the Newbie lot |
+| L2 | **DROPPED, see Correction** (measured: almost no visible effect) N.L shading from room lights in the sprite shaders (effect replacement) | L1 | a lamp visibly lights facing surfaces more than the back |
 | L3 | **DONE** `LightGrid` from the lot: occluders, emitters, updated on change; unit tests for rasterisation | S3 | grid debug overlay matches the floor plan |
 | L4 | **DONE** `RadianceCascades` pixel-shader merge from `sparse_rc_2d` / `solis_2d` ideas; write into the light-map inputs via `PrepareLighting` | L3 | soft shadow behind a wall; colour bleed from a coloured lamp; <= 4 ms |
 | L5 | **DONE** Options entry "Dynamic lighting" with off switch; e2e comparing screenshots | L4 | toggles live |
@@ -64,6 +64,25 @@ Each task ends with an atomic commit.
   disabled feature, so some surfaces may look faceted.
 - Not done: L6 vertical occlusion, G1 GTAO, R1 ray tracing (research only).
 - Finding: the game saves `GlobalGraphicsMode` in `config.ini` when a mode is picked in the menu; the e2e now resets and restores it (and `render.profile`).
+
+## Correction after looking at the pictures (2026-11-22, later)
+The first round of this work was reported as done on the strength of tests that only proved the code ran. Looking at before/after images showed otherwise, and the
+fixes below were checked against aligned frames of the paused game (two screenshots of the same state are pixel-identical, so any difference is real).
+- **SMAA had two bugs.** (1) The area lookup table is stored in red/green but the HLSL 3 path of the reference reads red/alpha, so every blend weight was wrong and edges came out
+  stair-stepped (fixed by `#define SMAA_AREATEX_SELECT(sample) sample.rg`). (2) The pass switched render targets in the middle of the frame, and switching back to the
+  screen made the driver discard what the game had already drawn there (its clear colour, which sprite edges blend over), so edge pixels and the void area lost their
+  background (fixed by asking for `RenderTargetUsage.PreserveContents` when the device is created). Regression check: with edge detection off the pass now reproduces the
+  original frame with 0 changed pixels. Edge sensitivity is now a run-time setting; 0.2 (reference preset: 0.1) keeps 97% of lawn texture detail while the number of hard-edge
+  pixels drops to about half. FXAA keeps 74% of the lawn detail and visibly blurs, so the Options button now offers SMAA only (FXAA stays in `render.profile`).
+  The honest limit: the game's sprites and its 3D mode are already soft-edged (pre-rendered alpha edges, hardware MSAA), so SMAA's improvement is subtle.
+- **Radiance cascades were spreading the night ambient light**, which is the same everywhere in the light map (measured 36,52,90 of 255 over the whole lot), so the result
+  was a uniform brightening. Now only light above that ambient level is a source. The scene is 8 px per tile (was 4) to keep the top cascade's probes one tile apart.
+  Measured at night with the default gain 50: the lamp light spills across floors and walls, a warm glow reaches the lawn, and the bedroom behind a wall stays dark.
+  Ignoring every wall (a debug switch) changed 39% of the pixels against 8% with walls (measured at gain 25), which is the proof that walls block the light.
+- **Directional sprite shading did not earn its place.** At night with the cascades on it changes 174 pixels of 2 million; by day about 1.6%, mostly small darkening of outdoor objects.
+  It is therefore no longer part of the "Dynamic lighting" button and the installer no longer replaces the game's `2DWorldBatch.xnb`. The code, `Make-WorldEffect.py` and
+  `Shaders/World2D.xnb` stay as an experimental option (`shade=on` plus copying the file by hand).
+- **Depth buffer finding stands:** the hardware depth buffer cannot be sampled (D24S8, DepthStencil bind flag only).
 
 ## Order and parallelism
 S1 -> (S3, S2) -> Phase 1 (A1..A6) -> Phase 2 (L1..L6, L1 and L3 parallel) -> Phase 3. Phase 1 alone already delivers a visible win.

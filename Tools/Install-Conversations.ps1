@@ -47,11 +47,9 @@ Copy-Item "$Tools\SpriteCards\out\SpriteCards.dll" $App -Force
 if ($WithSimTestHook) { Copy-Item "$Tools\SimTestHook\out\SimTestHook.dll" $App -Force }
 Copy-Item "$Tools\SpriteCards\icons\opt_convo.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
 Copy-Item "$Tools\SpriteCards\icons\opt_aa.png", "$Tools\SpriteCards\icons\opt_light.png" (Join-Path $App 'Content\uigraphics\live\modes') -Force
-# the world-sprite effect with the third (directional shading) pass; the original is saved once and the effect is identical in its other passes
-$worldFx = Join-Path $App 'Content\DX\Effects\2DWorldBatch.xnb'
-if ((Test-Path $worldFx) -and -not (Test-Path (Join-Path $Backup '2DWorldBatch.xnb'))) { Copy-Item $worldFx $Backup }
-Copy-Item "$Tools\Render\Shaders\World2D.xnb" $worldFx -Force
-$bankSrc =Join-Path $Tools 'Conversations\bank\bank.json'
+# Directional sprite shading is experimental and NOT installed: it needs Render/Shaders/World2D.xnb copied over Content/DX/Effects/2DWorldBatch.xnb
+# (see Render/README.md). When measured it changed almost nothing visible, so the installer leaves the game's own effect file alone.
+$bankSrc = Join-Path $Tools 'Conversations\bank\bank.json'
 if (Test-Path $bankSrc) { New-Item -ItemType Directory -Force (Join-Path $App 'Content\conversations') | Out-Null; Copy-Item $bankSrc (Join-Path $App 'Content\conversations\bank.json') -Force }
 Remove-Item $Tmp -Recurse -Force
 Write-Host "Installed. Originals saved in $Backup" -ForegroundColor Green
