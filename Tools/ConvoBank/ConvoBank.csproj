@@ -12,6 +12,10 @@
     <Compile Include="..\Conversations\Logic\OutcomeResolver.cs" Link="Logic\OutcomeResolver.cs" />
     <Compile Include="..\Conversations\Logic\DialogueBank.cs" Link="Logic\DialogueBank.cs" />
     <Compile Include="..\Conversations\Logic\LayaClient.cs" Link="Logic\LayaClient.cs" />
+    <Compile Include="..\Conversations\Logic\TopicLogic.cs" Link="Logic\TopicLogic.cs" />
+    <Compile Include="..\Conversations\Logic\SocialMemory.cs" Link="Logic\SocialMemory.cs" />
+    <Compile Include="..\Conversations\Logic\SocialIntelligence.cs" Link="Logic\SocialIntelligence.cs" />
+    <Compile Include="..\Conversations\Logic\AiSubjectBank.cs" Link="Logic\AiSubjectBank.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

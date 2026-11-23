@@ -109,3 +109,31 @@ public static class TalkPrompts
                "You may use {topic} and {me} as placeholders. " + Prompts.Rules + "Reply only as JSON: {\"lines\": [\"...\", \"...\"]}";
     }
 }
+
+// AI-generated conversation subjects (APS-12): natural, specific, PG topics that map onto one of the eight underlying
+// Sims 1 interest slots (0..7) and optionally resonate with a Sim skill, without ever using the raw TS1 interest strings.
+public static class SubjectPrompts
+{
+    public static readonly string[] InterestThemes =
+    {
+        "travel adventures, weekend road trips, and playful hobbies",
+        "violent cinema, crime mysteries, or classic detective fiction (keep PG)",
+        "local politics, neighborhood gossip, and civic affairs",
+        "retro nostalgia, vintage music, and memorable school days",
+        "household finances, thrift finds, and neighborhood weather",
+        "neighborhood sports, friendly fitness challenges, and outdoor games",
+        "music albums, painting, sci-fi stories, and creative arts",
+        "home cooking, kitchen experiments, gadgets, and technology",
+    };
+
+    public static string ForInterest(int interestIndex, int count)
+    {
+        var theme = interestIndex >= 0 && interestIndex < InterestThemes.Length ? InterestThemes[interestIndex] : InterestThemes[0];
+        return "You design natural conversation subjects for a Sims-style life simulation game. " +
+               "Generate " + count + " short, natural, everyday conversation topics inspired by: " + theme + ". " +
+               "Each title must be 2 to 6 words, plain English, PG-rated, with no quotes, emojis, or line breaks, and must NOT be a generic two-word slash/and label like 'Travel and Toys' or 'Sports'. " +
+               "For each topic, pick the closest matching skill from: None, Cooking, Charisma, Mechanical, Creativity, Body, Logic. " +
+               "Also pick a natural opening tone from: Gentle, Playful, Bold. " +
+               "Reply only as JSON: {\"subjects\": [{\"title\": \"...\", \"skill\": \"None\", \"tone\": \"Gentle\"}]}";
+    }
+}

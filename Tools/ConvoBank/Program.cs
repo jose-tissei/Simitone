@@ -21,10 +21,15 @@ static class Program
     static async Task<int> Main(string[] a)
     {
         string Arg(string name, string def = null) { var i = Array.IndexOf(a, name); return i >= 0 && i + 1 < a.Length ? a[i + 1] : def; }
+        bool HasFlag(string name) => Array.IndexOf(a, name) >= 0;
         var outPath = Arg("--out", "bank.json");
         var model = Arg("--model", "gemma3:4b");
         var host = Arg("--ollama", "http://localhost:11434");
         int count = int.Parse(Arg("--lines", "6"));
+        int subjectsPerInterest = int.Parse(Arg("--subjects-per-interest", "6"));
+        bool genSubjects = HasFlag("--subjects") || HasFlag("--subjects-only");
+        bool subjectsOnly = HasFlag("--subjects-only");
+        bool seedSubjects = HasFlag("--seed-subjects");
         var only = Arg("--only") == null ? null : Arg("--only").Split(',');
         var reviewPath = Arg("--review");
         var layaUrl = Arg("--laya");
@@ -32,10 +37,11 @@ static class Program
         if (layaUrl != null) { laya = new LayaClient(new HttpLayaTransport()) { TimeoutMs = 5000 }; laya.Configure(layaUrl, Arg("--laya-key")); }
 
         var bank = File.Exists(outPath) ? JsonConvert.DeserializeObject<BankFile>(File.ReadAllText(outPath)) ?? new BankFile() : new BankFile();
+        if (bank.Subjects == null) bank.Subjects = new List<AiSubject>();
         var review = new StringBuilder("# Bank review sheet\n\nModel: " + model + "\n\n");
-        var keys = OutcomeResolver.Interactions.Where(k => only == null || only.Contains(k)).ToList();
+        var keys = subjectsOnly ? new List<string>() : OutcomeResolver.Interactions.Where(k => only == null || only.Contains(k)).ToList();
         var temps = new[] { Temperament.EasilyOffended, Temperament.ThickSkinned, Temperament.Cold, Temperament.Receptive };
-        int calls = 0, kept = 0, dropped = 0;
+        int calls = 0, kept = 0;
 
         foreach (var key in keys)
         {
@@ -81,7 +87,7 @@ static class Program
         }
 
         // ---- Talk: subject lines per tone, replies per how much the listener likes the subject
-        if (only == null || only.Contains("talk"))
+        if (!subjectsOnly && (only == null || only.Contains("talk")))
         {
             if (!bank.Speaker.ContainsKey("talk")) bank.Speaker["talk"] = new Dictionary<string, List<string>>();
             for (int tone = 0; tone < 3; tone++)
@@ -106,8 +112,44 @@ static class Program
             }
         }
 
+        // ---- AI Talk Subjects (APS-12): generate or seed curated natural subjects for each of the 8 interest slots
+        if (seedSubjects)
+        {
+            var existingTitles = new HashSet<string>(bank.Subjects.Select(s => (s.Title ?? "").Trim()), StringComparer.OrdinalIgnoreCase);
+            int added = 0;
+            foreach (var s in AiSubjectBank.Builtin().All)
+            {
+                if (existingTitles.Add(s.Title))
+                {
+                    bank.Subjects.Add(s);
+                    added++;
+                }
+            }
+            if (added > 0) Save(outPath, bank);
+            Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] seeded {added} built-in AI subjects (total {bank.Subjects.Count})");
+        }
+        if (genSubjects)
+        {
+            var existingTitles = new HashSet<string>(bank.Subjects.Select(s => (s.Title ?? "").Trim()), StringComparer.OrdinalIgnoreCase);
+            for (int interest = 0; interest < 8; interest++)
+            {
+                int have = bank.Subjects.Count(s => s.Interest == interest);
+                if (have >= subjectsPerInterest) continue;
+                int need = subjectsPerInterest - have;
+                var generated = await AskSubjects(host, model, interest, need + 2, existingTitles, review);
+                calls++;
+                foreach (var item in generated.Take(need))
+                {
+                    bank.Subjects.Add(item);
+                    kept++;
+                }
+                Save(outPath, bank);
+                Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] subjects interest={interest} +{Math.Min(need, generated.Count)} (total {bank.Subjects.Count(s => s.Interest == interest)})");
+            }
+        }
+
         if (reviewPath != null) File.WriteAllText(reviewPath, review.ToString());
-        Console.WriteLine($"done: {calls} model calls, {kept} lines kept. Bank: {outPath}");
+        Console.WriteLine($"done: {calls} model calls, {kept} items kept, {bank.Subjects.Count} subjects. Bank: {outPath}");
         return 0;
     }
 
@@ -160,5 +202,73 @@ static class Program
     {
         if (Hostile.Contains(key)) return false;
         return laya.ClassifyTone(line.Replace("{name}", "friend").Replace("{me}", "friend")) == "hostile";
+    }
+
+    static async Task<List<AiSubject>> AskSubjects(string host, string model, int interest, int count, HashSet<string> existingTitles, StringBuilder review)
+    {
+        var kept = new List<AiSubject>();
+        var prompt = SubjectPrompts.ForInterest(interest, count);
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            try
+            {
+                var body = new JObject
+                {
+                    ["model"] = model, ["prompt"] = prompt, ["stream"] = false, ["format"] = "json",
+                    ["options"] = new JObject { ["temperature"] = 0.85, ["num_predict"] = 700 },
+                };
+                var resp = await http.PostAsync(host + "/api/generate", new StringContent(body.ToString(), Encoding.UTF8, "application/json"));
+                resp.EnsureSuccessStatusCode();
+                var text = (string)JObject.Parse(await resp.Content.ReadAsStringAsync())["response"];
+                var arr = JObject.Parse(text)["subjects"] as JArray;
+                if (arr == null) continue;
+                review.AppendLine("## subjects / interest " + interest);
+                foreach (var obj in arr.OfType<JObject>())
+                {
+                    var title = ((string)obj["title"] ?? "").Trim().Trim('"').Trim();
+                    var skillStr = ((string)obj["skill"] ?? "None").Trim();
+                    var toneStr = ((string)obj["tone"] ?? "Gentle").Trim();
+                    SkillKind sk;
+                    if (!Enum.TryParse(skillStr, true, out sk)) sk = SkillKind.None;
+                    Tone tn;
+                    if (!Enum.TryParse(toneStr, true, out tn)) tn = Tone.Gentle;
+                    var candidate = new AiSubject
+                    {
+                        Id = "s" + interest + "_" + Slugify(title),
+                        Title = title,
+                        Interest = interest,
+                        Skill = sk,
+                        ToneHint = tn,
+                    };
+                    if (!AiSubjectBank.IsValid(candidate))
+                    {
+                        review.AppendLine("- ~~" + title + "~~ (invalid subject or raw TS1 label)");
+                        continue;
+                    }
+                    if (!existingTitles.Add(title)) continue;
+                    kept.Add(candidate);
+                    review.AppendLine("- " + title + " (" + candidate.Skill + ", " + candidate.ToneHint + ")");
+                }
+                review.AppendLine();
+                if (kept.Count >= count - 2) return kept;
+            }
+            catch (Exception e) { Console.WriteLine("  subject retry (" + e.Message + ")"); }
+        }
+        return kept;
+    }
+
+    static string Slugify(string s)
+    {
+        if (string.IsNullOrEmpty(s)) return "topic";
+        var sb = new StringBuilder();
+        bool dash = false;
+        foreach (var ch in s.ToLowerInvariant())
+        {
+            if (char.IsLetterOrDigit(ch)) { sb.Append(ch); dash = false; }
+            else if (!dash && sb.Length > 0) { sb.Append('_'); dash = true; }
+            if (sb.Length >= 24) break;
+        }
+        var res = sb.ToString().Trim('_');
+        return res.Length == 0 ? "topic" : res;
     }
 }
