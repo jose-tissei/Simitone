@@ -148,6 +148,11 @@ namespace Simitone.Conversations
                         ? 0.26 + (speaker.Outgoing / 1000.0) * 0.15 + (a.PerceivesListenerGoodMood ? 0.14 : 0.0) - (a.PerceivesListenerBadMood ? 0.25 : 0.0)
                         : -0.50;
                     break;
+                case "gossip":
+                    // only offered when the speaker really has news for this listener: outgoing Sims jump at it, quiet and kind ones keep it to themselves
+                    score = 0.55 + (speaker.Outgoing / 1000.0) * 0.25 - (speaker.Nice > 650 && speaker.Outgoing < 400 ? 0.25 : 0.0)
+                          - (a.PerceivesListenerBadMood ? 0.15 : 0.0) - (speakerBadMood ? 0.10 : 0.0);
+                    break;
                 case "tease":
                     score = 0.10 + (speaker.Playful / 1000.0) * 0.16 + ((1000 - speaker.Nice) / 1000.0) * 0.16
                           + (speakerBadMood && !deescalating ? 0.16 : 0.0)

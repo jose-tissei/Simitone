@@ -59,7 +59,7 @@ namespace Simitone.Conversations
             while (lines.Count > MaxLines - 2) lines.RemoveAt(0);
             lines.Add(new Entry { Who = speakerName, Text = "“" + line + "”", Entity = speaker, Vm = vm, Born = clock });
             // the answer appears a moment later, as in a real exchange
-            lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.6 });
+            if (!string.IsNullOrEmpty(reply)) lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.6 });
         }
 
         public override void Update(UpdateState state)

@@ -18,6 +18,8 @@ namespace Simitone.Conversations
         public static DialogueBank Bank = new DialogueBank();
         public static AiSubjectBank Subjects = AiSubjectBank.Builtin();
         public static SocialMemory Memory = new SocialMemory();
+        public static GossipBook Gossip = new GossipBook();
+        public static bool GossipEnabled = true;
         public static readonly LayaClient Laya = new LayaClient(new HttpLayaTransport());
         // requests run on a worker thread, never on the game thread, so they may take longer than the 150 ms planning figure
         static Boot() { Laya.TimeoutMs = 3000; }
@@ -43,6 +45,7 @@ namespace Simitone.Conversations
         static string UserDir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone"); } }
         static string ProfilePath { get { return Path.Combine(UserDir, "conversations.profile"); } }
         static string MenuPath { get { return Path.Combine(UserDir, "conversations.menu"); } }
+        static string GossipPath { get { return Path.Combine(UserDir, "conversations.gossip.json"); } }
         static string MemoryPath { get { return Path.Combine(UserDir, "conversations.memory.json"); } }
 
         public static bool Enabled
@@ -68,14 +71,20 @@ namespace Simitone.Conversations
                 Bank = DialogueBank.Load(Path.Combine(GameDir, "Content", "conversations", "bank.json"));
                 Subjects = AiSubjectBank.FromBank(Bank);
                 Memory = SocialMemory.Load(MemoryPath);
+                Gossip = GossipBook.Load(GossipPath);
                 Log("startup: enabled=" + enabled + ", bank " + (Bank.Loaded ? "loaded" : "built-in lines only") +
                     ", subjects=" + Subjects.Count + (Subjects.LoadedFromBank ? " (bank)" : " (builtin)") +
                     ", memoryPairs=" + Memory.PairCount);
                 AppDomain.CurrentDomain.FirstChanceException += (s, e) => { try { var st = e.Exception.StackTrace ?? ""; if (st.Contains("Conversations") || (e.Exception.Message ?? "").Contains("Conversations")) Log("first-chance: " + e.Exception.GetType().Name + ": " + e.Exception.Message + " @ " + st.Split((char)10)[0].Trim()); } catch { } };
-                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } try { Memory.Save(MemoryPath); } catch { } try { WriteMisses(); } catch { } };
+                AppDomain.CurrentDomain.ProcessExit += (s, e) => { try { if (Host != null) Host.Stop(); } catch { } try { Memory.Save(MemoryPath); } catch { } try { Gossip.Save(GossipPath); } catch { } try { WriteMisses(); } catch { } };
                 if (enabled) EnsureLaya();
             }
             catch (Exception e) { Log("startup failed: " + e.Message); }
+        }
+
+        public static void SaveGossipAsync()
+        {
+            ThreadPool.QueueUserWorkItem(_ => { try { Gossip.Save(GossipPath); } catch { } });
         }
 
         public static void SaveMemoryAsync()
@@ -215,7 +224,7 @@ namespace Simitone.Conversations
                 case "tone": AutoTone = a.Length > 1 && a[1] != "off" ? int.Parse(a[1]) : -1; return "autotone=" + AutoTone;
                 case "auto": TreatAsAutonomous = a.Length > 1 && a[1] == "on"; return "autonomous=" + TreatAsAutonomous;
                 case "menu": SetFullMenu(a.Length > 1 && a[1] == "full", false); return "menu=" + (FullMenu ? "full" : "simplified");
-                case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
+                case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " " + ParallelSocialDriver.Diagnostics() + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
                 case "memory-ui":
                 {
@@ -225,10 +234,14 @@ namespace Simitone.Conversations
                     if (sub == "tab") return OpenLiveMemoryTab(false);
                     if (sub == "switcher") return OpenLiveMemoryTab(true);
                     if (sub == "select") return SimMemoryMenu.SelectKnown(a.Length > 2 ? string.Join(" ", a.Skip(2)) : "");
+                    if (sub == "news") return SimMemoryMenu.SetNews(true);
+                    if (sub == "dossier") return SimMemoryMenu.SetNews(false);
                     if (sub == "toggle") { SimMemoryMenu.Toggle(); return SimMemoryMenu.Status(); }
                     return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
                 }
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
+                case "fact": case "news": case "gossipstatus": return GossipDirector.Command(a);
+                case "gossip": GossipEnabled = !(a.Length > 1 && a[1] == "off"); return "gossip=" + GossipEnabled;
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
                 default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|trigger A B|last|log");

@@ -17,6 +17,7 @@ namespace Simitone.Conversations
         [JsonProperty("speaker")] public Dictionary<string, Dictionary<string, List<string>>> Speaker = new Dictionary<string, Dictionary<string, List<string>>>();
         [JsonProperty("reply")] public Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>> Reply = new Dictionary<string, Dictionary<string, Dictionary<string, List<string>>>>();
         [JsonProperty("subjects")] public List<AiSubject> Subjects = new List<AiSubject>();
+        [JsonProperty("gossip")] public GossipLineBank Gossip = new GossipLineBank();
     }
 
     public class LinePair
@@ -39,6 +40,7 @@ namespace Simitone.Conversations
         void Miss(string what) { lock (missLock) { int n; misses.TryGetValue(what, out n); misses[what] = n + 1; } }
         public bool Loaded { get; private set; }
         public IList<AiSubject> RawSubjects { get { return file.Subjects ?? new List<AiSubject>(); } }
+        public GossipLineBank Gossip { get { return file.Gossip ?? new GossipLineBank(); } }
 
         public DialogueBank() { file = new BankFile(); }
 
@@ -86,6 +88,25 @@ namespace Simitone.Conversations
                 }
                 return kept;
             };
+            Func<List<string>, List<string>> cleanGossip = list =>
+            {
+                var kept = new List<string>();
+                foreach (var raw in list ?? new List<string>())
+                {
+                    var s = Tidy(raw);
+                    string reason;
+                    if (IsCleanLine(s, out reason, true)) kept.Add(s); else dropped++;
+                }
+                return kept;
+            };
+            if (f.Gossip != null)
+            {
+                var g = f.Gossip;
+                Action<Dictionary<string, List<string>>> cleanMap = map => { if (map != null) foreach (var k in map.Keys.ToList()) map[k] = cleanGossip(map[k]); };
+                cleanMap(g.Greet); cleanMap(g.Bye); cleanMap(g.Lead); cleanMap(g.Ask); cleanMap(g.Reaction);
+                if (g.Tell != null) foreach (var byCertainty in g.Tell.Values.Where(v => v != null)) cleanMap(byCertainty);
+                g.NoIdea = cleanGossip(g.NoIdea); g.Source = cleanGossip(g.Source); g.FirstHand = cleanGossip(g.FirstHand);
+            }
             if (f.Speaker != null)
                 foreach (var byTone in f.Speaker.Values.Where(v => v != null))
                     foreach (var k in byTone.Keys.ToList()) byTone[k] = clean(byTone[k]);
@@ -107,9 +128,9 @@ namespace Simitone.Conversations
 
         // Style rules for a line in a speech balloon, on top of IsAcceptable: no markdown asterisks, no stray or curly double quotes,
         // no dashes used as punctuation, and it must end like a sentence.
-        public static bool IsCleanLine(string line, out string reason)
+        public static bool IsCleanLine(string line, out string reason, bool gossip = false)
         {
-            if (!IsAcceptable(line, out reason)) return false;
+            if (!IsAcceptable(line, out reason, gossip)) return false;
             var s = line.Trim();
             if (s.Contains("*")) { reason = "asterisk"; return false; }
             if (s.Contains("–") || s.Contains("—") || s.Contains(" - ")) { reason = "dash"; return false; }
@@ -173,7 +194,7 @@ namespace Simitone.Conversations
         }
 
         // safety filter (length, characters, blocked words, placeholders); IsCleanLine adds the style rules applied when the bank is loaded
-        public static bool IsAcceptable(string line, out string reason)
+        public static bool IsAcceptable(string line, out string reason, bool gossip = false)
         {
             reason = null;
             if (string.IsNullOrWhiteSpace(line)) { reason = "empty"; return false; }
@@ -187,6 +208,7 @@ namespace Simitone.Conversations
             int open = s.Count(ch => ch == '{');
             if (open != s.Count(ch => ch == '}')) { reason = "unbalanced braces"; return false; }
             var stripped = s.Replace("{me}", "").Replace("{name}", "").Replace("{job}", "").Replace("{topic}", "");
+            if (gossip) foreach (var p in new[] { "{who}", "{with}", "{label}", "{amount}", "{when}", "{src}" }) stripped = stripped.Replace(p, "");
             if (stripped.Contains("{") || stripped.Contains("}")) { reason = "unknown placeholder"; return false; }
             return true;
         }

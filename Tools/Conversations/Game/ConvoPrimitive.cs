@@ -228,6 +228,7 @@ namespace Simitone.Conversations
                                 " (" + p.Speaker.Name + " -> " + p.Listener.Name + ") laya=" + (Boot.Laya.Available ? "up" : "down") + " failures=" + Boot.Laya.Failures + " err=" + Boot.Laya.LastError + " cached=" + Boot.Laya.HasTemperament(p.Listener) + " [" + p.Listener.Summary + "]";
             Boot.Log("decision: " + Boot.LastDecision + " | \"" + line + "\" / \"" + reply + "\"");
             ConvoOverlay.Show(ctx.VM, ctx.Caller, p.Speaker.Name, line, ctx.VM.GetObjectById(ctx.StackObject.GetAttribute(0)), p.Listener.Name, reply);
+            try { GossipDirector.OnInteraction(ctx.VM, ctx.Caller as VMAvatar, ctx.VM.GetObjectById(ctx.StackObject.GetAttribute(0)) as VMAvatar, p.Key, quality); } catch (Exception e) { Boot.Log("gossip interaction error: " + e.Message); }
             return outcome;
         }
 

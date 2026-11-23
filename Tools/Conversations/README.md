@@ -3,6 +3,7 @@
 Makes The Sims 1 social interactions livelier and autonomous:
 - **Autonomous parallel room conversations:** awake adult Sims in the same room (or within 8 tiles outdoors) automatically talk to each other **in parallel with their ongoing activities** (without interrupting their interaction queue) whenever a Sim's Social motive is at or below **60%** (`<= +20` on `-100..+100`).
 - **Laya-driven interaction & AI topic selection:** Laya (`/v1/systemone`) chooses both the verbal interaction (`talk`, `compliment`, `joke`, `brag`, `cheerup`, `apologize`, `flirt`, `tease`) and the AI talk subject, modulated by the speaker's **knowledge** of the listener (LTR/STR + observed history), both Sims' **skills** (Charisma reading/tact + Cooking/Mechanical/Creativity/Logic/Body topic resonance), and both Sims' **moods**.
+- **News and gossip:** Sims notice what happens around them (promotions, new skill points, new friends, kisses, fights, gifts), pass it on in short conversations (greeting, the news, a question, goodbye), forget details with time and sometimes twist a rumour; the Sim Memory window has a **News** button showing what each Sim knows and how sure they are (`conversations.gossip.json`). See the section below.
 - **Social memory, learned Sim dossiers & anti-negative-loop learning:** per-pair memory (`Documents\Simitone\conversations.memory.json`) records outcomes and structured facts each Sim learns about every Sim they talk with (traits revealed progressively, observed temperament, career, liked/neutral/disliked interests with 0–10 ratings, discovered skills with levels, what interactions/tones work vs. avoid, and AI topics discussed), penalizes recently failed interactions/tones/topics, engages de-escalation at `NegativeStreak >= 2`, enforces cool-down backoff at `NegativeStreak >= 3`, and resets on positive outcomes.
 - **In-game Sim Memory button (Selected Sim Live Panel):** open **Sim Memory** (`live_memory.png`) right alongside **Needs, Career, Personality, Relationships, and Inventory** in the selected Sim's Live category switcher (or `simtool convo memory-ui tab`) to launch the floating **Sim Memory** dossier window for the currently selected Sim while keeping the bottom bar on your active Live tab.
 - **Simplified manual pie menu:** clicking another adult Sim shows one **Talk** bubble and one **Romance** submenu, plus everything else the game offers (friendly Hug, Dance, Joke, Tickle, Give Gift, ...) unchanged. Children, pets, self, ungreeted visitors, non-social NPCs and feature-off keep the unmodified menu. The Options button **"Pie menu: Simplified / Full"** switches to the game's own full menu (remembered in `DocumentsSimitonenversations.menu`).
@@ -68,7 +69,7 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
 | `Logic/` | Pure `net461`/`net9.0` logic, zero game types, unit tested: `Traits`, `OutcomeResolver`, `DialogueBank`, `LayaClient`, `LayaHost`, `TopicLogic`, `AiSubjectBank`, `SocialMemory`, `SimMemoryViewModel`, `SocialIntelligence`, `ParallelSocialPlanner`, `PieMenuLogic`, `BalloonLayout` |
 | `Game/` | Game runtime: `Boot`, `ParallelSocialDriver`, `ConvoPieMenu`, `ConvoPrimitive`, `ConvoTalk`, `ConvoOverlay`, `SimMemoryMenu` |
 | `bank/` | `bank.json` (built dialogue lines + 48 AI Talk subjects) and review sheets |
-| `../Conversations.Tests` | 248 unit tests |
+| `../Conversations.Tests` | 316 unit tests |
 | `../Package-Laya.ps1` | Builds the bundled Laya |
 | `bank/lines`, `bank/Build-Bank.ps1` | The hand-written dialogue lines and the script that assembles `bank.json` |
 | `../Install-Conversations.ps1` | Patches a pristine release and installs into a game folder |
@@ -78,12 +79,24 @@ Placeholders: `{me}` speaker, `{name}` receiver, `{job}` receiver's job title, `
     pwsh Tools/Install-Conversations.ps1 -Pristine <unmodified v0.8.12> -App <game folder>
 and make sure Python with `laya` is available (or a bundled `laya\python`).
 
+## News and gossip (Sims talk about things that really happened)
+The design follows Rumor Village (github.com/manuelgscom/rumor-village, MIT): the engine owns the state and decides what is allowed, nothing is decided from the text of a balloon. No language model is involved.
+- **Facts** (`Logic/Gossip/GossipModel.cs`): the truth of something that happened. A kind (`Promoted`, `SkillGain`, `Friendship`, `Romance`, `Argument`, `Gift`), a label (job title, skill) and slots that can be remembered wrongly: who, with whom, amount (skill level), when (game day).
+- **Minds** (`GossipBook`): each Sim holds their own version of every fact they know. Per slot: unknown, sure, doubt (somebody's guess) or forgotten, plus who told them. Seeing it happen makes every slot sure; hearing it fills gaps but never overwrites what the Sim is sure of (a different value is a conflict). Memories fade a little each game day (a forgotten slot loses its old value for good) and a doubt may harden into "sure": that is how rumours get twisted, always starting as a declared guess.
+- **Events** (`EventDetector` + `Game/GossipDirector.cs`): a new skill point, a promotion or new job, two Sims reaching friendship (STR 70), and kisses, flirts, insults, slaps, gifts and bad teases. Every adult Sim in the same room is a witness.
+- **Validation** (`GossipValidator`): the engine checks every proposed action: the Sim must know the fact, may not repeat what the listener has been told or what they just said, every name and day must be real, and every told slot is compared with the Sim's own memory (faithful / declared guess / contradiction / invented / hardened doubt). A failing slot is cleared, never applied.
+- **Conversations** (`GossipPolicy`, `GossipConversation`): greet, tell, ask, "no idea", bye, at most 8 turns. Telling depends on the Sim (Outgoing and Playful Sims gossip, kind but quiet ones keep things to themselves) and on how well they know the listener. Sims never gossip about the listener or about themselves. The whole conversation is played on a copy of the two minds off the game thread and applied on the game thread; the balloons appear two at a time. Autonomous chats pick "gossip" whenever the speaker has news the listener has not heard.
+- **Wording**: hand-written (`bank/lines/06-gossip.txt`): greetings, goodbyes, lead-ins by tone, news per kind in a "sure" and a "hedged" version, questions, reactions to what was just heard, "I saw it myself" / "X told me". A line is only used when every placeholder in it is something the Sim really says, and a Sim who saw it never says they only heard it.
+- **Seen in the game**: Sim Memory window, **News** button (or `simtool convo memory-ui news`): what the Sim saw or heard, how sure they are, where it came from, who they passed it on to, and whether their version differs from what really happened. Saved in `conversations.gossip.json`.
+- **Tests**: `GossipTests` (memory rules, validator table, policy, 2,000 frozen conversations with zero rejected or invented claims, planner), `GossipLinesTests` (every rendered balloon is a complete sentence), `GossipEventsTests`.
 ## Try it without clicking (simtool)
     simtool convo status                  enabled, Laya up, bank/subjects count, menu mode, parallel count, memory pairs, memory UI state, last decision
     simtool convo parallel                total parallel exchanges and last parallel decision
     simtool convo memory                  per-pair social memory summary
     simtool convo memory-ui open [Sim]    open the in-game Sim Memory Menu (optionally focused on Sim); also `close`, `select <Sim>`, `toggle`, `status`
     simtool convo trigger A B             immediately dispatch a parallel exchange from Sim A to Sim B
+    simtool convo fact <kind> <Sim> [Sim]  make something happen (promoted, skillgain, friendship, romance, argument, gift); a Sim who is not on the lot is `#34=Name`, `by=Bob` = only Bob saw it
+    simtool convo news [Sim]              what each Sim (or one Sim) knows;  `convo gossipstatus`, `convo gossip off|on`
     simtool convo menu full|simple   this run only: show the game's full pie menu or the simplified one (the Options button remembers it)
     simtool convo auto on|off        treat every Sim as not player-controlled (tests the autonomous path)
     simtool convo tone 1             skip the dialog and use tone 1 (0 Gentle, 1 Playful, 2 Bold)

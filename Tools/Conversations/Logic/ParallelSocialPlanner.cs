@@ -20,6 +20,8 @@ namespace Simitone.Conversations
         public short SpeakerStrDelta, ListenerStrDelta;
         public short SpeakerLtrDelta, ListenerLtrDelta;
         public SkillKind DiscoveredSkill = SkillKind.None;
+        public GossipTranscript Gossip;                    // non-null when Interaction == "gossip": the whole conversation
+        public List<GossipBalloon> Balloons;               // its lines, in order, ready to show
 
         public string Summary(string speakerName, string listenerName)
         {
@@ -53,6 +55,7 @@ namespace Simitone.Conversations
             ["apologize"] = "apologize sincerely to smooth over tension",
             ["flirt"] = "drop a charming, mildly romantic remark",
             ["tease"] = "playfully tease or banter with them",
+            ["gossip"] = "pass on a piece of news about another Sim",
         };
 
         public static bool ShouldTriggerSocial(short socialMotive)
@@ -69,7 +72,7 @@ namespace Simitone.Conversations
             return Math.Sqrt(dx * dx + dy * dy) <= MaxOutdoorTileDistance;
         }
 
-        public static ParallelSocialPlan Plan(RawSim speaker, RawSim listener, LayaClient laya, DialogueBank bank, AiSubjectBank subjects, SocialMemory memory, Random rng)
+        public static ParallelSocialPlan Plan(RawSim speaker, RawSim listener, LayaClient laya, DialogueBank bank, AiSubjectBank subjects, SocialMemory memory, Random rng, GossipBook gossip = null, int today = 0, long tick = 0)
         {
             speaker = speaker ?? new RawSim();
             listener = listener ?? new RawSim();
@@ -96,6 +99,13 @@ namespace Simitone.Conversations
 
             // 2. Build eligible candidate verbal interactions
             var candidates = BuildCandidateInteractions(speaker, listener, assessment, memory);
+            TurnContext gossipCtx = null;
+            if (gossip != null && speaker.NeighborId > 0 && listener.NeighborId > 0 && !deescalating)
+            {
+                gossip.SetName(speaker.NeighborId, speaker.Name); gossip.SetName(listener.NeighborId, listener.Name);
+                gossipCtx = new TurnContext { Self = speaker.NeighborId, Other = listener.NeighborId, SelfMind = gossip.SnapshotMind(speaker.NeighborId), Today = today };
+                if (GossipPolicy.HasCandidates(gossipCtx) && !memory.IsInteractionForbidden(speaker, listener, "gossip")) candidates.Add("gossip");
+            }
 
             // 3. Ask Laya to score candidate interactions
             Dictionary<string, double> layaScores = null;
@@ -109,6 +119,13 @@ namespace Simitone.Conversations
 
             // 4. Blend Laya scores + SocialIntelligence heuristics + SocialMemory + misjudgment noise
             string chosenInteraction = PickBestInteraction(candidates, layaScores, speaker, listener, assessment, memory, rng);
+
+            if (chosenInteraction == "gossip")
+            {
+                var gp = PlanGossip(speaker, listener, bank, gossip, today, tick, rng, usedLaya, trueTemper, assessment);
+                if (gp != null) return gp;
+                chosenInteraction = "talk";   // nothing came of it (the Sim did not feel like telling): have a normal chat instead
+            }
 
             // 5. If "talk", use Laya + SocialIntelligence + SocialMemory to choose an AI subject
             AiSubject chosenSubject = null;
@@ -169,6 +186,46 @@ namespace Simitone.Conversations
             };
         }
 
+        // A whole news conversation (greeting, the news, maybe a question, goodbye). Null when nothing was actually told.
+        static ParallelSocialPlan PlanGossip(RawSim speaker, RawSim listener, DialogueBank bank, GossipBook gossip, int today, long tick, Random rng, bool usedLaya, Temperament temper, SocialAssessment a)
+        {
+            var spTraits = GossipTraits.From(speaker, speaker.StrToTarget, speaker.LtrToTarget);
+            var lsTraits = GossipTraits.From(listener, speaker.TargetStrToMe, speaker.TargetLtrToMe);
+            var sims = gossip.SimIds();
+            GossipTranscript t = null;
+            for (int attempt = 0; attempt < 4 && (t == null || !t.HasContent); attempt++)
+            {
+                ulong seed = ((ulong)(uint)rng.Next() << 32) | (uint)rng.Next();
+                t = GossipConversation.Run(gossip, speaker.NeighborId, listener.NeighborId, spTraits, lsTraits, sims, today, tick, seed, 8, GossipLines.ToneOf(speaker), GossipLines.ToneOf(listener));
+            }
+            if (t == null || !t.HasContent) return null;
+
+            var lines = bank == null ? new GossipLineBank() : bank.Gossip;
+            var lrng = new GossipRng(((ulong)(uint)rng.Next() << 32) | (uint)rng.Next());
+            var balloons = new List<GossipBalloon>();
+            foreach (var turn in t.Turns)
+            {
+                var ctx = new GossipContext
+                {
+                    Book = gossip, Lines = lines, Today = today, Tone = turn.Tone,
+                    SpeakerName = turn.Speaker == speaker.NeighborId ? speaker.Name : listener.Name,
+                    ListenerName = turn.Speaker == speaker.NeighborId ? listener.Name : speaker.Name,
+                };
+                balloons.Add(new GossipBalloon { Speaker = turn.Speaker, Act = turn.Act, Text = GossipLines.Render(turn, ctx, ref lrng) });
+            }
+            int quality = t.Turns.Any(x => x.Heard != null && (x.Heard.IsNew || x.Heard.Filled.Count > 0)) ? 3 : 2;
+            short spSoc, lsSoc, spStr, lsStr, spLtr, lsLtr;
+            ComputeDeltas("gossip", quality, out spSoc, out lsSoc, out spStr, out lsStr, out spLtr, out lsLtr);
+            return new ParallelSocialPlan
+            {
+                Interaction = "gossip", Tone = GossipLines.ToneOf(speaker), ListenerTemperament = temper, Quality = quality,
+                Knowledge = a.Knowledge, Accuracy = a.Accuracy, UsedLaya = usedLaya,
+                SpeakerLine = balloons[0].Text, ReplyLine = balloons.Count > 1 ? balloons[1].Text : "",
+                SpeakerSocialDelta = spSoc, ListenerSocialDelta = lsSoc, SpeakerStrDelta = spStr, ListenerStrDelta = lsStr, SpeakerLtrDelta = spLtr, ListenerLtrDelta = lsLtr,
+                Gossip = t, Balloons = balloons,
+            };
+        }
+
         static List<string> BuildCandidateInteractions(RawSim speaker, RawSim listener, SocialAssessment a, SocialMemory memory)
         {
             var list = new List<string> { "talk", "compliment", "joke" };
@@ -200,6 +257,9 @@ namespace Simitone.Conversations
                 double laya = (layaScores != null && layaScores.ContainsKey(c)) ? layaScores[c] : 0.0;
                 double layaWeight = deesc ? 0.25 : 0.55;
                 double combined = (layaScores != null ? laya * layaWeight + h * (1.0 - layaWeight) : h);
+                // Laya only knows the interaction names; whether this Sim really has news to share is something the engine knows,
+                // so Laya's opinion of "gossip" would only dilute that: the heuristic decides, with a small nudge
+                if (c == "gossip") combined = h + 0.10;
                 double noise = (rng.NextDouble() * 2.0 - 1.0) * noiseScale * (deesc ? 0.35 : 1.0);
                 double total = combined + noise;
                 if (total > bestScore) { bestScore = total; best = c; }

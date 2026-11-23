@@ -26,7 +26,8 @@ namespace Simitone.Conversations
         readonly List<SpeakerIdentity> speakers = new List<SpeakerIdentity>();
         readonly List<Rectangle> tabRects = new List<Rectangle>();
         readonly List<Rectangle> rowRects = new List<Rectangle>();
-        Rectangle panelRect, closeRect;
+        Rectangle panelRect, closeRect, newsRect;
+        bool showNews;                // the right-hand side shows the news the selected Sim has heard instead of what they know about another Sim
 
         string selectedSpeakerKey = "";
         string selectedSpeakerName = "";
@@ -38,6 +39,9 @@ namespace Simitone.Conversations
         int prevScrollWheel;
 
         public static bool IsOpen { get { return isOpen && instance != null; } }
+
+        // simtool: show the news side (true) or the dossier side (false) of an open menu
+        public static string SetNews(bool on) { if (instance == null) return "closed"; instance.showNews = on; return Status(); }
 
         public static void Toggle()
         {
@@ -273,6 +277,7 @@ namespace Simitone.Conversations
             bool left = state.MouseState.LeftButton == ButtonState.Pressed;
             if (left && !prevLeftDown)
             {
+                if (newsRect.Width > 0 && newsRect.Contains(mx, my)) { prevLeftDown = true; showNews = !showNews; return; }
                 if (closeRect.Contains(mx, my) || (panelRect.Width > 0 && !panelRect.Contains(mx, my)))
                 {
                     prevLeftDown = true;
@@ -337,6 +342,16 @@ namespace Simitone.Conversations
             var xSz = bodyStyle.MeasureString("X");
             DrawLocalString(batch, "X", new Vector2(closeRect.X + (closeRect.Width - xSz.X) * 0.5f, closeRect.Y + (closeRect.Height - xSz.Y) * 0.5f), bodyStyle);
 
+            // News / Dossier switch, left of the close button
+            int speakerId = SpeakerNeighborId();
+            var vmNow = ParallelSocialDriver.CurrentVm;
+            var newsList = speakerId > 0 && vmNow != null ? GossipView.NewsOf(Boot.Gossip, speakerId, GossipDirector.Today(vmNow)) : new List<NewsEntry>();
+            string newsLabel = showNews ? "Dossier" : "News (" + newsList.Count + ")";
+            float nw = Math.Max(78f, bodyStyle.MeasureString(newsLabel).X + 24f);
+            newsRect = new Rectangle((int)(px0 + pw - 46 - 10 - nw), (int)(py0 + 14), (int)nw, 28);
+            DrawLocalTexture(batch, px, null, new Vector2(newsRect.X, newsRect.Y), new Vector2(newsRect.Width, newsRect.Height), showNews ? new Color(46, 98, 128, 245) : new Color(34, 48, 68, 230));
+            DrawLocalString(batch, newsLabel, new Vector2(newsRect.X + 12, newsRect.Y + 4), showNews ? goldStyle : bodyStyle);
+
             // Speaker switcher tabs
             tabRects.Clear();
             float tx = px0 + 20, ty = py0 + 66;
@@ -396,6 +411,13 @@ namespace Simitone.Conversations
             float rightX = leftX + leftW + 14;
             float rightW = pw - (rightX - px0) - 18;
             DrawLocalTexture(batch, px, null, new Vector2(rightX, bodyY + 4), new Vector2(rightW, bodyH - 8), new Color(15, 21, 32, 225));
+
+            if (showNews)
+            {
+                DrawNews(batch, px, newsList, rightX + 18, bodyY + 14, rightW - 36, bodyH - 30);
+                DrawLocalString(batch, "Press Esc or click outside to close", new Vector2(px0 + pw - 245, py0 + ph - 22), mutedStyle);
+                return;
+            }
 
             var card = CurrentCard();
             if (card == null)
@@ -486,6 +508,44 @@ namespace Simitone.Conversations
 
             // Footer hint
             DrawLocalString(batch, "Press Esc or click outside to close", new Vector2(px0 + pw - 245, py0 + ph - 22), mutedStyle);
+        }
+
+        // "n:48" -> 48 (the key SocialMemory uses for a Sim with a neighbour number)
+        int SpeakerNeighborId()
+        {
+            int id;
+            if (selectedSpeakerKey != null && selectedSpeakerKey.StartsWith("n:") && int.TryParse(selectedSpeakerKey.Substring(2), out id)) return id;
+            return 0;
+        }
+
+        // the news this Sim has heard or seen: what it was, how sure they are, where it came from, who they passed it on to
+        void DrawNews(UISpriteBatch batch, Texture2D px, List<NewsEntry> news, float x, float y, float w, float h)
+        {
+            DrawLocalString(batch, selectedSpeakerName + "'s news", new Vector2(x, y), titleStyle);
+            DrawLocalString(batch, "What " + selectedSpeakerName + " saw or heard about other Sims, newest first", new Vector2(x, y + 26), subtitleStyle);
+            float cy = y + 56;
+            if (news.Count == 0)
+            {
+                DrawWrapped(batch, "Nothing yet. News is picked up when something happens in the same room (a promotion, a new skill point, new friends, a kiss, a fight, a gift) and spreads when Sims chat.", x, cy, w, bodyStyle);
+                return;
+            }
+            float bottom = y + h;
+            int shown = 0;
+            foreach (var n in news)
+            {
+                var lines = BalloonLayout.Wrap(n.Text, w - 16, s => bodyStyle.MeasureString(s).X);
+                float rowH = 10 + lines.Take(2).Count() * 19 + 20;
+                if (cy + rowH > bottom) break;
+                DrawLocalTexture(batch, px, null, new Vector2(x, cy), new Vector2(w, rowH - 4), new Color(24, 32, 46, 200));
+                var accent = n.Fuzzy ? new Color(235, 170, 90, 255) : (n.Certainty == "saw it" ? new Color(255, 224, 120, 255) : new Color(90, 210, 170, 255));
+                DrawLocalTexture(batch, px, null, new Vector2(x, cy), new Vector2(4, rowH - 4), accent);
+                float ty = cy + 5;
+                foreach (var line in lines.Take(2)) { DrawLocalString(batch, line, new Vector2(x + 12, ty), bodyStyle); ty += 19; }
+                string meta = n.Detail + (n.Differs ? " | differs from what really happened" : "");
+                DrawLocalString(batch, meta, new Vector2(x + 12, ty), n.Differs ? redStyle : mutedStyle);
+                cy += rowH; shown++;
+            }
+            if (shown < news.Count) DrawLocalString(batch, "+ " + (news.Count - shown) + " more", new Vector2(x + 12, cy), mutedStyle);
         }
 
         float DrawSectionHeader(UISpriteBatch batch, Texture2D px, string label, float x, float y, float w)

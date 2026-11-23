@@ -33,11 +33,31 @@ namespace Simitone.Conversations
         static readonly Dictionary<string, long> pairNextTick = new Dictionary<string, long>();
         static readonly Random rng = new Random();
         static VM lastVm;
+        public static VM CurrentVm { get { return lastVm; } }
+
+        // lines of a gossip conversation waiting for their turn to appear over the Sims heads
+        class PendingBalloons
+        {
+            public VM Vm;
+            public long DueTick;
+            public short SpeakerObj, ListenerObj;
+            public string SpeakerName, ListenerName, Line, Reply;
+        }
+        static readonly List<PendingBalloons> pendingBalloons = new List<PendingBalloons>();
+        const int TicksBetweenBalloonPairs = 200;   // a pair of balloons stays up for about 6.5 s (about 195 ticks)
         static long tickCount;
         static int totalExchanges;
         static int savesPending;
 
         public static string LastParallelDecision = "";
+
+        // for simtool: what the driver is doing right now
+        public static string Diagnostics()
+        {
+            int worker, io, maxWorker, maxIo;
+            ThreadPool.GetAvailableThreads(out worker, out io); ThreadPool.GetMaxThreads(out maxWorker, out maxIo);
+            lock (gate) return "inFlight=" + inFlight.Count + " completed=" + completed.Count + " pendingBalloons=" + pendingBalloons.Count + " tick=" + tickCount + " poolFree=" + worker + "/" + maxWorker;
+        }
         public static int TotalExchanges { get { return totalExchanges; } }
 
         public static void OnTick(VM vm)
@@ -53,6 +73,7 @@ namespace Simitone.Conversations
 
             tickCount++;
             DrainCompleted(vm);
+            ShowDueBalloons(vm);
 
             if (tickCount % ScanIntervalTicks != 0) return;
             ScanAndDispatch(vm);
@@ -68,7 +89,9 @@ namespace Simitone.Conversations
                 inFlight.Clear();
                 simNextTick.Clear();
                 pairNextTick.Clear();
+                pendingBalloons.Clear();
             }
+            GossipDirector.Reset();
         }
 
         static bool IsOutsideRoom(VM vm, ushort roomId)
@@ -83,7 +106,7 @@ namespace Simitone.Conversations
             catch { return true; }
         }
 
-        static bool IsEligibleSim(VMAvatar a)
+        public static bool IsEligibleSim(VMAvatar a)
         {
             if (a == null || a.Dead || a.IsPet) return false;
             if (a.Position == LotTilePos.OUT_OF_WORLD) return false;
@@ -95,7 +118,7 @@ namespace Simitone.Conversations
             return true;
         }
 
-        static bool SameRoom(VM vm, VMAvatar a, VMAvatar b)
+        public static bool SameRoom(VM vm, VMAvatar a, VMAvatar b)
         {
             var rA = vm.Context.GetObjectRoom(a);
             var rB = vm.Context.GetObjectRoom(b);
@@ -107,6 +130,7 @@ namespace Simitone.Conversations
         static void ScanAndDispatch(VM vm)
         {
             var avatars = vm.Entities.OfType<VMAvatar>().Where(IsEligibleSim).ToList();
+            try { GossipDirector.Observe(vm, avatars); } catch (Exception e) { Boot.Log("gossip observe error: " + e.GetType().Name + ": " + e.Message); }
             if (avatars.Count < 2) return;
 
             foreach (var speaker in avatars)
@@ -169,6 +193,8 @@ namespace Simitone.Conversations
             var rs = ConvoPrimitive.Read(speaker, listener, vm);
             var rl = ConvoPrimitive.Read(listener, speaker, vm);
             short spId = speaker.ObjectID, lsId = listener.ObjectID;
+            int today = GossipDirector.Today(vm);
+            long tickNow = vm.Context.Clock.Ticks;
 
             lock (gate)
             {
@@ -183,8 +209,11 @@ namespace Simitone.Conversations
             {
                 try
                 {
+                    var started = DateTime.UtcNow;
                     var localRng = new Random(Guid.NewGuid().GetHashCode());
-                    var plan = ParallelSocialPlanner.Plan(rs, rl, Boot.Laya, Boot.Bank, Boot.Subjects, Boot.Memory, localRng);
+                    var plan = ParallelSocialPlanner.Plan(rs, rl, Boot.Laya, Boot.Bank, Boot.Subjects, Boot.Memory, localRng, Boot.GossipEnabled ? Boot.Gossip : null, today, tickNow);
+                    var took = (int)(DateTime.UtcNow - started).TotalMilliseconds;
+                    if (took > 1500) Boot.Log("parallel plan took " + took + " ms (" + rs.Name + " -> " + rl.Name + ", " + plan.Interaction + ")");
                     lock (gate)
                     {
                         completed.Enqueue(new CompletedExchange
@@ -228,8 +257,8 @@ namespace Simitone.Conversations
         {
             var speaker = vm.GetObjectById(ex.SpeakerId) as VMAvatar;
             var listener = vm.GetObjectById(ex.ListenerId) as VMAvatar;
-            if (!IsEligibleSim(speaker) || !IsEligibleSim(listener)) return;
-            if (!SameRoom(vm, speaker, listener)) return;
+            if (!IsEligibleSim(speaker) || !IsEligibleSim(listener)) { Boot.Log("parallel exchange dropped: a Sim is no longer free to talk (" + ex.SpeakerRaw.Name + " -> " + ex.ListenerRaw.Name + ")"); return; }
+            if (!SameRoom(vm, speaker, listener)) { Boot.Log("parallel exchange dropped: the Sims are no longer in the same room (" + ex.SpeakerRaw.Name + " -> " + ex.ListenerRaw.Name + ")"); return; }
 
             var plan = ex.Plan;
             // Apply Social motive deltas without disturbing either Sim's active interaction queue
@@ -248,6 +277,8 @@ namespace Simitone.Conversations
             ReadRelationship(vm, speaker, listener, out ex.SpeakerRaw.StrToTarget, out ex.SpeakerRaw.LtrToTarget);
             ReadRelationship(vm, listener, speaker, out ex.ListenerRaw.StrToTarget, out ex.ListenerRaw.LtrToTarget);
             Boot.Memory.Record(ex.SpeakerRaw, ex.ListenerRaw, plan.Interaction, plan.Tone, subjId, plan.Quality, interestIdx, plan.DiscoveredSkill, subjTitle, plan.ListenerTemperament);
+            if (plan.Gossip != null) { ApplyGossip(vm, ex, speaker, listener); return; }
+            GossipDirector.OnInteraction(vm, speaker, listener, plan.Interaction, plan.Quality);
             var speakerSkill = plan.Subject != null && plan.Subject.Skill != SkillKind.None ? plan.Subject.Skill : SkillKind.None;
             Boot.Memory.RecordReciprocal(ex.ListenerRaw, ex.SpeakerRaw, plan.Interaction, plan.Quality, interestIdx, speakerSkill, subjId, subjTitle);
 
@@ -262,6 +293,63 @@ namespace Simitone.Conversations
             {
                 savesPending = 0;
                 Boot.SaveMemoryAsync();
+            }
+        }
+
+        // A news conversation: the listeners really learn it now, and the lines appear two at a time, one pair after another.
+        static void ApplyGossip(VM vm, CompletedExchange ex, VMAvatar speaker, VMAvatar listener)
+        {
+            var plan = ex.Plan;
+            Boot.Gossip.Apply(plan.Gossip);
+            Boot.Memory.RecordReciprocal(ex.ListenerRaw, ex.SpeakerRaw, plan.Interaction, plan.Quality, -1, SkillKind.None, null, null);
+            Interlocked.Increment(ref totalExchanges);
+            LastParallelDecision = plan.Summary(ex.SpeakerRaw.Name, ex.ListenerRaw.Name) + " turns=" + plan.Balloons.Count;
+            Boot.LastDecision = LastParallelDecision;
+            Boot.Log("decision: " + LastParallelDecision);
+            foreach (var b in plan.Balloons) Boot.Log("  gossip " + (b.Speaker == ex.SpeakerRaw.NeighborId ? ex.SpeakerRaw.Name : ex.ListenerRaw.Name) + " [" + b.Act + "]: " + b.Text);
+
+            Func<int, VMAvatar> who = n => n == ex.SpeakerRaw.NeighborId ? speaker : listener;
+            Func<int, string> nameOf = n => n == ex.SpeakerRaw.NeighborId ? ex.SpeakerRaw.Name : ex.ListenerRaw.Name;
+            var balloons = plan.Balloons;
+            int pairs = (balloons.Count + 1) / 2;
+            lock (gate)
+            {
+                for (int i = 0; i < balloons.Count; i += 2)
+                {
+                    var first = balloons[i]; var second = i + 1 < balloons.Count ? balloons[i + 1] : null;
+                    var firstSpeaker = who(first.Speaker);
+                    var answerer = second == null ? (ReferenceEquals(firstSpeaker, speaker) ? listener : speaker) : who(second.Speaker);
+                    pendingBalloons.Add(new PendingBalloons
+                    {
+                        Vm = vm, DueTick = tickCount + (i / 2) * TicksBetweenBalloonPairs,
+                        SpeakerObj = firstSpeaker.ObjectID, ListenerObj = answerer.ObjectID,
+                        SpeakerName = nameOf(first.Speaker), ListenerName = second == null ? "" : nameOf(second.Speaker), Line = first.Text, Reply = second == null ? "" : second.Text,
+                    });
+                }
+                // both Sims stay out of other parallel chats until the whole conversation has been shown
+                long until = tickCount + pairs * TicksBetweenBalloonPairs + 120;
+                simNextTick[speaker.ObjectID] = until; simNextTick[listener.ObjectID] = until;
+                pairNextTick[PairTickKey(speaker.ObjectID, listener.ObjectID)] = until + PairCooldownTicks;
+            }
+            if (++savesPending >= 2) { savesPending = 0; Boot.SaveMemoryAsync(); }
+            Boot.SaveGossipAsync();
+        }
+
+        static void ShowDueBalloons(VM vm)
+        {
+            List<PendingBalloons> due;
+            lock (gate)
+            {
+                if (pendingBalloons.Count == 0) return;
+                due = pendingBalloons.Where(p => ReferenceEquals(p.Vm, vm) && tickCount >= p.DueTick).ToList();
+                foreach (var d in due) pendingBalloons.Remove(d);
+                pendingBalloons.RemoveAll(p => !ReferenceEquals(p.Vm, vm));
+            }
+            foreach (var d in due)
+            {
+                var a = vm.GetObjectById(d.SpeakerObj) as VMAvatar; var b = vm.GetObjectById(d.ListenerObj) as VMAvatar;
+                if (a == null || b == null) continue;
+                ConvoOverlay.Show(vm, a, d.SpeakerName, d.Line, b, d.ListenerName, d.Reply);
             }
         }
 
