@@ -30,6 +30,7 @@ namespace Simitone.Conversations
             foreach (JProperty kv in ((JObject)root["shared"]["pill"]).Properties()) map["pill-" + Kebab(kv.Name)] = (string)kv.Value;
             foreach (JProperty kv in ((JObject)root["shared"]["iconButton"]).Properties()) map["icon-btn-" + Kebab(kv.Name)] = (string)kv.Value;
             foreach (JProperty kv in ((JObject)root["shared"]["pie"]).Properties()) map["pie-" + Kebab(kv.Name)] = (string)kv.Value;
+            foreach (JProperty kv in ((JObject)root["shared"]["balloon"]).Properties()) map["balloon-" + Kebab(kv.Name)] = kv.Value.Type == JTokenType.Integer ? ((int)kv.Value) + "px" : (string)kv.Value;
             int i = 1;
             foreach (var c in root["shared"]["simIdentity"]) map["sim-" + (i++)] = (string)c;
             foreach (JProperty kv in ((JObject)root["spacing"]).Properties()) map["sp-" + kv.Name] = ((int)kv.Value) + "px";

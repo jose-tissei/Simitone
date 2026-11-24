@@ -124,6 +124,37 @@ namespace Conversations.Tests
         }
 
         [Fact]
+        public void AiSettings_PageDataAndActions()
+        {
+            var d = AiSettingsPageData.Build(true, false, true, false, "paused");
+            Assert.True((bool)d["convo"]); Assert.False((bool)d["gossip"]); Assert.True((bool)d["simple"]); Assert.False((bool)d["day"]);
+            Assert.False((bool)d["layaUp"]);
+            Assert.Contains("Paused", (string)d["layaText"]);
+            Assert.True((bool)AiSettingsPageData.Build(true, true, true, true, "up")["layaUp"]);
+            Assert.Equal("gossip", AiSettingsPageData.SettingOf("toggle-gossip"));
+            Assert.Equal("theme", AiSettingsPageData.SettingOf("toggle-theme"));
+            Assert.Null(AiSettingsPageData.SettingOf("close"));
+        }
+
+        [Fact]
+        public void AiSettingsPage_RendersEverySwitchWithAWordForItsState()
+        {
+            var html = Template.Render(File.ReadAllText(FindPage("sims_options.html")), AiSettingsPageData.Build(true, false, true, false, "up"));
+            Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(html, @"class=""sw on""").Count);   // conversations + simplified menu are on
+            Assert.Contains(">Off<", html); Assert.Contains(">On<", html);
+        }
+
+        static string FindPage(string name)
+        {
+            for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
+            {
+                var p = Path.Combine(d.FullName, "Tools", "HtmlUi", "ui", name);
+                if (File.Exists(p)) return p;
+            }
+            return null;
+        }
+
+        [Fact]
         public void PageData_SimColourIsStablePerName()
         {
             Assert.Equal(SimMemoryPageData.SimColor("Betty"), SimMemoryPageData.SimColor("betty"));

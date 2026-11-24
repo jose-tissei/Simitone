@@ -95,6 +95,13 @@ namespace Simitone.Conversations
             prevLeft = left;
         }
 
+        // for overlays that paint shapes and text directly (speech balloons) without a page: call before FillRect / StrokeRect / DrawText
+        public void BeginDraw(UISpriteBatch b)
+        {
+            batch = b;
+            px = TextureGenerator.GetPxWhite(b.GraphicsDevice);
+        }
+
         public void Draw(UISpriteBatch b)
         {
             batch = b;

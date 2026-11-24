@@ -19,7 +19,11 @@ namespace Simitone.Conversations
         public static AiSubjectBank Subjects = AiSubjectBank.Builtin();
         public static SocialMemory Memory = new SocialMemory();
         public static GossipBook Gossip = new GossipBook();
-        public static bool GossipEnabled = true;
+        static bool gossipEnabled = true;
+        public static bool GossipEnabled { get { return gossipEnabled; } set { gossipEnabled = value; try { File.WriteAllText(GossipFlagPath, value ? "on" : "off"); } catch { } } }
+        static string theme = "night";
+        // "night" or "day": the look of the redesigned windows (balloons and menus stay dark in both)
+        public static string Theme { get { return theme; } set { theme = value == "day" ? "day" : "night"; try { File.WriteAllText(ThemePath, theme); } catch { } } }
         public static readonly LayaClient Laya = new LayaClient(new HttpLayaTransport());
         // requests run on a worker thread, never on the game thread, so they may take longer than the 150 ms planning figure
         static Boot() { Laya.TimeoutMs = 3000; }
@@ -45,6 +49,8 @@ namespace Simitone.Conversations
         static string UserDir { get { return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Simitone"); } }
         static string ProfilePath { get { return Path.Combine(UserDir, "conversations.profile"); } }
         static string MenuPath { get { return Path.Combine(UserDir, "conversations.menu"); } }
+        static string ThemePath { get { return Path.Combine(UserDir, "conversations.theme"); } }
+        static string GossipFlagPath { get { return Path.Combine(UserDir, "conversations.gossip.flag"); } }
         static string GossipPath { get { return Path.Combine(UserDir, "conversations.gossip.json"); } }
         static string MemoryPath { get { return Path.Combine(UserDir, "conversations.memory.json"); } }
 
@@ -67,6 +73,8 @@ namespace Simitone.Conversations
             {
                 GameDir = string.IsNullOrEmpty(gameDir) ? "." : gameDir;
                 try { enabled = !(File.Exists(ProfilePath) && File.ReadAllText(ProfilePath).Trim().ToLowerInvariant() == "off"); } catch { }
+                try { theme = File.Exists(ThemePath) && File.ReadAllText(ThemePath).Trim().ToLowerInvariant() == "day" ? "day" : "night"; } catch { }
+                try { gossipEnabled = !(File.Exists(GossipFlagPath) && File.ReadAllText(GossipFlagPath).Trim().ToLowerInvariant() == "off"); } catch { }
                 try { FullMenu = File.Exists(MenuPath) && File.ReadAllText(MenuPath).Trim().ToLowerInvariant() == "full"; } catch { }
                 Bank = DialogueBank.Load(Path.Combine(GameDir, "Content", "conversations", "bank.json"));
                 Subjects = AiSubjectBank.FromBank(Bank);
@@ -244,6 +252,11 @@ namespace Simitone.Conversations
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "fact": case "news": case "forget": case "gossipstatus": return GossipDirector.Command(a);
                 case "gossip": GossipEnabled = !(a.Length > 1 && a[1] == "off"); return "gossip=" + GossipEnabled;
+                case "theme": if (a.Length > 1) Theme = a[1]; return "theme=" + Theme;
+                case "options":
+                    if (a.Length > 1 && a[1] == "close") return SimsOptionsMenu.Close();
+                    if (a.Length > 1 && a[1] == "click") return SimsOptionsMenu.Act(a.Length > 2 ? a[2] : "");
+                    return SimsOptionsMenu.Open();
                 case "interaction": ParallelSocialPlanner.ForcedInteraction = a.Length > 1 && a[1] != "off" ? a[1] : null; return "forced interaction=" + (ParallelSocialPlanner.ForcedInteraction ?? "none");
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", Enumerable.Reverse(Enumerable.Reverse(File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log"))).Take(8))); } catch { return "(no log)"; }

@@ -294,6 +294,8 @@ namespace Simitone.HtmlUi
             }
         }
 
+        public static Rgba ParseColor(string s) { return Color(s, new Rgba(255, 0, 255)); }
+
         static Rgba Color(string s, Rgba fallback)
         {
             if (string.IsNullOrEmpty(s)) return fallback;

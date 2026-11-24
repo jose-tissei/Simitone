@@ -67,4 +67,9 @@ body { width: 100%; height: 100%; display: flex; align-items: center; justify-co
 .news.flag { border-color: var(--bad); background-color: var(--bad-a8); }
 .news .ico { width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-pill); flex-direction: row; align-items: center; justify-content: center; background-color: var(--raised); border: 2px solid var(--line-strong); }
 .news .hd { font-size: 19px; line-height: 24px; font-weight: 700; }
+/* switch: a track that always says On or Off in words, knob on the right when on */
+.sw { flex-direction: row; align-items: center; justify-content: space-between; width: 96px; height: 40px; flex-shrink: 0; padding-left: 4px; padding-right: 4px; border-radius: 20px; background-color: var(--track); border: 2px solid var(--line-strong); color: var(--text-2); font-size: 16px; font-weight: 700; }
+.sw.on { background-color: var(--good); border-color: var(--good); color: var(--on-accent); }
+.sw .swt { padding-left: 10px; padding-right: 10px; }
+.sw .knob { width: 28px; height: 28px; border-radius: 14px; background-color: var(--text); }
 .btn { flex-direction: row; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding-left: 20px; padding-right: 20px; border-radius: var(--r-pill); border: 3px solid var(--pill-edge); background-image: linear-gradient(180deg, var(--pill-a), var(--pill-b)); color: var(--pill-text); font-size: 18px; font-weight: 600; }

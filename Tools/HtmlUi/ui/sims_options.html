@@ -1,0 +1,51 @@
+<html>
+<body>
+<div class="dlg" style="width: 960px; height: 640px;">
+  <div class="head">
+    <span class="ic s32 i-gear"></span><span>Options</span><span class="sub">Sims AI</span>
+    <span class="spacer"></span>
+    <div class="ibtn" data-action="close" aria-label="Close"><span class="ic s24 i-close"></span></div>
+  </div>
+
+  <div style="flex-direction: column; gap: 12px; padding: 16px 28px 0 28px; flex-grow: 1;">
+    <span class="t-over">Conversations</span>
+
+    <div class="row" data-action="toggle-convo">
+      <span class="ic s28 i-chat"></span>
+      <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>AI conversations</span><span class="sub">Sims choose what to say from their personality and memory.</span></div>
+      <!--#if convo--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+    </div>
+
+    <div class="row" data-action="toggle-gossip">
+      <span class="ic s28 i-news"></span>
+      <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Gossip</span><span class="sub">Sims pass on what they saw. It shows up in each Sim's News.</span></div>
+      <!--#if gossip--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+    </div>
+
+    <span class="t-over" style="margin-top: 8px;">Menus and look</span>
+
+    <div class="row" data-action="toggle-menu">
+      <span class="ic s28 i-pie"></span>
+      <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Simplified pie menu</span><span class="sub">One Talk bubble, romance under Romance. Off shows the game's full menu.</span></div>
+      <!--#if simple--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+    </div>
+
+    <div class="row" data-action="toggle-theme">
+      <span class="ic s28 i-sun"></span>
+      <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Day theme</span><span class="sub">Light panels instead of dark ones. Balloons and menus stay dark.</span></div>
+      <!--#if day--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+    </div>
+
+    <div style="flex-direction: row; align-items: center; gap: 10px; margin-top: 4px;">
+      <span class="t-label muted">Laya</span>
+      <!--#if layaUp--><div class="chip good"><span class="ic s16 i-check"></span><span>{{layaText}}</span></div><!--#else--><div class="chip warn"><span class="ic s16 i-alert"></span><span>{{layaText}}</span></div><!--/if-->
+    </div>
+  </div>
+
+  <div class="foot">
+    <div style="flex-direction: row; align-items: center; gap: 10px;"><div class="key"><span>Esc</span></div><span>or click outside to close</span></div>
+    <span>Changes apply right away</span>
+  </div>
+</div>
+</body>
+</html>

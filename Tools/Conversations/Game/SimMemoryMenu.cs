@@ -540,6 +540,7 @@ namespace Simitone.Conversations
 
         void DrawHtml(UISpriteBatch batch)
         {
+            if (surface.Theme != Boot.Theme) { surface.Theme = Boot.Theme; surface.Invalidate(); }
             if (htmlDirty)
             {
                 htmlDirty = false;
