@@ -1,1125 +1,973 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
-using FSO.Client;
 using FSO.Client.UI.Framework;
-using FSO.Common;
 using FSO.Common.Rendering.Framework.Model;
 using FSO.Common.Utils;
-using FSO.Content;
-using FSO.Files.Formats.IFF.Chunks;
-using FSO.SimAntics;
-using FSO.SimAntics.Model;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace Simitone.Conversations
 {
-    // Full-Screen 3D "Virtual Pocket Lot" Overlay for Law Enforcement Level 4 ("Desk Sergeant"):
-    // 911 Dispatch Triage (DISP-07). Renders the live 3D SimCity PD Precinct Front Desk
-    // edge-to-edge while the home lot VM stays safely paused, combining retro 911 phone lines
-    // with live 3D Walk-in Neighborhood Citizens, custom Blender desk animations, and procedural SFX.
-    public class DispatchTriageOverlay : SimUiElement
+    // Real-Lot UI Overlay for Law Enforcement Level 4 ("Desk Sergeant"):
+    // 911 Dispatch Triage (DISP-07).
+    // Renders cleanly over the live 100%-real-TS1-game-assets Precinct Front Desk (works in 3D & 2D):
+    //   - Pulsing clickable world markers directly over the real TS1 Desk Phone & real Walk-In Sim
+    //   - Tactile Phone Switchboard Modal (SimCity PD desk telephone console with Department Buttons)
+    //   - Tactile Paper Forms Clipboard Modal (4 physical color-coded stamped Referral Forms to hand to Walk-In Sims)
+    //   - S/A/B/C Shift Scorecard & seamless return to the player's home lot
+    public sealed class DispatchTriageOverlay : SimUiElement
     {
         static DispatchTriageOverlay instance;
         static bool isOpen;
 
-        VMAvatar avatar;
-        DispatchTriageGame game;
-        DispatchTriageOutcome finalOutcome;
-        bool rewardsApplied;
-        int savedSpeed = 1;
-        bool finishSoundPlayed;
-        float walkInStepAccumSec;
-        bool walkInStepToggle;
-        float urgentBeepAccumSec;
-
-        bool prevLeftDown, prevEscDown, prevEnterDown, prevSpaceDown, prevTabDown;
-        bool prevD1Down, prevD2Down, prevD3Down, prevD4Down, prevCDown;
-
-        int hoverCaseIndex = -1;
-        bool hoverStart, hoverSkip, hoverClose, hoverClaim, hoverCalm;
-        bool hoverPatrol, hoverFire, hoverAid, hoverDismiss;
-
-        Rectangle startBtnRect, skipBtnRect, closeBtnRect, claimBtnRect, calmBtnRect;
-        Rectangle patrolBtnRect, fireBtnRect, aidBtnRect, dismissBtnRect;
-        readonly List<Tuple<int, Rectangle>> queueHitRects = new List<Tuple<int, Rectangle>>(4);
-
-        readonly DispatchTriageSceneRenderer sceneRenderer = new DispatchTriageSceneRenderer();
-        readonly VirtualLotTransition transition = new VirtualLotTransition();
-        readonly DispatchAudioEngine audio = new DispatchAudioEngine();
-
         readonly TextStyle titleStyle;
-        readonly TextStyle bannerTitleStyle;
-        readonly TextStyle bannerSubStyle;
+        readonly TextStyle headerStyle;
         readonly TextStyle subStyle;
         readonly TextStyle bodyStyle;
+        readonly TextStyle darkBodyStyle;
+        readonly TextStyle darkHeaderStyle;
+        readonly TextStyle darkSmallStyle;
         readonly TextStyle smallStyle;
         readonly TextStyle badgeStyle;
         readonly TextStyle cyanStyle;
         readonly TextStyle mintStyle;
-        readonly TextStyle amberStyle;
+        readonly TextStyle goldStyle;
         readonly TextStyle redStyle;
         readonly TextStyle gradeStyle;
+        readonly TextStyle lcdStyle;
+        readonly TextStyle lcdDimStyle;
+
+        Rectangle startBtnRect;
+        Rectangle skipBtnRect;
+        Rectangle endShiftBtnRect;
+        Rectangle claimBtnRect;
+
+        Rectangle phoneMarkerRect;
+        Rectangle walkInMarkerRect;
+        Rectangle queuePhoneBtnRect;
+        Rectangle queueWalkInBtnRect;
+
+        Rectangle modalCloseRect;
+        Rectangle modalCalmRect;
+        readonly Rectangle[] deptBtnRects = new Rectangle[4];
+
+        bool hoverStart, hoverSkip, hoverEnd, hoverClaim;
+        bool hoverPhoneMarker, hoverWalkInMarker, hoverQueuePhone, hoverQueueWalkIn;
+        bool hoverModalClose, hoverModalCalm;
+        int hoverDeptIdx = -1;
+
+        bool prevLeftDown, prevEnterDown, prevSpaceDown, prevEscDown;
+        bool prevD1, prevD2, prevD3, prevD4, prevKeyC;
+        float uiPulseSec;
 
         public static bool IsOpen { get { return isOpen && instance != null && instance.Parent != null; } }
 
         DispatchTriageOverlay()
         {
-            titleStyle = SimUiTokens.MakeStyle(16, Color.White, true);
-            bannerTitleStyle = SimUiTokens.MakeStyle(22, Color.White, true);
-            bannerSubStyle = SimUiTokens.MakeStyle(11, SimUiTokens.Cyan, true);
-            subStyle = SimUiTokens.MakeStyle(12, new Color(176, 196, 218), true);
-            bodyStyle = SimUiTokens.MakeStyle(13, SimUiTokens.TextPrimary, true);
-            smallStyle = SimUiTokens.MakeStyle(11, new Color(228, 240, 252), true);
-            badgeStyle = SimUiTokens.MakeStyle(12, Color.White, true);
+            titleStyle = SimUiTokens.MakeStyle(17, SimUiTokens.DialogTitle, true);
+            headerStyle = SimUiTokens.MakeStyle(14, SimUiTokens.DialogTitle, true);
+            subStyle = SimUiTokens.MakeStyle(11, SimUiTokens.TextMuted, true);
+            bodyStyle = SimUiTokens.MakeStyle(12, SimUiTokens.TextPrimary, true);
+            darkBodyStyle = SimUiTokens.MakeStyle(12, new Color(36, 32, 28), true);
+            darkHeaderStyle = SimUiTokens.MakeStyle(13, new Color(26, 24, 22), true);
+            darkSmallStyle = SimUiTokens.MakeStyle(10, new Color(82, 74, 66), true);
+            smallStyle = SimUiTokens.MakeStyle(11, SimUiTokens.TextSubtle, true);
+            badgeStyle = SimUiTokens.MakeStyle(11, Color.White, true);
             cyanStyle = SimUiTokens.MakeStyle(12, SimUiTokens.Cyan, true);
             mintStyle = SimUiTokens.MakeStyle(12, SimUiTokens.Mint, true);
-            amberStyle = SimUiTokens.MakeStyle(12, new Color(255, 206, 92), true);
-            redStyle = SimUiTokens.MakeStyle(12, new Color(255, 118, 112), true);
-            gradeStyle = SimUiTokens.MakeStyle(40, Color.White, true);
+            goldStyle = SimUiTokens.MakeStyle(12, new Color(246, 206, 94), true);
+            redStyle = SimUiTokens.MakeStyle(12, new Color(244, 118, 118), true);
+            gradeStyle = SimUiTokens.MakeStyle(36, Color.White, true);
+            lcdStyle = SimUiTokens.MakeStyle(13, new Color(172, 248, 186), true);
+            lcdDimStyle = SimUiTokens.MakeStyle(11, new Color(118, 192, 138), true);
         }
 
-        public static string Open(
-            VMAvatar av,
-            int? logicLevelOverride = null,
-            int? charismaLevelOverride = null,
-            int? seed = null)
+        public static void OpenForRealLot()
         {
             try
             {
                 var screen = UIScreen.Current;
-                if (screen == null) return "no screen";
+                if (screen == null) return;
                 if (instance == null) instance = new DispatchTriageOverlay();
                 if (instance.Parent != null && instance.Parent != screen)
                     instance.Parent.Remove(instance);
                 screen.Add(instance);
-
-                instance.avatar = av;
-                string simName = av != null && !string.IsNullOrWhiteSpace(av.Name) ? av.Name.Trim() : "Sim";
-                int logicLvl = logicLevelOverride.HasValue
-                    ? logicLevelOverride.Value
-                    : (av != null ? av.GetPersonData(VMPersonDataVariable.LogicSkill) / 100 : 3);
-                int charismaLvl = charismaLevelOverride.HasValue
-                    ? charismaLevelOverride.Value
-                    : (av != null ? av.GetPersonData(VMPersonDataVariable.CharismaSkill) / 100 : 3);
-
-                var callers = CollectNeighborhoodCallers(av);
-                instance.game = new DispatchTriageGame(
-                    sergeantName: simName,
-                    logicSkillLevel: logicLvl,
-                    charismaSkillLevel: charismaLvl,
-                    neighborhoodCallers: callers,
-                    seed: seed,
-                    startInBriefing: true);
-
-                instance.finalOutcome = null;
-                instance.rewardsApplied = false;
-                instance.finishSoundPlayed = false;
-                instance.walkInStepAccumSec = 0f;
-                instance.walkInStepToggle = false;
-                instance.urgentBeepAccumSec = 0f;
-
-                instance.transition.BeginEnter(
-                    "SIMCITY PD  •  911 DISPATCH DESK",
-                    "PRECINCT FRONT COUNTER  •  VIRTUAL SHIFT LOT (HOME LOT PAUSED)");
-
-                var vm = CareerDispatchDriver.CurrentVM();
-                if (vm != null)
-                {
-                    instance.savedSpeed = vm.SpeedMultiplier > 0 ? vm.SpeedMultiplier : 1;
-                    vm.SpeedMultiplier = 0;
-                }
-                else
-                {
-                    instance.savedSpeed = 1;
-                }
-
-                instance.prevLeftDown = true;
-                var kb = Keyboard.GetState();
-                instance.prevEscDown = kb.IsKeyDown(Keys.Escape);
-                instance.prevEnterDown = kb.IsKeyDown(Keys.Enter);
-                instance.prevSpaceDown = kb.IsKeyDown(Keys.Space);
-                instance.prevTabDown = kb.IsKeyDown(Keys.Tab);
-                instance.prevD1Down = kb.IsKeyDown(Keys.D1);
-                instance.prevD2Down = kb.IsKeyDown(Keys.D2);
-                instance.prevD3Down = kb.IsKeyDown(Keys.D3);
-                instance.prevD4Down = kb.IsKeyDown(Keys.D4);
-                instance.prevCDown = kb.IsKeyDown(Keys.C);
-
-                instance.Visible = true;
                 isOpen = true;
-
-                instance.audio.StartSession();
-                instance.audio.StartAmbience(0.18f);
-                instance.audio.Play(DispatchSfxId.ArrivalCue, 0.44f);
-                Boot.Log("dispatch-triage: opened 3D Precinct Front Desk for " + simName + " (Logic=" + logicLvl + " Charisma=" + charismaLvl + ")");
-                return "ok " + instance.StatusText();
+                instance.prevLeftDown = true;
+                instance.prevEnterDown = true;
+                instance.prevSpaceDown = true;
+                instance.prevEscDown = true;
             }
-            catch (Exception e)
-            {
-                return "err " + e.Message;
-            }
+            catch (Exception e) { Boot.Log("dispatch-triage overlay open error: " + e.Message); }
         }
 
-        public static void Close(bool applyRewards)
+        public static void Close()
         {
-            if (instance == null) return;
+            isOpen = false;
             try
             {
-                if (applyRewards && !instance.rewardsApplied && instance.game != null)
-                {
-                    var outcome = instance.finalOutcome ?? instance.game.ComputeOutcome();
-                    ApplyOutcomeRewards(instance.avatar, outcome);
-                    instance.rewardsApplied = true;
-                }
+                if (instance != null && instance.Parent != null)
+                    instance.Parent.Remove(instance);
             }
-            catch (Exception e) { Boot.Log("dispatch-triage reward error: " + e.Message); }
-
-            instance.audio.StopAmbience();
-            var vm = CareerDispatchDriver.CurrentVM();
-            if (vm != null && vm.SpeedMultiplier == 0)
-                vm.SpeedMultiplier = instance.savedSpeed > 0 ? instance.savedSpeed : 1;
-
-            isOpen = false;
-            instance.Visible = false;
-            if (instance.Parent != null)
-                instance.Parent.Remove(instance);
-        }
-
-        public static string StatusSummary()
-        {
-            return IsOpen ? instance.StatusText() : "closed";
-        }
-
-        public static string ExportLastSessionWav(string path, float leadSec = 0f, float tailSec = 1.0f)
-        {
-            if (instance == null) return "err no dispatch triage session";
-            return instance.audio.ExportSessionWav(path, leadSec, tailSec);
-        }
-
-        public static string HandleTestAction(string cmd)
-        {
-            if (!IsOpen || instance.game == null) return "err dispatch triage not open";
-            string c = (cmd ?? "").Trim().ToLowerInvariant();
-            var g = instance.game;
-
-            if (c == "start" || c == "begin")
-            {
-                g.BeginShift();
-                instance.ProcessGameEvents();
-                return "ok " + instance.StatusText();
-            }
-            if (c == "patrol" || c == "1")
-            {
-                bool ok = g.RouteSelectedCase(DispatchRouteAction.DispatchPatrol);
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "busy ") + instance.StatusText();
-            }
-            if (c == "fire" || c == "2")
-            {
-                bool ok = g.RouteSelectedCase(DispatchRouteAction.DispatchFire);
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "busy ") + instance.StatusText();
-            }
-            if (c == "aid" || c == "community" || c == "3")
-            {
-                bool ok = g.RouteSelectedCase(DispatchRouteAction.CommunityAid);
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "busy ") + instance.StatusText();
-            }
-            if (c == "dismiss" || c == "prank" || c == "4")
-            {
-                bool ok = g.RouteSelectedCase(DispatchRouteAction.DismissCall);
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "busy ") + instance.StatusText();
-            }
-            if (c == "auto" || c == "correct")
-            {
-                var sel = g.SelectedCase;
-                if (sel == null) return "err no active case";
-                bool ok = g.RouteSelectedCase(sel.CorrectAction);
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "busy ") + instance.StatusText();
-            }
-            if (c == "calm" || c == "c")
-            {
-                bool ok = g.CalmSelectedCaller();
-                instance.ProcessGameEvents();
-                return (ok ? "ok " : "err ") + instance.StatusText();
-            }
-            if (c == "cycle" || c == "tab")
-            {
-                g.CycleSelectedCase();
-                return "ok " + instance.StatusText();
-            }
-            if (c == "select_walkin")
-            {
-                var wi = g.GetActiveCases().FirstOrDefault(x => x.Channel == DispatchCallChannel.WalkIn);
-                if (wi == null) return "err no active walkin";
-                g.SelectCase(wi.CaseIndex);
-                return "ok " + instance.StatusText();
-            }
-            if (c.StartsWith("select "))
-            {
-                int idx;
-                if (int.TryParse(c.Substring(7).Trim(), out idx) && g.SelectCase(idx))
-                    return "ok " + instance.StatusText();
-                return "err invalid case index";
-            }
-            if (c == "claim" || c == "finish")
-            {
-                if (g.IsFinished)
-                {
-                    Close(true);
-                    return "ok claimed";
-                }
-                return "err shift not finished";
-            }
-            if (c == "skip" || c == "close")
-            {
-                Close(false);
-                return "ok closed";
-            }
-            return "err unknown triage action: " + c;
-        }
-
-        string StatusText()
-        {
-            if (game == null) return "none";
-            var sel = game.SelectedCase;
-            var wi = game.ActiveWalkIn;
-            return "triage: briefing=" + game.IsBriefing +
-                   " finished=" + game.IsFinished +
-                   " resolved=" + game.ResolvedCount + "/" + game.TotalCases +
-                   " active=" + game.GetActiveCases().Count +
-                   " score=" + game.Score +
-                   " gesture=" + game.CurrentGesture +
-                   " sel=" + (sel != null ? (sel.CaseIndex + ":" + sel.Channel + ":" + sel.CorrectAction) : "none") +
-                   " walkin=" + (wi != null ? (wi.CallerName + "@" + wi.WalkInApproach.ToString("0.00", CultureInfo.InvariantCulture)) : "none") +
-                   " units=P" + game.AvailablePatrolUnits + "F" + game.AvailableFireUnits + "C" + game.AvailableCommunityUnits +
-                   " audioCues=" + audio.RecordedCueCount +
-                   " [" + sceneRenderer.DiagnosticSummary() + "]";
+            catch { }
         }
 
         public override void PreDraw(UISpriteBatch batch)
         {
             base.PreDraw(batch);
-            if (!isOpen || game == null) return;
-            var gd = batch != null ? batch.GraphicsDevice : GameFacade.GraphicsDevice;
-            sceneRenderer.PreDraw(gd, game, avatar);
+            if (!isOpen) return;
+            try { DispatchTriageDriver.PreDrawFrame(); }
+            catch (Exception e) { Boot.Log("dispatch-triage PreDraw error: " + e.Message); }
         }
 
         public override void Update(UpdateState state)
         {
             base.Update(state);
-            if (!isOpen || game == null) return;
+            if (!isOpen) return;
 
-            float dt = 1f / 60f;
-            if (transition.Tick(dt))
+            uiPulseSec += 1f / 60f;
+            DispatchTriageDriver.TickAlertSweep();
+
+            var game = DispatchTriageDriver.Game;
+            if (game == null || !DispatchTriageDriver.IsPrecinctLotLive)
             {
-                Close(transition.ExitApplyRewards);
+                Close();
                 return;
             }
 
-            if (!game.IsBriefing && !game.IsFinished)
-            {
-                game.Tick(dt);
-                ProcessGameEvents();
-
-                // Footsteps while 3D Walk-in townie strides across marble precinct floor!
-                if (sceneRenderer.WalkInIsWalking)
-                {
-                    walkInStepAccumSec += dt;
-                    if (walkInStepAccumSec >= 0.34f)
-                    {
-                        walkInStepAccumSec -= 0.34f;
-                        walkInStepToggle = !walkInStepToggle;
-                        audio.Play(walkInStepToggle ? DispatchSfxId.WalkInStepA : DispatchSfxId.WalkInStepB, 0.28f);
-                    }
-                }
-                else
-                {
-                    walkInStepAccumSec = 0f;
-                }
-
-                // Low-urgency subtle warning beep if any call drops below 25%
-                bool anyUrgent = game.GetActiveCases().Any(c => c.UrgencyFraction < 0.25f);
-                if (anyUrgent)
-                {
-                    urgentBeepAccumSec += dt;
-                    if (urgentBeepAccumSec >= 1.35f)
-                    {
-                        urgentBeepAccumSec = 0f;
-                        audio.Play(DispatchSfxId.UrgentBeep, 0.24f);
-                    }
-                }
-                else
-                {
-                    urgentBeepAccumSec = 0f;
-                }
-            }
-
-            if (game.IsFinished && finalOutcome == null)
-            {
-                finalOutcome = game.ComputeOutcome();
-                if (!finishSoundPlayed)
-                {
-                    finishSoundPlayed = true;
-                    audio.Play(DispatchSfxId.ShiftFanfare, 0.50f);
-                }
-            }
-
-            HandleInput();
-        }
-
-        void ProcessGameEvents()
-        {
-            var events = game.DrainEvents();
-            if (events == null) return;
-            for (int i = 0; i < events.Count; i++)
-            {
-                var ev = events[i];
-                switch (ev.Kind)
-                {
-                    case "call_arrived":
-                        audio.Play(DispatchSfxId.PhoneRing, 0.44f);
-                        break;
-                    case "walkin_arrived":
-                        audio.Play(DispatchSfxId.WalkInBell, 0.48f);
-                        break;
-                    case "routed_good":
-                        PlayDispatchSfx(ev.Action);
-                        audio.Play(DispatchSfxId.CorrectChime, 0.42f);
-                        break;
-                    case "routed_wrong":
-                        PlayDispatchSfx(ev.Action);
-                        audio.Play(DispatchSfxId.WrongBuzzer, 0.46f);
-                        break;
-                    case "calmed":
-                        audio.Play(DispatchSfxId.CalmCallerChime, 0.44f);
-                        break;
-                    case "missed":
-                    case "unit_busy":
-                        audio.Play(DispatchSfxId.WrongBuzzer, 0.42f);
-                        break;
-                }
-            }
-        }
-
-        void PlayDispatchSfx(DispatchRouteAction action)
-        {
-            switch (action)
-            {
-                case DispatchRouteAction.DispatchPatrol:
-                    audio.Play(DispatchSfxId.RadioDispatchPatrol, 0.48f);
-                    break;
-                case DispatchRouteAction.DispatchFire:
-                    audio.Play(DispatchSfxId.RadioDispatchFire, 0.48f);
-                    break;
-                case DispatchRouteAction.CommunityAid:
-                    audio.Play(DispatchSfxId.RadioDispatchCommunity, 0.46f);
-                    break;
-                case DispatchRouteAction.DismissCall:
-                    audio.Play(DispatchSfxId.HangUpDismiss, 0.48f);
-                    break;
-            }
-        }
-
-        void HandleInput()
-        {
-            var ms = Mouse.GetState();
-            var kb = Keyboard.GetState();
-            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
-            var pt = new Point((int)(ms.X / scale), (int)(ms.Y / scale));
-            bool leftDown = ms.LeftButton == ButtonState.Pressed;
-            bool clicked = leftDown && !prevLeftDown;
-
-            bool escPressed = kb.IsKeyDown(Keys.Escape) && !prevEscDown;
-            bool enterPressed = kb.IsKeyDown(Keys.Enter) && !prevEnterDown;
-            bool spacePressed = kb.IsKeyDown(Keys.Space) && !prevSpaceDown;
-            bool tabPressed = kb.IsKeyDown(Keys.Tab) && !prevTabDown;
-            bool d1Pressed = kb.IsKeyDown(Keys.D1) && !prevD1Down;
-            bool d2Pressed = kb.IsKeyDown(Keys.D2) && !prevD2Down;
-            bool d3Pressed = kb.IsKeyDown(Keys.D3) && !prevD3Down;
-            bool d4Pressed = kb.IsKeyDown(Keys.D4) && !prevD4Down;
-            bool cPressed = kb.IsKeyDown(Keys.C) && !prevCDown;
-
-            hoverStart = startBtnRect.Contains(pt);
-            hoverSkip = skipBtnRect.Contains(pt);
-            hoverClose = closeBtnRect.Contains(pt);
-            hoverClaim = claimBtnRect.Contains(pt);
-            hoverCalm = calmBtnRect.Contains(pt);
-            hoverPatrol = patrolBtnRect.Contains(pt);
-            hoverFire = fireBtnRect.Contains(pt);
-            hoverAid = aidBtnRect.Contains(pt);
-            hoverDismiss = dismissBtnRect.Contains(pt);
-
-            hoverCaseIndex = -1;
-            for (int i = 0; i < queueHitRects.Count; i++)
-            {
-                if (queueHitRects[i].Item2.Contains(pt))
-                {
-                    hoverCaseIndex = queueHitRects[i].Item1;
-                    break;
-                }
-            }
-
-            if (transition.Phase != VirtualLotPhase.Exiting)
-            {
-                if (game.IsBriefing)
-                {
-                    if ((clicked && hoverStart) || enterPressed || spacePressed)
-                    {
-                        game.BeginShift();
-                        ProcessGameEvents();
-                    }
-                    else if ((clicked && hoverSkip) || escPressed)
-                    {
-                        transition.BeginExit(false);
-                    }
-                }
-                else if (game.IsFinished)
-                {
-                    if ((clicked && hoverClaim) || enterPressed || spacePressed)
-                    {
-                        transition.BeginExit(true);
-                    }
-                    else if (escPressed)
-                    {
-                        transition.BeginExit(true);
-                    }
-                }
-                else
-                {
-                    if ((clicked && hoverClose) || escPressed)
-                    {
-                        transition.BeginExit(false);
-                    }
-                    else if (clicked && hoverCaseIndex >= 0)
-                    {
-                        if (game.SelectCase(hoverCaseIndex))
-                            audio.Play(DispatchSfxId.PhonePickup, 0.36f);
-                    }
-                    else if (tabPressed)
-                    {
-                        if (game.CycleSelectedCase())
-                            audio.Play(DispatchSfxId.PhonePickup, 0.34f);
-                    }
-                    else if ((clicked && hoverPatrol) || d1Pressed)
-                    {
-                        game.RouteSelectedCase(DispatchRouteAction.DispatchPatrol);
-                        ProcessGameEvents();
-                    }
-                    else if ((clicked && hoverFire) || d2Pressed)
-                    {
-                        game.RouteSelectedCase(DispatchRouteAction.DispatchFire);
-                        ProcessGameEvents();
-                    }
-                    else if ((clicked && hoverAid) || d3Pressed)
-                    {
-                        game.RouteSelectedCase(DispatchRouteAction.CommunityAid);
-                        ProcessGameEvents();
-                    }
-                    else if ((clicked && hoverDismiss) || d4Pressed)
-                    {
-                        game.RouteSelectedCase(DispatchRouteAction.DismissCall);
-                        ProcessGameEvents();
-                    }
-                    else if ((clicked && hoverCalm) || cPressed)
-                    {
-                        game.CalmSelectedCaller();
-                        ProcessGameEvents();
-                    }
-                }
-            }
-
+            var m = state.MouseState;
+            var kb = state.KeyboardState;
+            int mx = m.X;
+            int my = m.Y;
+            bool leftDown = m.LeftButton == ButtonState.Pressed;
+            bool justClicked = leftDown && !prevLeftDown;
             prevLeftDown = leftDown;
-            prevEscDown = kb.IsKeyDown(Keys.Escape);
-            prevEnterDown = kb.IsKeyDown(Keys.Enter);
-            prevSpaceDown = kb.IsKeyDown(Keys.Space);
-            prevTabDown = kb.IsKeyDown(Keys.Tab);
-            prevD1Down = kb.IsKeyDown(Keys.D1);
-            prevD2Down = kb.IsKeyDown(Keys.D2);
-            prevD3Down = kb.IsKeyDown(Keys.D3);
-            prevD4Down = kb.IsKeyDown(Keys.D4);
-            prevCDown = kb.IsKeyDown(Keys.C);
+
+            bool enterDown = kb.IsKeyDown(Keys.Enter);
+            bool spaceDown = kb.IsKeyDown(Keys.Space);
+            bool escDown = kb.IsKeyDown(Keys.Escape);
+            bool d1 = kb.IsKeyDown(Keys.D1) || kb.IsKeyDown(Keys.NumPad1);
+            bool d2 = kb.IsKeyDown(Keys.D2) || kb.IsKeyDown(Keys.NumPad2);
+            bool d3 = kb.IsKeyDown(Keys.D3) || kb.IsKeyDown(Keys.NumPad3);
+            bool d4 = kb.IsKeyDown(Keys.D4) || kb.IsKeyDown(Keys.NumPad4);
+            bool keyC = kb.IsKeyDown(Keys.C);
+
+            bool enterPressed = enterDown && !prevEnterDown;
+            bool spacePressed = spaceDown && !prevSpaceDown;
+            bool escPressed = escDown && !prevEscDown;
+            bool d1Pressed = d1 && !prevD1;
+            bool d2Pressed = d2 && !prevD2;
+            bool d3Pressed = d3 && !prevD3;
+            bool d4Pressed = d4 && !prevD4;
+            bool cPressed = keyC && !prevKeyC;
+
+            prevEnterDown = enterDown;
+            prevSpaceDown = spaceDown;
+            prevEscDown = escDown;
+            prevD1 = d1;
+            prevD2 = d2;
+            prevD3 = d3;
+            prevD4 = d4;
+            prevKeyC = keyC;
+
+            hoverStart = hoverSkip = hoverEnd = hoverClaim = false;
+            hoverPhoneMarker = hoverWalkInMarker = hoverQueuePhone = hoverQueueWalkIn = false;
+            hoverModalClose = hoverModalCalm = false;
+            hoverDeptIdx = -1;
+
+            if (game.IsBriefing)
+            {
+                hoverStart = startBtnRect.Contains(mx, my);
+                hoverSkip = skipBtnRect.Contains(mx, my);
+
+                if (enterPressed || spacePressed || (justClicked && hoverStart))
+                    DispatchTriageDriver.HandleTestAction("start");
+                else if (escPressed || (justClicked && hoverSkip))
+                    DispatchTriageDriver.RequestReturnHome(false);
+                return;
+            }
+
+            if (game.IsFinished && DispatchTriageDriver.FinalOutcome != null)
+            {
+                hoverClaim = claimBtnRect.Contains(mx, my);
+                if (enterPressed || spacePressed || escPressed || (justClicked && hoverClaim))
+                    DispatchTriageDriver.RequestReturnHome(true);
+                return;
+            }
+
+            var modal = DispatchTriageDriver.ActiveModal;
+            if (modal != TriageModalMode.None)
+            {
+                hoverModalClose = modalCloseRect.Contains(mx, my);
+                hoverModalCalm = modalCalmRect.Contains(mx, my);
+                for (int i = 0; i < 4; i++)
+                    if (deptBtnRects[i].Contains(mx, my)) hoverDeptIdx = i;
+
+                if (escPressed || (justClicked && hoverModalClose))
+                {
+                    DispatchTriageDriver.CloseActiveModal();
+                    return;
+                }
+                if (cPressed || (justClicked && hoverModalCalm))
+                {
+                    DispatchTriageDriver.CalmActiveModalCaller();
+                    return;
+                }
+                if (d1Pressed || (justClicked && hoverDeptIdx == 0))
+                {
+                    DispatchTriageDriver.RouteActiveModalCase(DispatchRouteAction.DispatchPatrol);
+                    return;
+                }
+                if (d2Pressed || (justClicked && hoverDeptIdx == 1))
+                {
+                    DispatchTriageDriver.RouteActiveModalCase(DispatchRouteAction.DispatchFire);
+                    return;
+                }
+                if (d3Pressed || (justClicked && hoverDeptIdx == 2))
+                {
+                    DispatchTriageDriver.RouteActiveModalCase(DispatchRouteAction.CommunityAid);
+                    return;
+                }
+                if (d4Pressed || (justClicked && hoverDeptIdx == 3))
+                {
+                    DispatchTriageDriver.RouteActiveModalCase(DispatchRouteAction.DismissCall);
+                    return;
+                }
+                return;
+            }
+
+            // Live precinct lobby (no modal open): player can click world markers, queue pills, or native Pie Menu!
+            hoverEnd = endShiftBtnRect.Contains(mx, my);
+            hoverPhoneMarker = !phoneMarkerRect.IsEmpty && phoneMarkerRect.Contains(mx, my);
+            hoverWalkInMarker = !walkInMarkerRect.IsEmpty && walkInMarkerRect.Contains(mx, my);
+            hoverQueuePhone = !queuePhoneBtnRect.IsEmpty && queuePhoneBtnRect.Contains(mx, my);
+            hoverQueueWalkIn = !queueWalkInBtnRect.IsEmpty && queueWalkInBtnRect.Contains(mx, my);
+
+            if (justClicked && hoverEnd)
+            {
+                DispatchTriageDriver.RequestReturnHome(false);
+                return;
+            }
+            if (justClicked && (hoverPhoneMarker || hoverQueuePhone))
+            {
+                DispatchTriageDriver.OpenPhoneSwitchboardModal();
+                return;
+            }
+            if (justClicked && (hoverWalkInMarker || hoverQueueWalkIn))
+            {
+                DispatchTriageDriver.OpenPaperFormsModal();
+                return;
+            }
         }
 
         public override void Draw(UISpriteBatch batch)
         {
-            if (!isOpen || game == null || batch == null) return;
-            var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
-            float fsw, fsh;
-            GetScreenSize(batch, out fsw, out fsh);
-            int sw = Math.Max(800, (int)Math.Round(fsw));
-            int sh = Math.Max(600, (int)Math.Round(fsh));
-            var fullRect = new Rectangle(0, 0, sw, sh);
+            if (!isOpen) return;
+            var game = DispatchTriageDriver.Game;
+            if (game == null) return;
 
-            // 1. Draw Full-Screen Live 3D Precinct Front Desk edge-to-edge!
-            if (sceneRenderer.HasLiveFrame && sceneRenderer.TargetTexture != null)
-                batch.Draw(sceneRenderer.TargetTexture, fullRect, Color.White);
-            else
-                batch.Draw(px, fullRect, new Color(22, 32, 48));
-
-            startBtnRect = skipBtnRect = closeBtnRect = claimBtnRect = calmBtnRect = Rectangle.Empty;
-            patrolBtnRect = fireBtnRect = aidBtnRect = dismissBtnRect = Rectangle.Empty;
-            queueHitRects.Clear();
-
-            // 2. Draw Overhead 3D Speech Callouts above Desk Sergeant & Live 3D Walk-in Citizen!
-            if (!game.IsBriefing && !game.IsFinished)
-                DrawWorldSpeechCallouts(batch, px, sw, sh);
-
-            // 3. Draw Briefing, Active 911 Switchboard HUD, or S/A/B/C Scorecard
-            if (game.IsBriefing)
-                DrawBriefingCard(batch, px, sw, sh);
-            else if (game.IsFinished)
-                DrawScorecard(batch, px, sw, sh);
-            else
-                DrawActiveSwitchboardHud(batch, px, sw, sh);
-
-            // 4. Cinematic Virtual Pocket Lot Fade & Arrival Banner
-            DrawTransitionOverlay(batch, px, sw, sh);
-        }
-
-        void DrawWorldSpeechCallouts(UISpriteBatch batch, Texture2D px, int sw, int sh)
-        {
-            bool showSgt = game.SergeantSpeechTimerSec > 0.05f && !string.IsNullOrWhiteSpace(game.SergeantSpokenLine);
-            var wi = game.ActiveWalkIn;
-            bool showWalkIn = wi != null && sceneRenderer.WalkInVisible && !wi.WalkInLeaving && wi.WalkInApproach >= 0.85f;
-
-            // Desk Sergeant spoken radio/phone confirmation bubble (upper-left lane above counter)
-            if (showSgt)
+            try
             {
-                int cx = (int)(Math.Max(0.36f, Math.Min(0.56f, sceneRenderer.SergeantHeadNorm.X)) * sw);
-                int cy = (int)(Math.Max(0.14f, Math.Min(0.34f, sceneRenderer.SergeantHeadNorm.Y)) * sh) - 52;
-                DrawSpeechPill(batch, px, sw, cx, cy, "SGT. " + game.SergeantName.ToUpperInvariant(),
-                    "\u201C" + game.SergeantSpokenLine + "\u201D", SimUiTokens.Cyan, 326, sw - 20);
-            }
+                var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
+                float sw, sh;
+                GetScreenSize(batch, out sw, out sh);
 
-            // Live 3D Walk-in Citizen bubble once standing at the front counter (offset cleanly right & lower if Sgt. is speaking)
-            if (showWalkIn)
-            {
-                int cx = (int)(Math.Max(0.66f, Math.Min(0.84f, sceneRenderer.WalkInHeadNorm.X)) * sw);
-                int cy = (int)(Math.Max(0.22f, Math.Min(0.46f, sceneRenderer.WalkInHeadNorm.Y)) * sh) - (showSgt ? 6 : 42);
-                int minX = showSgt ? Math.Max(326, sw / 2 + 48) : 326;
-                DrawSpeechPill(batch, px, sw, cx, cy, wi.CallerName.ToUpperInvariant() + " (WALK-IN)",
-                    "\u201C" + wi.TranscriptLine1 + "\u201D", SimUiTokens.Mint, minX, sw - 20);
-            }
-        }
+                startBtnRect = Rectangle.Empty;
+                skipBtnRect = Rectangle.Empty;
+                endShiftBtnRect = Rectangle.Empty;
+                claimBtnRect = Rectangle.Empty;
+                phoneMarkerRect = Rectangle.Empty;
+                walkInMarkerRect = Rectangle.Empty;
+                queuePhoneBtnRect = Rectangle.Empty;
+                queueWalkInBtnRect = Rectangle.Empty;
+                modalCloseRect = Rectangle.Empty;
+                modalCalmRect = Rectangle.Empty;
+                for (int i = 0; i < 4; i++) deptBtnRects[i] = Rectangle.Empty;
 
-        void DrawSpeechPill(UISpriteBatch batch, Texture2D px, int sw, int centerX, int topY, string speaker, string line, Color accent, int minX, int maxRight)
-        {
-            string trimmed = Truncate(line, 56);
-            int w = Math.Max(220, Math.Min(400, (int)bodyStyle.MeasureString(trimmed).X + 28));
-            int h = 48;
-            int x = Math.Max(minX, Math.Min(maxRight - w, centerX - w / 2));
-            int y = Math.Max(68, topY);
-            var r = new Rectangle(x, y, w, h);
-
-            DrawRoundedPanel(batch, px, r, 10, new Color(10, 18, 30, 224), new Color((int)accent.R, (int)accent.G, (int)accent.B, 195), 2);
-            DrawLocalString(batch, speaker, new Vector2(x + 12, y + 6), accent == SimUiTokens.Mint ? mintStyle : cyanStyle);
-            DrawLocalString(batch, trimmed, new Vector2(x + 12, y + 23), bodyStyle);
-        }
-
-        void DrawBriefingCard(UISpriteBatch batch, Texture2D px, int sw, int sh)
-        {
-            int w = Math.Min(500, sw - 48);
-            int h = 424;
-            int x = 24;
-            int y = Math.Max(82, (sh - h) / 2);
-            var card = new Rectangle(x, y, w, h);
-
-            DrawRoundedPanel(batch, px, card, 14, new Color(12, 20, 34, 232), new Color(68, 178, 236, 170), 2);
-
-            int cy = y + 18;
-            DrawLocalString(batch, "LAW ENFORCEMENT  •  LEVEL 4", new Vector2(x + 20, cy), cyanStyle);
-            cy += 22;
-            DrawLocalString(batch, "DESK SERGEANT: 911 TRIAGE", new Vector2(x + 20, cy), titleStyle);
-            cy += 26;
-            DrawLocalString(batch, "Officer on Duty: Sgt. " + game.SergeantName, new Vector2(x + 20, cy), mintStyle);
-            cy += 26;
-
-            batch.Draw(px, new Rectangle(x + 20, cy, w - 40, 1), new Color(72, 130, 180, 90));
-            cy += 14;
-
-            DrawLocalString(batch, "Juggle incoming 911 phone lines AND live 3D", new Vector2(x + 20, cy), bodyStyle);
-            cy += 20;
-            DrawLocalString(batch, "walk-in townies at the SimCity PD Front Desk:", new Vector2(x + 20, cy), bodyStyle);
-            cy += 28;
-
-            DrawLocalString(batch, "[1] PATROL (2 units) — Burglars & break-ins", new Vector2(x + 24, cy), cyanStyle);
-            cy += 22;
-            DrawLocalString(batch, "[2] FIRE DEPT (1 unit) — Stove, grill & spark fires", new Vector2(x + 24, cy), amberStyle);
-            cy += 22;
-            DrawLocalString(batch, "[3] COMMUNITY AID (2) — Raccoons, pets & noise", new Vector2(x + 24, cy), mintStyle);
-            cy += 22;
-            DrawLocalString(batch, "[4] DISMISS (Instant) — Pranks & wrong numbers", new Vector2(x + 24, cy), subStyle);
-            cy += 28;
-
-            DrawLocalString(batch, "SKILL BONUSES:", new Vector2(x + 20, cy), cyanStyle);
-            cy += 20;
-            string logicTxt = game.LogicCluesUnlocked
-                ? "Logic " + game.LogicSkillLevel + " — Dispatch Clues & Prank Tells UNLOCKED!"
-                : "Logic " + game.LogicSkillLevel + " — Reach Logic 2 to reveal caller tells.";
-            DrawLocalString(batch, "• " + logicTxt, new Vector2(x + 24, cy), game.LogicCluesUnlocked ? mintStyle : subStyle);
-            cy += 20;
-            DrawLocalString(batch, "• Charisma " + game.CharismaSkillLevel + " — Calm Caller [C] (" + game.CalmChargesRemaining + " charges, +6s)", new Vector2(x + 24, cy), bodyStyle);
-            cy += 34;
-
-            startBtnRect = new Rectangle(x + 20, cy, w - 160, 44);
-            skipBtnRect = new Rectangle(x + w - 130, cy, 110, 44);
-
-            DrawRoundedPanel(batch, px, startBtnRect, 10,
-                hoverStart ? new Color(46, 152, 224) : new Color(32, 118, 186),
-                new Color(142, 224, 255), 2);
-            DrawCentered(batch, "OPEN 911 BOARD [ENTER]", startBtnRect, badgeStyle);
-
-            DrawRoundedPanel(batch, px, skipBtnRect, 10,
-                hoverSkip ? new Color(68, 78, 96) : new Color(42, 50, 64),
-                new Color(120, 136, 158), 1);
-            DrawCentered(batch, "SKIP [ESC]", skipBtnRect, subStyle);
-        }
-
-        void DrawActiveSwitchboardHud(UISpriteBatch batch, Texture2D px, int sw, int sh)
-        {
-            // ---- 1. Slim Top Precinct Bar ----
-            var topBar = new Rectangle(16, 12, sw - 32, 48);
-            DrawRoundedPanel(batch, px, topBar, 12, new Color(11, 19, 32, 224), new Color(68, 168, 226, 150), 2);
-
-            string topTitle = "SIMCITY PD  •  911 DISPATCH DESK";
-            DrawLocalString(batch, topTitle, new Vector2(topBar.X + 16, topBar.Y + 14), titleStyle);
-            int afterTitleX = topBar.X + 16 + (int)Math.Ceiling(titleStyle.MeasureString(topTitle).X) + 28;
-            DrawLocalString(batch, "CASES " + game.ResolvedCount + "/" + game.TotalCases, new Vector2(afterTitleX, topBar.Y + 16), cyanStyle);
-            DrawLocalString(batch, "SCORE " + game.Score, new Vector2(afterTitleX + 106, topBar.Y + 16), mintStyle);
-
-            // Unit Pool Status Pills
-            int pillX = afterTitleX + 214;
-            DrawUnitPill(batch, px, pillX, topBar.Y + 9, 132, "PATROL", game.AvailablePatrolUnits, DispatchTriageGame.MaxPatrolUnits, game.NextPatrolReadySec, new Color(44, 122, 206));
-            DrawUnitPill(batch, px, pillX + 142, topBar.Y + 9, 120, "FIRE", game.AvailableFireUnits, DispatchTriageGame.MaxFireUnits, game.NextFireReadySec, new Color(214, 78, 46));
-            DrawUnitPill(batch, px, pillX + 272, topBar.Y + 9, 132, "AID", game.AvailableCommunityUnits, DispatchTriageGame.MaxCommunityUnits, game.NextCommunityReadySec, new Color(36, 156, 132));
-
-            closeBtnRect = new Rectangle(topBar.Right - 108, topBar.Y + 9, 96, 30);
-            DrawRoundedPanel(batch, px, closeBtnRect, 8,
-                hoverClose ? new Color(168, 52, 58) : new Color(54, 64, 82),
-                new Color(140, 154, 178), 1);
-            DrawCentered(batch, "END [ESC]", closeBtnRect, smallStyle);
-
-            // ---- 2. Floating Action Feedback Toast (top-center) ----
-            if (game.FeedbackBannerTimerSec > 0.05f && !string.IsNullOrWhiteSpace(game.LastFeedbackBanner))
-            {
-                int fw = Math.Max(280, Math.Min(540, (int)badgeStyle.MeasureString(game.LastFeedbackBanner).X + 40));
-                var fbRect = new Rectangle((sw - fw) / 2 + 80, 68, fw, 32);
-                Color fill = game.LastFeedbackPositive ? new Color(20, 72, 54, 232) : new Color(92, 28, 32, 232);
-                Color border = game.LastFeedbackPositive ? SimUiTokens.Mint : new Color(255, 108, 96);
-                DrawRoundedPanel(batch, px, fbRect, 10, fill, border, 2);
-                DrawCentered(batch, game.LastFeedbackBanner, fbRect, badgeStyle);
-            }
-
-            // ---- 3. Left Compact Switchboard Queue (up to 3 active lines / walk-in) ----
-            var active = game.GetActiveCases();
-            var sel = game.SelectedCase;
-            int qx = 16;
-            int qy = 74;
-            int qw = 300;
-
-            var qHdr = new Rectangle(qx, qy, qw, 28);
-            DrawRoundedPanel(batch, px, qHdr, 8, new Color(14, 24, 40, 218), new Color(68, 168, 226, 130), 1);
-            DrawLocalString(batch, "INCOMING QUEUE (" + active.Count + "/3)   [TAB]", new Vector2(qx + 12, qy + 6), cyanStyle);
-            qy += 34;
-
-            if (active.Count == 0)
-            {
-                var emptyR = new Rectangle(qx, qy, qw, 64);
-                DrawRoundedPanel(batch, px, emptyR, 10, new Color(14, 22, 36, 190), new Color(64, 96, 132, 110), 1);
-                DrawLocalString(batch, "Switchboard clear...", new Vector2(qx + 14, qy + 14), mintStyle);
-                DrawLocalString(batch, "Waiting for next 911 call or walk-in.", new Vector2(qx + 14, qy + 34), subStyle);
-            }
-            else
-            {
-                for (int i = 0; i < active.Count; i++)
+                if (game.IsBriefing)
                 {
-                    var c = active[i];
-                    bool isSelected = sel != null && sel.CaseIndex == c.CaseIndex;
-                    bool isHover = hoverCaseIndex == c.CaseIndex;
-                    var cardR = new Rectangle(qx, qy, qw, 92);
-                    queueHitRects.Add(Tuple.Create(c.CaseIndex, cardR));
-
-                    Color borderCol = isSelected
-                        ? (c.Channel == DispatchCallChannel.WalkIn ? SimUiTokens.Mint : SimUiTokens.Cyan)
-                        : (isHover ? new Color(142, 188, 224) : new Color(66, 92, 124, 150));
-                    Color fillCol = isSelected
-                        ? new Color(20, 38, 62, 238)
-                        : new Color(12, 20, 34, 214);
-                    DrawRoundedPanel(batch, px, cardR, 10, fillCol, borderCol, isSelected ? 2 : 1);
-
-                    string slotTag = c.Channel == DispatchCallChannel.WalkIn
-                        ? "WALK-IN COUNTER"
-                        : ("911 LINE " + (c.SlotNumber + 1));
-                    DrawLocalString(batch, slotTag, new Vector2(qx + 12, qy + 8),
-                        c.Channel == DispatchCallChannel.WalkIn ? mintStyle : amberStyle);
-
-                    string secTxt = c.RemainingUrgencySec.ToString("0.0", CultureInfo.InvariantCulture) + "s";
-                    DrawLocalString(batch, secTxt, new Vector2(qx + qw - 48, qy + 8),
-                        c.UrgencyFraction < 0.28f ? redStyle : bodyStyle);
-
-                    DrawLocalString(batch, Truncate(c.CallerName + " — " + c.Address, 34), new Vector2(qx + 12, qy + 27), bodyStyle);
-                    DrawLocalString(batch, Truncate(c.SubjectTitle, 34), new Vector2(qx + 12, qy + 46), cyanStyle);
-
-                    // Urgency countdown progress bar
-                    var barBg = new Rectangle(qx + 12, qy + 70, qw - 24, 10);
-                    batch.Draw(px, barBg, new Color(26, 36, 52));
-                    int fillW = (int)Math.Round(barBg.Width * c.UrgencyFraction);
-                    Color barCol = c.UrgencyFraction > 0.50f
-                        ? SimUiTokens.Mint
-                        : (c.UrgencyFraction > 0.25f ? new Color(246, 184, 56) : new Color(242, 72, 68));
-                    if (fillW > 0)
-                        batch.Draw(px, new Rectangle(barBg.X, barBg.Y, fillW, barBg.Height), barCol);
-
-                    qy += 100;
+                    DrawBriefingCard(batch, px, sw, sh, game);
+                    return;
                 }
-            }
 
-            // ---- 4. Bottom Compact Dispatch Console (Active Transcript + 4 Triage Actions) ----
-            int ch = 152;
-            var console = new Rectangle(16, sh - ch - 14, sw - 32, ch);
-            DrawRoundedPanel(batch, px, console, 14, new Color(11, 19, 32, 236), new Color(68, 168, 226, 175), 2);
+                if (game.IsFinished && DispatchTriageDriver.FinalOutcome != null)
+                {
+                    DrawScorecard(batch, px, sw, sh, game, DispatchTriageDriver.FinalOutcome);
+                    return;
+                }
 
-            int splitX = console.X + (int)(console.Width * 0.54f);
-            batch.Draw(px, new Rectangle(splitX, console.Y + 14, 1, console.Height - 28), new Color(72, 120, 168, 110));
+                // Always show slim Top Precinct Bar
+                DrawTopPrecinctBar(batch, px, sw, game);
 
-            if (sel != null)
-            {
-                int tx = console.X + 18;
-                int ty = console.Y + 12;
-                string badge = sel.Channel == DispatchCallChannel.WalkIn
-                    ? "LIVE 3D WALK-IN AT FRONT COUNTER"
-                    : "INCOMING 911 EMERGENCY CALL";
-                DrawLocalString(batch, badge + "  •  " + sel.CallerName.ToUpperInvariant() + " (" + sel.Address + ")",
-                    new Vector2(tx, ty), sel.Channel == DispatchCallChannel.WalkIn ? mintStyle : amberStyle);
-                ty += 22;
-
-                DrawLocalString(batch, "\u201C" + Truncate(sel.TranscriptLine1, 74), new Vector2(tx, ty), bodyStyle);
-                ty += 20;
-                DrawLocalString(batch, Truncate(sel.TranscriptLine2, 74) + "\u201D", new Vector2(tx, ty), bodyStyle);
-                ty += 24;
-
-                if (game.LogicCluesUnlocked)
-                    DrawLocalString(batch, "LOGIC CLUE: " + Truncate(sel.LogicClue, 68), new Vector2(tx, ty), cyanStyle);
+                var modal = DispatchTriageDriver.ActiveModal;
+                if (modal == TriageModalMode.None)
+                {
+                    DrawLeftAlertStrip(batch, px, game);
+                    DrawWorldActionMarkers(batch, px, sw, sh);
+                }
                 else
-                    DrawLocalString(batch, "Reach Logic 2 to unlock dispatch audio & visual tells.", new Vector2(tx, ty), subStyle);
+                {
+                    // Dim world subtly behind modal
+                    FillRect(batch, px, 0, 0, sw, sh, new Color(8, 12, 20, 122));
+                    var mc = DispatchTriageDriver.GetModalCase();
+                    if (mc != null)
+                    {
+                        if (modal == TriageModalMode.PhoneSwitchboard)
+                            DrawPhoneSwitchboardModal(batch, px, sw, sh, game, mc);
+                        else if (modal == TriageModalMode.PaperForms)
+                            DrawPaperFormsModal(batch, px, sw, sh, game, mc);
+                    }
+                }
 
-                // Calm Caller Charisma button
-                calmBtnRect = new Rectangle(tx, console.Bottom - 40, 232, 30);
-                bool canCalm = game.CalmChargesRemaining > 0;
-                DrawRoundedPanel(batch, px, calmBtnRect, 8,
-                    canCalm ? (hoverCalm ? new Color(46, 134, 128) : new Color(28, 92, 92)) : new Color(34, 42, 54),
-                    canCalm ? SimUiTokens.Mint : new Color(76, 88, 106), 1);
-                DrawCentered(batch, "[C] CALM CALLER +6s (" + game.CalmChargesRemaining + " left)", calmBtnRect, smallStyle);
+                // Bottom feedback banner
+                if (!string.IsNullOrEmpty(game.LastFeedbackBanner) && game.FeedbackBannerTimerSec > 0f)
+                {
+                    int bw = (int)Math.Min(640f, sw - 48f);
+                    int bx = (int)((sw - bw) * 0.5f);
+                    int by = (int)(sh - 56f);
+                    Color bg = game.LastFeedbackPositive
+                        ? new Color(16, 78, 56, 232)
+                        : new Color(118, 28, 34, 232);
+                    Color border = game.LastFeedbackPositive
+                        ? new Color(96, 224, 168, 230)
+                        : new Color(246, 118, 118, 230);
+                    DrawCard(batch, new Rectangle(bx, by, bw, 36), bg, border, 10);
+                    DrawFittedLine(batch, game.LastFeedbackBanner, new SimRect(bx + 14, by + 8, bw - 28, 20), badgeStyle, SimTextAlign.Center);
+                }
             }
-            else
+            catch (Exception e)
             {
-                DrawLocalString(batch, "ALL LINES STANDING BY — WATCH THE PRECINCT COUNTER & SWITCHBOARD",
-                    new Vector2(console.X + 20, console.Y + 58), mintStyle);
+                Boot.Log("dispatch-triage draw error: " + e.GetType().Name + ": " + e.Message);
             }
-
-            // Right half: 2x2 Big Color-Coded Dispatch Buttons!
-            int rx = splitX + 18;
-            int rw = console.Right - rx - 18;
-            int bw = (rw - 12) / 2;
-            int bh = 54;
-            int by1 = console.Y + 16;
-            int by2 = by1 + bh + 12;
-
-            patrolBtnRect = new Rectangle(rx, by1, bw, bh);
-            fireBtnRect = new Rectangle(rx + bw + 12, by1, bw, bh);
-            aidBtnRect = new Rectangle(rx, by2, bw, bh);
-            dismissBtnRect = new Rectangle(rx + bw + 12, by2, bw, bh);
-
-            string pSub = game.AvailablePatrolUnits > 0
-                ? (game.AvailablePatrolUnits + "/" + DispatchTriageGame.MaxPatrolUnits + " READY • Burglars / Crime")
-                : ("BUSY — Ready in " + game.NextPatrolReadySec.ToString("0.0") + "s");
-            DrawDispatchActionBtn(batch, px, patrolBtnRect, "[1] DISPATCH PATROL", pSub,
-                hoverPatrol, game.AvailablePatrolUnits > 0 && sel != null, new Color(30, 96, 178), new Color(96, 192, 255));
-
-            string fSub = game.AvailableFireUnits > 0
-                ? (game.AvailableFireUnits + "/" + DispatchTriageGame.MaxFireUnits + " READY • Fires / Smoke")
-                : ("BUSY — Ready in " + game.NextFireReadySec.ToString("0.0") + "s");
-            DrawDispatchActionBtn(batch, px, fireBtnRect, "[2] DISPATCH FIRE", fSub,
-                hoverFire, game.AvailableFireUnits > 0 && sel != null, new Color(184, 62, 34), new Color(255, 166, 94));
-
-            string aSub = game.AvailableCommunityUnits > 0
-                ? (game.AvailableCommunityUnits + "/" + DispatchTriageGame.MaxCommunityUnits + " READY • Pets / Raccoons / Noise")
-                : ("BUSY — Ready in " + game.NextCommunityReadySec.ToString("0.0") + "s");
-            DrawDispatchActionBtn(batch, px, aidBtnRect, "[3] COMMUNITY AID", aSub,
-                hoverAid, game.AvailableCommunityUnits > 0 && sel != null, new Color(26, 134, 114), SimUiTokens.Mint);
-
-            DrawDispatchActionBtn(batch, px, dismissBtnRect, "[4] DISMISS / HANG UP", "INSTANT • Pranks & Non-Emergencies",
-                hoverDismiss, sel != null, new Color(84, 72, 108), new Color(204, 182, 242));
         }
 
-        void DrawUnitPill(UISpriteBatch batch, Texture2D px, int x, int y, int w, string label, int avail, int max, float nextReady, Color accent)
+        // ---- Briefing Card (compact left card so real TS1 Precinct Desk stays clearly visible!) ----
+
+        void DrawBriefingCard(UISpriteBatch batch, Texture2D px, float sw, float sh, DispatchTriageGame game)
         {
-            var r = new Rectangle(x, y, w, 30);
-            bool ready = avail > 0;
-            DrawRoundedPanel(batch, px, r, 8,
-                ready ? new Color(accent.R / 3, accent.G / 3, accent.B / 3, 210) : new Color(64, 34, 30, 210),
-                ready ? accent : new Color(246, 168, 62), 1);
-            string txt = ready
-                ? (label + " " + avail + "/" + max)
-                : (label + " " + nextReady.ToString("0.0", CultureInfo.InvariantCulture) + "s");
-            DrawCentered(batch, txt, r, smallStyle);
+            int cw = (int)Math.Min(482f, sw - 48f);
+            int ch = 336;
+            int cx = 24;
+            int cy = (int)Math.Max(24f, Math.Min(sh - ch - 24f, (sh - ch) * 0.42f));
+            var rect = new Rectangle(cx, cy, cw, ch);
+
+            DrawCard(batch, rect, new Color(14, 24, 38, 236), new Color(78, 152, 226, 205), 14);
+
+            int x = cx + 18;
+            int innerW = cw - 36;
+            int y = cy + 16;
+
+            DrawPill(batch, new Rectangle(x, y, innerW, 22), new Color(36, 98, 178, 230), 6);
+            DrawFittedLine(batch, "LAW ENFORCEMENT  |  LVL 4 DESK SERGEANT", new SimRect(x + 10, y + 2, innerW - 20, 18), badgeStyle, SimTextAlign.Left);
+            y += 30;
+
+            DrawFittedLine(batch, "PRECINCT DESK: 911 TRIAGE", new SimRect(x, y, innerW, 22), titleStyle, SimTextAlign.Left);
+            y += 24;
+
+            DrawFittedLine(batch, "Sgt. " + game.SergeantName + "  |  Logic " + game.LogicSkillLevel + "  |  Charisma " + game.CharismaSkillLevel,
+                new SimRect(x, y, innerW, 18), cyanStyle, SimTextAlign.Left);
+            y += 24;
+
+            FillRect(batch, px, x, y, innerW, 1f, new Color(90, 140, 200, 95));
+            y += 12;
+
+            DrawFittedLine(batch, "- Live SimCity PD Precinct Front Desk (3D & 2D).", new SimRect(x, y, innerW, 18), bodyStyle, SimTextAlign.Left);
+            y += 22;
+            DrawFittedLine(batch, "- CLICK THE DESK PHONE when 911 rings ->", new SimRect(x, y, innerW, 18), goldStyle, SimTextAlign.Left);
+            y += 19;
+            DrawFittedLine(batch, "  opens Switchboard Phone UI with Dept Buttons.", new SimRect(x, y, innerW, 18), subStyle, SimTextAlign.Left);
+            y += 22;
+            DrawFittedLine(batch, "- CLICK WALK-IN CITIZENS at the counter ->", new SimRect(x, y, innerW, 18), mintStyle, SimTextAlign.Left);
+            y += 19;
+            DrawFittedLine(batch, "  opens Precinct Paper Forms to stamp & hand off.", new SimRect(x, y, innerW, 18), subStyle, SimTextAlign.Left);
+            y += 24;
+            DrawFittedLine(batch, "Route 6 real calls & walk-ins cleanly for S-Rank!", new SimRect(x, y, innerW, 18), bodyStyle, SimTextAlign.Left);
+            y += 28;
+
+            int btnW = (innerW - 12) * 2 / 3;
+            int skipW = innerW - 12 - btnW;
+            startBtnRect = new Rectangle(x, y, btnW, 38);
+            skipBtnRect = new Rectangle(x + btnW + 12, y, skipW, 38);
+
+            DrawButton(batch, startBtnRect,
+                hoverStart ? new Color(42, 168, 122, 245) : new Color(28, 138, 98, 240),
+                new Color(128, 240, 194, 230), 8, "START SHIFT [ENTER]", badgeStyle);
+            DrawButton(batch, skipBtnRect,
+                hoverSkip ? new Color(68, 82, 102, 235) : new Color(44, 54, 70, 225),
+                new Color(138, 156, 182, 180), 8, "SKIP [ESC]", bodyStyle);
         }
 
-        void DrawDispatchActionBtn(UISpriteBatch batch, Texture2D px, Rectangle r, string title, string subtitle, bool hover, bool enabled, Color baseCol, Color borderCol)
+        // ---- Slim Top Precinct Bar ----
+
+        void DrawTopPrecinctBar(UISpriteBatch batch, Texture2D px, float sw, DispatchTriageGame game)
         {
-            Color fill = !enabled
-                ? new Color(32, 38, 48, 200)
-                : (hover ? new Color(Math.Min(255, baseCol.R + 28), Math.Min(255, baseCol.G + 28), Math.Min(255, baseCol.B + 28)) : baseCol);
-            Color border = enabled ? borderCol : new Color(72, 82, 98);
-            DrawRoundedPanel(batch, px, r, 10, fill, border, hover && enabled ? 2 : 1);
-            DrawLocalString(batch, title, new Vector2(r.X + 14, r.Y + 9), enabled ? badgeStyle : subStyle);
-            DrawLocalString(batch, Truncate(subtitle, 38), new Vector2(r.X + 14, r.Y + 30), enabled ? smallStyle : subStyle);
+            int barW = (int)Math.Min(1000f, sw - 28f);
+            int barX = (int)((sw - barW) * 0.5f);
+            int barY = 12;
+            int barH = 44;
+
+            DrawCard(batch, new Rectangle(barX, barY, barW, barH),
+                new Color(14, 24, 38, 228), new Color(76, 146, 218, 195), 11);
+
+            int x = barX + 14;
+            int cy = barY + 10;
+
+            string title = "SIMCITY PD  |  FRONT DESK";
+            float titleW = Math.Min(240f, headerStyle.MeasureString(title).X + 16f);
+            DrawFittedLine(batch, title, new SimRect(x, barY + 12, titleW, 20), headerStyle, SimTextAlign.Left);
+            x += (int)titleW + 10;
+
+            // Cases counter pill
+            var casesPill = new Rectangle(x, cy, 112, 24);
+            DrawPill(batch, casesPill, new Color(28, 72, 134, 230), 6);
+            DrawFittedLine(batch, "CASES " + game.ResolvedCount + "/" + game.TotalCases,
+                new SimRect(casesPill.X + 6, casesPill.Y + 3, casesPill.Width - 12, 18), badgeStyle, SimTextAlign.Center);
+            x += 120;
+
+            // Score pill
+            var scorePill = new Rectangle(x, cy, 114, 24);
+            DrawPill(batch, scorePill, new Color(24, 96, 74, 230), 6);
+            DrawFittedLine(batch, "SCORE " + game.Score,
+                new SimRect(scorePill.X + 6, scorePill.Y + 3, scorePill.Width - 12, 18), badgeStyle, SimTextAlign.Center);
+            x += 124;
+
+            // Live Department Unit availability pills
+            x = DrawUnitPill(batch, x, cy, 118, "PATROL " + game.AvailablePatrolUnits + "/" + DispatchTriageGame.MaxPatrolUnits,
+                game.AvailablePatrolUnits > 0, new Color(36, 104, 192, 230));
+            x = DrawUnitPill(batch, x, cy, 98, "FIRE " + game.AvailableFireUnits + "/" + DispatchTriageGame.MaxFireUnits,
+                game.AvailableFireUnits > 0, new Color(186, 52, 46, 230));
+            DrawUnitPill(batch, x, cy, 94, "AID " + game.AvailableCommunityUnits + "/" + DispatchTriageGame.MaxCommunityUnits,
+                game.AvailableCommunityUnits > 0, new Color(28, 134, 102, 230));
+
+            // Right End button
+            endShiftBtnRect = new Rectangle(barX + barW - 96, barY + 8, 84, 28);
+            DrawButton(batch, endShiftBtnRect,
+                hoverEnd ? new Color(138, 46, 52, 240) : new Color(86, 36, 44, 225),
+                new Color(224, 128, 132, 195), 7, "END", badgeStyle);
         }
 
-        void DrawScorecard(UISpriteBatch batch, Texture2D px, int sw, int sh)
+        int DrawUnitPill(UISpriteBatch batch, int x, int y, int w, string text, bool ready, Color activeBg)
         {
-            var o = finalOutcome ?? game.ComputeOutcome();
-            int w = Math.Min(560, sw - 48);
-            int h = 472;
-            int x = 24;
-            int y = Math.Max(66, (sh - h) / 2);
-            var card = new Rectangle(x, y, w, h);
+            Color bg = ready ? activeBg : new Color(56, 62, 74, 210);
+            DrawPill(batch, new Rectangle(x, y, w, 24), bg, 6);
+            DrawFittedLine(batch, text, new SimRect(x + 4, y + 3, w - 8, 18),
+                ready ? badgeStyle : subStyle, SimTextAlign.Center);
+            return x + w + 8;
+        }
 
-            DrawRoundedPanel(batch, px, card, 14, new Color(12, 20, 34, 238), new Color(84, 224, 178, 190), 2);
+        // ---- Compact Left Alert Strip (shows ringing 911 lines & approaching/arrived Walk-Ins) ----
 
-            int cy = y + 18;
-            DrawLocalString(batch, "SIMCITY PD  •  911 SHIFT REPORT", new Vector2(x + 20, cy), titleStyle);
-            cy += 24;
-            DrawLocalString(batch, "Desk Sergeant " + game.SergeantName + "  •  Score " + o.Score, new Vector2(x + 20, cy), cyanStyle);
+        void DrawLeftAlertStrip(UISpriteBatch batch, Texture2D px, DispatchTriageGame game)
+        {
+            var ph = DispatchTriageDriver.GetFirstActivePhoneCase();
+            var wi = game.ActiveWalkIn;
+            if (ph == null && (wi == null || wi.IsResolved)) return;
 
-            // Big Rank Badge on top-right of scorecard
-            var gradeBox = new Rectangle(x + w - 90, y + 16, 70, 70);
-            Color gCol = o.Grade == "S" ? new Color(40, 168, 128) : (o.Grade == "A" ? new Color(46, 134, 212) : new Color(188, 134, 48));
-            DrawRoundedPanel(batch, px, gradeBox, 12, gCol, Color.White, 2);
-            DrawCentered(batch, o.Grade, gradeBox, gradeStyle);
+            int x = 18;
+            int y = 68;
+            int w = 278;
 
-            cy += 34;
-            DrawLocalString(batch, o.Summary, new Vector2(x + 20, cy), mintStyle);
-            cy += 24;
-            batch.Draw(px, new Rectangle(x + 20, cy, w - 40, 1), new Color(76, 124, 172, 100));
-            cy += 12;
+            float pulse = 0.5f + 0.5f * (float)Math.Sin(uiPulseSec * 6.5f);
 
-            // Per-case log
-            for (int i = 0; i < game.AllCases.Count; i++)
+            if (ph != null)
             {
-                var c = game.AllCases[i];
-                string chTag = c.Channel == DispatchCallChannel.WalkIn ? "[Walk-In]" : "[911]";
-                string rTag = c.Rating == DispatchCaseRating.Perfect ? "PERFECT"
-                    : (c.Rating == DispatchCaseRating.Good ? "GOOD"
-                    : (c.Rating == DispatchCaseRating.WrongUnit ? "WRONG" : "MISSED"));
-                var rStyle = (c.Rating == DispatchCaseRating.Perfect || c.Rating == DispatchCaseRating.Good) ? mintStyle : redStyle;
-                DrawLocalString(batch, Truncate(chTag + " " + c.CallerName + ": " + c.SubjectTitle, 46), new Vector2(x + 20, cy), bodyStyle);
-                DrawLocalString(batch, rTag, new Vector2(x + w - 86, cy), rStyle);
-                cy += 23;
+                queuePhoneBtnRect = new Rectangle(x, y, w, 68);
+                Color bg = hoverQueuePhone ? new Color(46, 30, 38, 242) : new Color(24, 28, 42, 234);
+                Color border = Color.Lerp(new Color(220, 74, 68, 215), new Color(252, 206, 84, 245), pulse);
+                DrawCard(batch, queuePhoneBtnRect, bg, border, 10);
+
+                DrawPill(batch, new Rectangle(x + 10, y + 8, 102, 18), new Color(202, 52, 52, 235), 5);
+                DrawFittedLine(batch, "911 RINGING", new SimRect(x + 14, y + 8, 94, 17), badgeStyle, SimTextAlign.Center);
+                bool urgentPh = ph.RemainingUrgencySec < 6.0f;
+                DrawFittedLine(batch, Math.Ceiling(ph.RemainingUrgencySec).ToString("0", CultureInfo.InvariantCulture) + "s",
+                    new SimRect(x + w - 54, y + 8, 42, 18), urgentPh ? redStyle : goldStyle, SimTextAlign.Right);
+
+                DrawFittedLine(batch, ph.CallerName + " — Click Desk Phone",
+                    new SimRect(x + 10, y + 30, w - 20, 18), bodyStyle, SimTextAlign.Left);
+
+                // Urgency mini-bar
+                float frac = ph.UrgencyFraction;
+                FillRect(batch, px, x + 10, y + 52, w - 20, 6, new Color(42, 48, 62, 220));
+                FillRect(batch, px, x + 10, y + 52, (w - 20) * frac, 6,
+                    frac < 0.35f ? new Color(238, 78, 72) : new Color(244, 192, 68));
+
+                y += 78;
             }
 
-            cy += 10;
-            batch.Draw(px, new Rectangle(x + 20, cy, w - 40, 1), new Color(76, 124, 172, 100));
-            cy += 12;
-
-            var rw = o.Reward;
-            DrawLocalString(batch, "REWARDS:  +$" + rw.BonusSimoleons + "  |  Perf +" + rw.JobPerformanceDelta +
-                "  |  Logic +" + rw.LogicXpDelta + " XP  |  Charisma +" + rw.CharismaXpDelta + " XP",
-                new Vector2(x + 20, cy), amberStyle);
-            cy += 22;
-
-            if (o.RelationshipDeltas.Count > 0)
+            if (wi != null && !wi.IsResolved)
             {
-                string relLine = "NEIGHBORS: " + string.Join(", ", o.RelationshipDeltas.Take(3).Select(d =>
-                    d.SimName + " (" + (d.DailyDelta >= 0 ? "+" : "") + d.DailyDelta + " Rel)"));
-                DrawLocalString(batch, Truncate(relLine, 68), new Vector2(x + 20, cy), cyanStyle);
-            }
+                bool arrived = !wi.WalkInLeaving && wi.WalkInApproach >= 0.85f;
+                var cardRect = new Rectangle(x, y, w, 68);
+                if (arrived) queueWalkInBtnRect = cardRect;
 
-            claimBtnRect = new Rectangle(x + 20, card.Bottom - 58, w - 40, 44);
-            DrawRoundedPanel(batch, px, claimBtnRect, 10,
-                hoverClaim ? new Color(46, 174, 134) : new Color(32, 138, 106),
-                SimUiTokens.Mint, 2);
-            DrawCentered(batch, "CLAIM REWARDS & RETURN HOME [ENTER]", claimBtnRect, badgeStyle);
+                Color bg = (arrived && hoverQueueWalkIn) ? new Color(24, 52, 56, 242) : new Color(18, 32, 46, 234);
+                Color border = arrived
+                    ? Color.Lerp(new Color(62, 206, 178, 225), new Color(138, 246, 212, 250), pulse)
+                    : new Color(84, 140, 192, 185);
+                DrawCard(batch, cardRect, bg, border, 10);
+
+                DrawPill(batch, new Rectangle(x + 10, y + 8, 128, 18),
+                    arrived ? new Color(28, 146, 114, 235) : new Color(56, 98, 152, 225), 5);
+                DrawFittedLine(batch, arrived ? "WALK-IN AT DESK" : "WALK-IN ENTERING",
+                    new SimRect(x + 14, y + 8, 120, 17), badgeStyle, SimTextAlign.Center);
+                bool urgentWi = wi.RemainingUrgencySec < 6.0f;
+                DrawFittedLine(batch, Math.Ceiling(wi.RemainingUrgencySec).ToString("0", CultureInfo.InvariantCulture) + "s",
+                    new SimRect(x + w - 54, y + 8, 42, 18), urgentWi ? redStyle : cyanStyle, SimTextAlign.Right);
+
+                DrawFittedLine(batch, arrived ? (wi.CallerName + " — Click Citizen!") : (wi.CallerName + " walking to counter..."),
+                    new SimRect(x + 10, y + 30, w - 20, 18), bodyStyle, SimTextAlign.Left);
+
+                float frac = wi.UrgencyFraction;
+                FillRect(batch, px, x + 10, y + 52, w - 20, 6, new Color(42, 48, 62, 220));
+                FillRect(batch, px, x + 10, y + 52, (w - 20) * frac, 6,
+                    arrived ? new Color(68, 218, 172) : new Color(86, 168, 234));
+            }
         }
 
-        void DrawRoundedPanel(UISpriteBatch batch, Texture2D px, Rectangle r, int radius, Color fill, Color border, int thickness = 1)
+        // ---- Direct Clickable Pulsing World Markers over Real TS1 Desk Phone & Real Walk-In Sim ----
+
+        void DrawWorldActionMarkers(UISpriteBatch batch, Texture2D px, float sw, float sh)
         {
-            var sr = new SimRect(r.X, r.Y, r.Width, r.Height);
+            float pulse = 0.5f + 0.5f * (float)Math.Sin(uiPulseSec * 7.2f);
+            float bob = (float)Math.Sin(uiPulseSec * 5.2f) * 4f;
+
+            // 1. Pulsing Marker above the REAL TS1 Desk Phone when 911 is ringing!
+            var ph = DispatchTriageDriver.GetFirstActivePhoneCase();
+            if (ph != null && DispatchTriageDriver.DeskPhoneEntity != null)
+            {
+                var pt = DispatchTriageDriver.GetEntityScreenPos(DispatchTriageDriver.DeskPhoneEntity, -54f);
+                if (pt.HasValue)
+                {
+                    int mw = 252;
+                    int mh = 34;
+                    int mx = (int)Math.Max(18f, Math.Min(sw - mw - 18f, pt.Value.X - mw * 0.5f));
+                    int my = (int)Math.Max(68f, Math.Min(sh - mh - 64f, pt.Value.Y - mh + bob));
+                    phoneMarkerRect = new Rectangle(mx, my, mw, mh);
+
+                    Color bg = hoverPhoneMarker
+                        ? new Color(220, 62, 52, 248)
+                        : Color.Lerp(new Color(172, 36, 36, 236), new Color(214, 72, 44, 245), pulse);
+                    Color border = new Color(255, 226, 128, 245);
+                    DrawCard(batch, phoneMarkerRect, bg, border, 10);
+                    DrawFittedLine(batch, "911 RINGING! CLICK PHONE",
+                        new SimRect(mx + 10, my + 7, mw - 20, 20), badgeStyle, SimTextAlign.Center);
+
+                    // Downward pointer tick toward phone
+                    FillRect(batch, px, mx + mw / 2 - 4, my + mh, 8, 6, border);
+                }
+            }
+
+            // 2. Pulsing Marker above the REAL Walk-In Citizen once arrived at the front counter!
+            var wi = DispatchTriageDriver.GetArrivedWalkInCase();
+            if (wi != null && DispatchTriageDriver.WalkInAvatar != null)
+            {
+                var pt = DispatchTriageDriver.GetEntityScreenPos(DispatchTriageDriver.WalkInAvatar, -92f);
+                if (pt.HasValue)
+                {
+                    int mw = 268;
+                    int mh = 34;
+                    int mx = (int)Math.Max(18f, Math.Min(sw - mw - 18f, pt.Value.X - mw * 0.5f));
+                    int my = (int)Math.Max(68f, Math.Min(sh - mh - 64f, pt.Value.Y - mh - bob));
+                    // Avoid overlapping phone marker if close on screen
+                    if (!phoneMarkerRect.IsEmpty && new Rectangle(mx, my, mw, mh).Intersects(phoneMarkerRect))
+                        my = Math.Min((int)(sh - mh - 64f), phoneMarkerRect.Bottom + 12);
+
+                    walkInMarkerRect = new Rectangle(mx, my, mw, mh);
+
+                    Color bg = hoverWalkInMarker
+                        ? new Color(34, 174, 134, 248)
+                        : Color.Lerp(new Color(22, 126, 98, 236), new Color(34, 166, 128, 245), pulse);
+                    Color border = new Color(156, 250, 220, 245);
+                    DrawCard(batch, walkInMarkerRect, bg, border, 10);
+                    DrawFittedLine(batch, "CLICK " + wi.CallerName.ToUpperInvariant() + " (FORMS)",
+                        new SimRect(mx + 10, my + 7, mw - 20, 20), badgeStyle, SimTextAlign.Center);
+
+                    FillRect(batch, px, mx + mw / 2 - 4, my + mh, 8, 6, border);
+                }
+            }
+        }
+
+        // ---- MODAL 1: Tactile Phone Switchboard UI (Clicking the ringing real TS1 Desk Phone!) ----
+
+        void DrawPhoneSwitchboardModal(UISpriteBatch batch, Texture2D px, float sw, float sh, DispatchTriageGame game, DispatchActiveCase mc)
+        {
+            int mw = (int)Math.Min(768f, sw - 40f);
+            int mh = 446;
+            int mx = (int)((sw - mw) * 0.5f);
+            int my = (int)Math.Max(66f, (sh - mh) * 0.5f);
+
+            // Outer Desk Phone Chassis (dark gunmetal console)
+            DrawCard(batch, new Rectangle(mx, my, mw, mh),
+                new Color(24, 29, 38, 248), new Color(98, 122, 152, 230), 16);
+
+            // Top handset cradle bar
+            DrawPill(batch, new Rectangle(mx + 16, my + 12, mw - 32, 34), new Color(16, 20, 27, 245), 9);
+            DrawPill(batch, new Rectangle(mx + 24, my + 18, 14, 22), new Color(218, 64, 58, 240), 4); // Line 1 LED
+            DrawFittedLine(batch, "SIMCITY PD  911 SWITCHBOARD CONSOLE  —  LINE 1 ACTIVE",
+                new SimRect(mx + 48, my + 19, mw - 204, 20), headerStyle, SimTextAlign.Left);
+
+            modalCloseRect = new Rectangle(mx + mw - 144, my + 16, 120, 26);
+            DrawButton(batch, modalCloseRect,
+                hoverModalClose ? new Color(84, 96, 114, 240) : new Color(52, 62, 78, 230),
+                new Color(142, 158, 182, 185), 6, "HOLD [ESC]", smallStyle);
+
+            // Illuminated Green-Phosphor LCD Caller Readout Screen
+            int lcdX = mx + 20;
+            int lcdY = my + 56;
+            int lcdW = mw - 40;
+            int lcdH = 148;
+            DrawCard(batch, new Rectangle(lcdX, lcdY, lcdW, lcdH),
+                new Color(14, 34, 28, 248), new Color(72, 178, 128, 220), 10);
+
+            // Caller ID & Countdown Row
+            string callerHeader = "CALLER ID: " + mc.CallerName.ToUpperInvariant() + "   |   " + (mc.Address ?? "SimCity").ToUpperInvariant();
+            DrawFittedLine(batch, callerHeader, new SimRect(lcdX + 14, lcdY + 10, lcdW - 180, 20), lcdStyle, SimTextAlign.Left);
+            bool urgent = mc.RemainingUrgencySec < 6.0f;
+            DrawFittedLine(batch, "HOLD TIME: " + Math.Ceiling(mc.RemainingUrgencySec).ToString("0", CultureInfo.InvariantCulture) + "s",
+                new SimRect(lcdX + lcdW - 164, lcdY + 10, 150, 20), urgent ? redStyle : goldStyle, SimTextAlign.Right);
+
+            // Urgency Timer Bar
+            float frac = mc.UrgencyFraction;
+            FillRect(batch, px, lcdX + 14, lcdY + 34, lcdW - 28, 7, new Color(24, 52, 42, 235));
+            FillRect(batch, px, lcdX + 14, lcdY + 34, (lcdW - 28) * frac, 7,
+                frac < 0.35f ? new Color(240, 82, 74) : new Color(98, 232, 146));
+
+            // Spoken Caller Transcript inside LCD
+            DrawFittedLine(batch, "\"" + mc.TranscriptLine1 + "\"",
+                new SimRect(lcdX + 14, lcdY + 48, lcdW - 28, 20), bodyStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "\"" + mc.TranscriptLine2 + "\"",
+                new SimRect(lcdX + 14, lcdY + 70, lcdW - 28, 20), bodyStyle, SimTextAlign.Left);
+
+            // Logic Clue + Calm Caller Button row
+            bool hasClue = game.LogicCluesUnlocked && !string.IsNullOrWhiteSpace(mc.LogicClue);
+            string clueText = hasClue ? ("LINE SCAN: " + mc.LogicClue) : "LINE SCAN: Standard 911 audio feed.";
+            DrawFittedLine(batch, clueText,
+                new SimRect(lcdX + 14, lcdY + 104, lcdW - 238, 18),
+                hasClue ? cyanStyle : lcdDimStyle, SimTextAlign.Left);
+
+            modalCalmRect = new Rectangle(lcdX + lcdW - 216, lcdY + 98, 202, 34);
+            bool canCalm = !mc.CalmedOnce && game.CalmChargesRemaining > 0;
+            DrawButton(batch, modalCalmRect,
+                !canCalm ? new Color(40, 52, 48, 200) : (hoverModalCalm ? new Color(44, 148, 134, 245) : new Color(30, 112, 102, 235)),
+                canCalm ? new Color(118, 236, 212, 225) : new Color(86, 108, 102, 150),
+                7,
+                canCalm ? "CALM CALLER +6s [C]" : (mc.CalmedOnce ? "CALLER CALMED" : "NO CALM LEFT"),
+                canCalm ? badgeStyle : subStyle);
+
+            // Tactile Department Keypad Label
+            int gridY = lcdY + lcdH + 14;
+            DrawFittedLine(batch, "SELECT DEPARTMENT BUTTON TO TRANSFER & DISPATCH:",
+                new SimRect(lcdX, gridY, lcdW, 18), subStyle, SimTextAlign.Left);
+            gridY += 24;
+
+            // 2x2 Illuminated Switchboard Department Buttons
+            int gap = 14;
+            int bw = (lcdW - gap) / 2;
+            int bh = 88;
+
+            DrawPhoneDeptButton(batch, 0, new Rectangle(lcdX, gridY, bw, bh),
+                "[1]  PATROL DEPT", "Burglars, prowlers, theft & vandalism",
+                game.AvailablePatrolUnits > 0 ? ("UNIT READY (" + game.AvailablePatrolUnits + "/" + DispatchTriageGame.MaxPatrolUnits + ")") : ("BUSY " + game.NextPatrolReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailablePatrolUnits > 0,
+                new Color(32, 86, 168, 242), new Color(46, 112, 208, 250), new Color(122, 188, 252, 235));
+
+            DrawPhoneDeptButton(batch, 1, new Rectangle(lcdX + bw + gap, gridY, bw, bh),
+                "[2]  FIRE DEPT", "Smoke, kitchen fires, sparks & gas",
+                game.AvailableFireUnits > 0 ? ("UNIT READY (" + game.AvailableFireUnits + "/" + DispatchTriageGame.MaxFireUnits + ")") : ("BUSY " + game.NextFireReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailableFireUnits > 0,
+                new Color(168, 42, 42, 242), new Color(204, 58, 54, 250), new Color(252, 142, 134, 235));
+
+            DrawPhoneDeptButton(batch, 2, new Rectangle(lcdX, gridY + bh + gap, bw, bh),
+                "[3]  COMMUNITY AID", "Lost pets, elderly checkups & noise",
+                game.AvailableCommunityUnits > 0 ? ("UNIT READY (" + game.AvailableCommunityUnits + "/" + DispatchTriageGame.MaxCommunityUnits + ")") : ("BUSY " + game.NextCommunityReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailableCommunityUnits > 0,
+                new Color(24, 122, 92, 242), new Color(36, 154, 118, 250), new Color(126, 242, 198, 235));
+
+            DrawPhoneDeptButton(batch, 3, new Rectangle(lcdX + bw + gap, gridY + bh + gap, bw, bh),
+                "[4]  HANG UP / PRANK", "Prank calls & wrong numbers",
+                "INSTANT DISCONNECT",
+                true,
+                new Color(86, 62, 126, 242), new Color(112, 82, 158, 250), new Color(192, 162, 244, 235));
+        }
+
+        void DrawPhoneDeptButton(
+            UISpriteBatch batch,
+            int idx,
+            Rectangle rect,
+            string title,
+            string desc,
+            string status,
+            bool ready,
+            Color baseBg,
+            Color hoverBg,
+            Color border)
+        {
+            deptBtnRects[idx] = rect;
+            bool hov = hoverDeptIdx == idx;
+            Color bg = !ready ? new Color(46, 50, 58, 225) : (hov ? hoverBg : baseBg);
+            Color bdr = !ready ? new Color(102, 108, 120, 175) : border;
+
+            DrawCard(batch, rect, bg, bdr, 10);
+            DrawFittedLine(batch, title, new SimRect(rect.X + 14, rect.Y + 12, rect.Width - 28, 22), titleStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, desc, new SimRect(rect.X + 14, rect.Y + 38, rect.Width - 28, 18), bodyStyle, SimTextAlign.Left);
+
+            var pill = new Rectangle(rect.X + 14, rect.Y + 60, rect.Width - 28, 20);
+            DrawPill(batch, pill, ready ? new Color(14, 22, 32, 150) : new Color(96, 36, 36, 205), 5);
+            DrawFittedLine(batch, status, new SimRect(pill.X + 8, pill.Y + 1, pill.Width - 16, 18),
+                ready ? mintStyle : goldStyle, SimTextAlign.Center);
+        }
+
+        // ---- MODAL 2: Precinct Paper Forms Clipboard UI (Clicking a real Walk-In Sim at the counter!) ----
+
+        void DrawPaperFormsModal(UISpriteBatch batch, Texture2D px, float sw, float sh, DispatchTriageGame game, DispatchActiveCase mc)
+        {
+            int mw = (int)Math.Min(792f, sw - 40f);
+            int mh = 474;
+            int mx = (int)((sw - mw) * 0.5f);
+            int my = (int)Math.Max(62f, (sh - mh) * 0.5f);
+
+            // Warm Walnut Precinct Clipboard Board
+            DrawCard(batch, new Rectangle(mx, my, mw, mh),
+                new Color(104, 70, 42, 248), new Color(168, 124, 78, 235), 16);
+
+            // Metallic Silver/Brass Clipboard Clamp at Top Center
+            int clipW = 240;
+            DrawCard(batch, new Rectangle(mx + (mw - clipW) / 2, my - 8, clipW, 28),
+                new Color(168, 174, 182, 250), new Color(224, 228, 234, 240), 7);
+            DrawFittedLine(batch, "PRECINCT DESK FORMS",
+                new SimRect(mx + (mw - clipW) / 2 + 8, my - 3, clipW - 16, 18), darkHeaderStyle, SimTextAlign.Center);
+
+            // Close / Step Back button on top right of clipboard
+            modalCloseRect = new Rectangle(mx + mw - 128, my + 12, 108, 26);
+            DrawButton(batch, modalCloseRect,
+                hoverModalClose ? new Color(134, 92, 58, 245) : new Color(78, 52, 32, 235),
+                new Color(204, 168, 126, 205), 6, "STEP BACK", badgeStyle);
+
+            // Top Cream-Ivory Citizen Walk-In Intake Slip
+            int slipX = mx + 20;
+            int slipY = my + 44;
+            int slipW = mw - 40;
+            int slipH = 142;
+            DrawCard(batch, new Rectangle(slipX, slipY, slipW, slipH),
+                new Color(246, 240, 226, 252), new Color(188, 174, 148, 235), 8);
+
+            // Top Stamp Header Strip on Intake Slip
+            FillRect(batch, px, slipX + 12, slipY + 10, slipW - 24, 22, new Color(36, 56, 86, 235));
+            DrawFittedLine(batch, "WALK-IN CITIZEN INTAKE SLIP   |   " + mc.CallerName.ToUpperInvariant() + " (" + (mc.Address ?? "SimCity") + ")",
+                new SimRect(slipX + 20, slipY + 12, slipW - 186, 18), badgeStyle, SimTextAlign.Left);
+            bool urgent = mc.RemainingUrgencySec < 6.0f;
+            DrawFittedLine(batch, "PATIENCE: " + Math.Ceiling(mc.RemainingUrgencySec).ToString("0", CultureInfo.InvariantCulture) + "s",
+                new SimRect(slipX + slipW - 164, slipY + 12, 146, 18), urgent ? redStyle : goldStyle, SimTextAlign.Right);
+
+            // Ruled Paper Lines & Citizen Statement
+            FillRect(batch, px, slipX + 14, slipY + 62, slipW - 28, 1, new Color(192, 204, 222, 180));
+            FillRect(batch, px, slipX + 14, slipY + 86, slipW - 28, 1, new Color(192, 204, 222, 180));
+            DrawFittedLine(batch, "\"" + mc.TranscriptLine1 + "\"",
+                new SimRect(slipX + 16, slipY + 40, slipW - 32, 20), darkHeaderStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "\"" + mc.TranscriptLine2 + "\"",
+                new SimRect(slipX + 16, slipY + 64, slipW - 32, 20), darkBodyStyle, SimTextAlign.Left);
+
+            // Visual Logic Inspection Note + Reassure Citizen button
+            bool hasClue = game.LogicCluesUnlocked && !string.IsNullOrWhiteSpace(mc.LogicClue);
+            string obs = hasClue ? ("DESK NOTE: " + mc.LogicClue) : "DESK NOTE: Citizen waiting for stamped referral slip.";
+            DrawFittedLine(batch, obs, new SimRect(slipX + 16, slipY + 98, slipW - 230, 20), darkBodyStyle, SimTextAlign.Left);
+
+            modalCalmRect = new Rectangle(slipX + slipW - 204, slipY + 94, 188, 34);
+            bool canCalm = !mc.CalmedOnce && game.CalmChargesRemaining > 0;
+            DrawButton(batch, modalCalmRect,
+                !canCalm ? new Color(164, 160, 150, 220) : (hoverModalCalm ? new Color(36, 138, 108, 245) : new Color(28, 108, 86, 238)),
+                canCalm ? new Color(20, 82, 64, 230) : new Color(132, 128, 120, 180),
+                7,
+                canCalm ? "REASSURE +6s [C]" : (mc.CalmedOnce ? "REASSURED" : "NO CALM LEFT"),
+                badgeStyle);
+
+            // Instruction Divider
+            int gridY = slipY + slipH + 12;
+            DrawFittedLine(batch, "CHOOSE & STAMP A DEPARTMENT PAPER FORM TO HAND TO " + mc.CallerName.ToUpperInvariant() + ":",
+                new SimRect(slipX, gridY, slipW, 18), badgeStyle, SimTextAlign.Left);
+            gridY += 22;
+
+            // 2x2 Grid of 4 Physical Color-Coded Paper Referral Forms!
+            int gap = 14;
+            int fw = (slipW - gap) / 2;
+            int fh = 112;
+
+            DrawPaperFormCard(batch, px, 0, new Rectangle(slipX, gridY, fw, fh),
+                "FORM 10-A  |  PATROL DIVISION",
+                "Criminal Report & Officer Escort",
+                "Send citizen to Patrol Intake Desk.",
+                game.AvailablePatrolUnits > 0 ? "STAMP & HAND FORM [1]" : ("PATROL BUSY " + game.NextPatrolReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailablePatrolUnits > 0,
+                new Color(230, 240, 252, 252), new Color(212, 230, 252, 255),
+                new Color(34, 86, 166, 245), new Color(46, 114, 208, 240));
+
+            DrawPaperFormCard(batch, px, 1, new Rectangle(slipX + fw + gap, gridY, fw, fh),
+                "FORM 22-F  |  FIRE MARSHAL",
+                "Fire & Utility Hazard Pass",
+                "Rush citizen to Fire Dispatch Desk.",
+                game.AvailableFireUnits > 0 ? "STAMP & HAND FORM [2]" : ("FIRE BUSY " + game.NextFireReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailableFireUnits > 0,
+                new Color(254, 236, 234, 252), new Color(254, 222, 218, 255),
+                new Color(176, 44, 44, 245), new Color(214, 62, 56, 240));
+
+            DrawPaperFormCard(batch, px, 2, new Rectangle(slipX, gridY + fh + gap, fw, fh),
+                "FORM 07-C  |  COMMUNITY AID",
+                "Welfare & Pet Aid Voucher",
+                "Refer citizen to Community Services.",
+                game.AvailableCommunityUnits > 0 ? "STAMP & HAND FORM [3]" : ("AID BUSY " + game.NextCommunityReadySec.ToString("0.0", CultureInfo.InvariantCulture) + "s"),
+                game.AvailableCommunityUnits > 0,
+                new Color(230, 248, 240, 252), new Color(210, 244, 228, 255),
+                new Color(26, 124, 92, 245), new Color(36, 162, 122, 240));
+
+            DrawPaperFormCard(batch, px, 3, new Rectangle(slipX + fw + gap, gridY + fh + gap, fw, fh),
+                "FORM 00-X  |  NO-ACTION SLIP",
+                "Civil Matter / Dismiss Slip",
+                "Stamp DENIED — non-police matter.",
+                "STAMP & HAND SLIP [4]",
+                true,
+                new Color(242, 236, 248, 252), new Color(232, 220, 246, 255),
+                new Color(98, 68, 138, 245), new Color(132, 92, 182, 240));
+        }
+
+        void DrawPaperFormCard(
+            UISpriteBatch batch,
+            Texture2D px,
+            int idx,
+            Rectangle rect,
+            string formHeader,
+            string formTitle,
+            string formDesc,
+            string stampText,
+            bool ready,
+            Color paperBg,
+            Color paperHoverBg,
+            Color headerStripBg,
+            Color stampBorder)
+        {
+            deptBtnRects[idx] = rect;
+            bool hov = hoverDeptIdx == idx;
+
+            Color bg = !ready ? new Color(214, 210, 204, 235) : (hov ? paperHoverBg : paperBg);
+            Color bdr = hov && ready ? stampBorder : new Color(162, 152, 138, 225);
+
+            // Physical paper sheet rectangle
+            DrawCard(batch, rect, bg, bdr, 6);
+
+            // Colored department header strip printed across the top of the paper form
+            FillRect(batch, px, rect.X + 4, rect.Y + 4, rect.Width - 8, 22,
+                ready ? headerStripBg : new Color(112, 110, 108, 225));
+            DrawFittedLine(batch, formHeader, new SimRect(rect.X + 10, rect.Y + 6, rect.Width - 20, 18), badgeStyle, SimTextAlign.Left);
+
+            // Printed ruled lines on the paper form
+            FillRect(batch, px, rect.X + 12, rect.Y + 50, rect.Width - 24, 1, new Color(180, 186, 198, 150));
+            FillRect(batch, px, rect.X + 12, rect.Y + 72, rect.Width - 24, 1, new Color(180, 186, 198, 150));
+
+            DrawFittedLine(batch, formTitle, new SimRect(rect.X + 12, rect.Y + 30, rect.Width - 24, 19), darkHeaderStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, formDesc, new SimRect(rect.X + 12, rect.Y + 53, rect.Width - 24, 18), darkSmallStyle, SimTextAlign.Left);
+
+            // Official Rubber-Stamp Action Pill at bottom of paper sheet
+            var stampRect = new Rectangle(rect.X + 12, rect.Y + 79, rect.Width - 24, 25);
+            DrawButton(batch, stampRect,
+                ready ? (hov ? stampBorder : headerStripBg) : new Color(138, 92, 86, 220),
+                ready ? stampBorder : new Color(166, 120, 114, 200),
+                5, stampText, badgeStyle);
+        }
+
+        // ---- Shift Scorecard (S / A / B / C) ----
+
+        void DrawScorecard(UISpriteBatch batch, Texture2D px, float sw, float sh, DispatchTriageGame game, DispatchTriageOutcome o)
+        {
+            FillRect(batch, px, 0, 0, sw, sh, new Color(8, 14, 24, 148));
+
+            int cw = (int)Math.Min(568f, sw - 44f);
+            int ch = 368;
+            int cx = (int)((sw - cw) * 0.5f);
+            int cy = (int)((sh - ch) * 0.5f);
+
+            DrawCard(batch, new Rectangle(cx, cy, cw, ch),
+                new Color(14, 24, 38, 244), new Color(92, 168, 236, 225), 16);
+
+            int x = cx + 22;
+            int innerW = cw - 44;
+            int y = cy + 18;
+
+            DrawPill(batch, new Rectangle(x, y, innerW, 24), new Color(34, 96, 174, 235), 6);
+            DrawFittedLine(batch, "SIMCITY PD  |  DESK SERGEANT SHIFT REPORT",
+                new SimRect(x + 10, y + 3, innerW - 20, 18), badgeStyle, SimTextAlign.Center);
+            y += 34;
+
+            // Grade badge + Headline
+            Color gBg = o.Grade == "S" ? new Color(212, 162, 34, 245)
+                      : o.Grade == "A" ? new Color(36, 152, 108, 245)
+                      : o.Grade == "B" ? new Color(52, 118, 198, 245)
+                      : new Color(142, 74, 68, 240);
+            DrawCard(batch, new Rectangle(x, y, 76, 76), gBg, new Color(255, 255, 255, 195), 14);
+            DrawFittedLine(batch, o.Grade, new SimRect(x, y + 14, 76, 48), gradeStyle, SimTextAlign.Center);
+
+            string headline = o.Grade == "S" ? "PRECINCT COMMENDATION!"
+                            : o.Grade == "A" ? "SHARP DISPATCH SHIFT"
+                            : o.Grade == "B" ? "SOLID FRONT DESK WORK"
+                            : "SHIFT COMPLETE";
+            int correctCount = o.PerfectCount + o.GoodCount;
+            DrawFittedLine(batch, headline, new SimRect(x + 92, y + 8, innerW - 92, 24), titleStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "Total Score: " + o.Score + "   |   Correct: " + correctCount + "/" + o.TotalCases,
+                new SimRect(x + 92, y + 36, innerW - 92, 18), cyanStyle, SimTextAlign.Left);
+            DrawFittedLine(batch, "Perfect: " + o.PerfectCount + "   |   Walk-Ins: " + o.WalkInsHandled + "   |   Pranks: " + o.PranksBlocked,
+                new SimRect(x + 92, y + 56, innerW - 92, 18), subStyle, SimTextAlign.Left);
+            y += 92;
+
+            FillRect(batch, px, x, y, innerW, 1, new Color(90, 140, 200, 100));
+            y += 14;
+
+            DrawFittedLine(batch, "REAL VM REWARDS APPLIED ON RETURN HOME:", new SimRect(x, y, innerW, 18), goldStyle, SimTextAlign.Left);
+            y += 24;
+
+            var r = o.Reward ?? new CareerDispatchReward();
+            string rewardsLine1 = "+$" + r.BonusSimoleons + " Simoleons   |   Job Performance +" + r.JobPerformanceDelta;
+            string rewardsLine2 = "Logic XP +" + r.LogicXpDelta + "   |   Charisma XP +" + r.CharismaXpDelta +
+                                  (o.RelationshipDeltas != null && o.RelationshipDeltas.Count > 0
+                                      ? ("   |   Citizens Helped: " + o.RelationshipDeltas.Count)
+                                      : "");
+            DrawFittedLine(batch, rewardsLine1, new SimRect(x, y, innerW, 20), mintStyle, SimTextAlign.Left);
+            y += 24;
+            DrawFittedLine(batch, rewardsLine2, new SimRect(x, y, innerW, 20), bodyStyle, SimTextAlign.Left);
+            y += 28;
+
+            DrawFittedLine(batch, o.Summary ?? "", new SimRect(x, y, innerW, 20), subStyle, SimTextAlign.Left);
+            y += 32;
+
+            claimBtnRect = new Rectangle(x, y, innerW, 42);
+            DrawButton(batch, claimBtnRect,
+                hoverClaim ? new Color(42, 174, 126, 250) : new Color(28, 142, 102, 242),
+                new Color(138, 246, 202, 235), 9,
+                "CLAIM REWARDS & RETURN HOME [ENTER]", badgeStyle);
+        }
+
+        // ---- Small Helpers ----
+
+        void DrawButton(UISpriteBatch batch, Rectangle r, Color bg, Color border, int radius, string text, TextStyle style)
+        {
+            DrawCard(batch, r, bg, border, radius);
+            DrawFittedLine(batch, text, new SimRect(r.X + 8, r.Y + (r.Height - 20) / 2, r.Width - 16, 20), style, SimTextAlign.Center);
+        }
+
+        void DrawCard(UISpriteBatch batch, Rectangle r, Color fill, Color border, int radius)
+        {
+            var sr = ToSimRect(r);
             FillRoundedRect(batch, sr, radius, fill);
-            if (thickness > 0)
-                DrawRoundedBorder(batch, sr, radius, border, thickness);
+            DrawRoundedBorder(batch, sr, radius, border, 1);
         }
 
-        void DrawTransitionOverlay(UISpriteBatch batch, Texture2D px, int sw, int sh)
+        void DrawPill(UISpriteBatch batch, Rectangle r, Color fill, int radius)
         {
-            if (transition.BlackVeilAlpha > 0.005f)
-            {
-                int veilA = Math.Max(0, Math.Min(255, (int)(transition.BlackVeilAlpha * 255f)));
-                batch.Draw(px, new Rectangle(0, 0, sw, sh), new Color(0, 0, 0, veilA));
-            }
-
-            if (transition.BannerAlpha > 0.01f)
-            {
-                int bw = 540;
-                int bh = 66;
-                var br = new Rectangle((sw - bw) / 2, 74, bw, bh);
-                int a = Math.Max(0, Math.Min(255, (int)(transition.BannerAlpha * 228f)));
-                DrawRoundedPanel(batch, px, br, 12, new Color(10, 18, 32, a), new Color(84, 198, 255, a), 2);
-                DrawCentered(batch, transition.LocationTitle, new Rectangle(br.X, br.Y + 8, br.Width, 28), bannerTitleStyle);
-                DrawCentered(batch, transition.LocationSubtitle, new Rectangle(br.X, br.Y + 38, br.Width, 20), bannerSubStyle);
-            }
+            FillRoundedRect(batch, ToSimRect(r), radius, fill);
         }
 
-        void DrawCentered(UISpriteBatch batch, string text, Rectangle r, TextStyle style)
+        static SimRect ToSimRect(Rectangle r)
         {
-            if (string.IsNullOrEmpty(text)) return;
-            var sz = style.MeasureString(text);
-            DrawLocalString(batch, text, new Vector2(r.X + (r.Width - sz.X) * 0.5f, r.Y + (r.Height - sz.Y) * 0.5f), style);
-        }
-
-        static string Truncate(string s, int max)
-        {
-            if (string.IsNullOrEmpty(s) || s.Length <= max) return s ?? "";
-            return s.Substring(0, Math.Max(1, max - 1)) + "\u2026";
-        }
-
-        static List<DispatchCallerInfo> CollectNeighborhoodCallers(VMAvatar officer)
-        {
-            var list = new List<DispatchCallerInfo>();
-            try
-            {
-                string officerName = officer != null ? (officer.Name ?? "") : "";
-                short officerNid = officer != null ? officer.GetPersonData(VMPersonDataVariable.NeighborId) : (short)0;
-                var content = Content.Get();
-                var entries = content?.Neighborhood?.Neighbors?.Entries;
-                if (entries != null)
-                {
-                    string[] addresses = { "5 Sim Lane", "7 Sim Lane", "21 Downtown Plaza", "55 Old Town Market", "10 Sim Lane", "3 Maple Street" };
-                    var residents = new List<DispatchCallerInfo>();
-                    var townies = new List<DispatchCallerInfo>();
-                    int addrIdx = 0;
-                    for (int i = 0; i < entries.Count; i++)
-                    {
-                        var n = entries[i];
-                        if (n == null || n.NeighbourID <= 0 || n.GUID == 0) continue;
-                        if (officerNid > 0 && n.NeighbourID == officerNid) continue;
-
-                        // Prefer adult human Sims for 911 callers & live 3D precinct walk-ins
-                        if (n.PersonData != null && n.PersonData.Length > (int)VMPersonDataVariable.PersonsAge)
-                        {
-                            short age = n.PersonData[(int)VMPersonDataVariable.PersonsAge];
-                            if (age > 0 && age < 18) continue;
-                        }
-
-                        string name = ResolveNeighborDisplayName(content, n);
-                        if (string.IsNullOrWhiteSpace(name) || IsServiceNpcName(name)) continue;
-                        if (string.Equals(name.Trim(), officerName.Trim(), StringComparison.OrdinalIgnoreCase)) continue;
-
-                        var info = new DispatchCallerInfo
-                        {
-                            Name = name.Trim(),
-                            NeighborId = n.NeighbourID,
-                            OutfitGuid = n.GUID,
-                            Address = addresses[addrIdx++ % addresses.Length]
-                        };
-                        bool isResident = !string.IsNullOrEmpty(n.Name) && n.Name.StartsWith("User", StringComparison.OrdinalIgnoreCase);
-                        if (isResident) residents.Add(info);
-                        else townies.Add(info);
-                    }
-                    // Iconic neighborhood residents (Goths, Bachelors, Mashugas, Newbies) first, then townies!
-                    list.AddRange(residents);
-                    list.AddRange(townies);
-                    if (list.Count > 12) list.RemoveRange(12, list.Count - 12);
-                }
-            }
-            catch { }
-            return list;
-        }
-
-        static string ResolveNeighborDisplayName(Content content, Neighbour n)
-        {
-            try
-            {
-                var obj = content?.WorldObjects?.Get(n.GUID);
-                if (obj != null)
-                {
-                    var ctss = obj.Resource?.Get<CTSS>(obj.OBJ.CatalogStringsID);
-                    string s = ctss?.GetString(0) ?? obj.OBJ?.ChunkLabel;
-                    if (!string.IsNullOrWhiteSpace(s))
-                        return s.Trim();
-                }
-            }
-            catch { }
-            return (n.Name ?? "").Trim();
-        }
-
-        static bool IsServiceNpcName(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return true;
-            string low = name.Trim().ToLowerInvariant();
-            string[] bad = { "clown", "npc", "maid", "gardener", "repair", "pizza", "burglar", "thief", "police", "cop", "fire", "mime", "grim", "santa", "genie", "bear", "pet", "cat", "dog", "stray", "raccoon", "skunk", "entertainer", "waiter", "chef", "dj", "bartender", "janitor", "sax", "bus", "car", "driver", "social", "skeleton", "bonehilda", "serv", "user0", "mystery", "stranger", "monster" };
-            for (int i = 0; i < bad.Length; i++)
-                if (low.Contains(bad[i])) return true;
-            return !char.IsUpper(name.Trim()[0]);
-        }
-
-        static void ApplyOutcomeRewards(VMAvatar sim, DispatchTriageOutcome outcome)
-        {
-            if (outcome == null) return;
-            string rewardSummary = CareerDispatchDriver.ApplyReward(sim, outcome.Reward);
-
-            // Persist real TS1 Neighbor relationship deltas + Sim Memory dossier entries!
-            try
-            {
-                var nb = Content.Get()?.Neighborhood;
-                short officerNid = sim != null ? sim.GetPersonData(VMPersonDataVariable.NeighborId) : (short)0;
-                string officerName = sim != null ? (sim.Name ?? "Sim") : "Sim";
-                var officerNb = officerNid > 0 ? nb?.GetNeighborByID(officerNid) : null;
-
-                foreach (var rel in outcome.RelationshipDeltas)
-                {
-                    if (officerNb != null && officerNb.Relationships != null && rel.NeighborId > 0)
-                    {
-                        List<short> v;
-                        if (!officerNb.Relationships.TryGetValue(rel.NeighborId, out v) || v == null)
-                        {
-                            v = new List<short> { 0, 0, 0, 0 };
-                            officerNb.Relationships[rel.NeighborId] = v;
-                        }
-                        while (v.Count < 4) v.Add(0);
-                        v[0] = (short)Math.Max(-100, Math.Min(100, v[0] + rel.DailyDelta));
-                        if (v[0] >= 70) v[1] = 1;
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(rel.SimName))
-                    {
-                        var sp = new RawSim { Name = officerName, NeighborId = officerNid };
-                        var ls = new RawSim { Name = rel.SimName, NeighborId = rel.NeighborId };
-                        Boot.Memory.Record(
-                            sp,
-                            ls,
-                            "dispatch_triage",
-                            rel.DailyDelta >= 0 ? Tone.Gentle : Tone.Bold,
-                            "dispatch_triage",
-                            rel.DailyDelta >= 0 ? 3 : 1,
-                            subjectTitle: rel.MemoryFact);
-                    }
-                }
-                Boot.SaveMemoryAsync();
-            }
-            catch (Exception re) { Boot.Log("dispatch-triage rel error: " + re.Message); }
-
-            Boot.Log("dispatch-triage: shift complete grade=" + outcome.Grade +
-                     " score=" + outcome.Score +
-                     " rewards=[" + rewardSummary + "] rels=" + outcome.RelationshipDeltas.Count);
+            return new SimRect(r.X, r.Y, r.Width, r.Height);
         }
     }
 }

@@ -25,7 +25,7 @@ namespace Simitone.Conversations
         static int tickCounter;
 
         public static bool ToastVisible { get { return CareerDispatchToast.IsOpen; } }
-        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive || DispatchTriageOverlay.IsOpen; } }
+        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive || DispatchTriageDriver.IsActive || DispatchTriageOverlay.IsOpen; } }
 
         public static void OnTick(VM vm)
         {
@@ -147,20 +147,20 @@ namespace Simitone.Conversations
                 case CareerMiniGameKind.DispatchTriage:
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
-                    return DispatchTriageOverlay.Open(av, logicLevelOverride: null, charismaLevelOverride: null, seed: seed);
+                    return DispatchTriageDriver.BeginTriage(av, logicLevelOverride: null, charismaLevelOverride: null, seed: seed);
                 case CareerMiniGameKind.BeatPatrol:
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     return BeatPatrolDriver.BeginPatrol(av, lotIdOverride: null, seed: seed);
                 case CareerMiniGameKind.CadetAcademy:
                     SecurityWatchOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     return CadetAcademyOverlay.Open(av, bodyLevelOverride, seed);
                 case CareerMiniGameKind.SecurityWatch:
                 default:
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     return SecurityWatchOverlay.Open(av, seed, SecurityWatchGame.DefaultTotalRounds, 3.6f, quietNight);
             }
         }
@@ -295,7 +295,7 @@ namespace Simitone.Conversations
                 case "status":
                 {
                     string activeDetail = "";
-                    if (DispatchTriageOverlay.IsOpen) activeDetail = " [" + DispatchTriageOverlay.StatusSummary() + "]";
+                    if (DispatchTriageDriver.IsActive) activeDetail = " [triage: " + DispatchTriageDriver.StatusSummary() + "]";
                     else if (BeatPatrolDriver.IsActive) activeDetail = " [patrol: " + BeatPatrolDriver.StatusSummary() + "]";
                     else if (CadetAcademyOverlay.IsOpen) activeDetail = " [" + CadetAcademyOverlay.StatusSummary() + "]";
                     else if (SecurityWatchOverlay.IsOpen) activeDetail = " [" + SecurityWatchOverlay.Status() + "]";
@@ -363,14 +363,14 @@ namespace Simitone.Conversations
                         }
                     }
                     var av = ResolveTargetAvatar(simQuery);
-                    return DispatchTriageOverlay.Open(av, logicLvl, charismaLvl, seedVal);
+                    return DispatchTriageDriver.BeginTriage(av, logicLvl, charismaLvl, seedVal);
                 }
                 case "patrol":
                 {
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     int? lotId = null;
                     int? seedVal = 42;
                     string simQuery = null;
@@ -398,7 +398,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     int? bodyLvl = null;
                     int? seedVal = 42;
                     string simQuery = null;
@@ -427,7 +427,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     int seedVal = 42;
                     int rounds = SecurityWatchGame.DefaultTotalRounds;
                     float scanPause = 3.6f;
@@ -456,7 +456,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     var av = ResolveTargetAvatar(arg);
                     return SecurityWatchOverlay.Open(av, null, 0, 0f, true);
                 }
@@ -470,8 +470,8 @@ namespace Simitone.Conversations
                 }
                 case "action":
                 {
-                    if (DispatchTriageOverlay.IsOpen)
-                        return DispatchTriageOverlay.HandleTestAction(args.Length > 1 ? string.Join(" ", args.Skip(1)) : "");
+                    if (DispatchTriageDriver.IsActive)
+                        return DispatchTriageDriver.HandleTestAction(args.Length > 1 ? string.Join(" ", args.Skip(1)) : "");
                     if (BeatPatrolDriver.IsActive)
                         return BeatPatrolDriver.HandleScriptedAction(args.Length > 1 ? args[1] : "", args.Length > 2 ? args[2] : "");
                     if (CadetAcademyOverlay.IsOpen)
@@ -480,7 +480,7 @@ namespace Simitone.Conversations
                 }
                 case "finish":
                 {
-                    if (DispatchTriageOverlay.IsOpen) return DispatchTriageOverlay.HandleTestAction("claim");
+                    if (DispatchTriageDriver.IsActive) return DispatchTriageDriver.HandleTestAction("claim");
                     if (BeatPatrolDriver.IsActive) return BeatPatrolDriver.HandleScriptedAction("end");
                     if (CadetAcademyOverlay.IsOpen) return CadetAcademyOverlay.FinishToSummary();
                     return SecurityWatchOverlay.FinishToSummary();
@@ -503,13 +503,10 @@ namespace Simitone.Conversations
                     float tail = 1.0f;
                     if (args.Length > 2) float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lead);
                     if (args.Length > 3) float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out tail);
-                    if (DispatchTriageOverlay.IsOpen)
-                        return DispatchTriageOverlay.ExportLastSessionWav(args[1], lead, tail);
+                    if (DispatchTriageDriver.IsActive || DispatchTriageDriver.Audio.RecordedCueCount > 0)
+                        return DispatchTriageDriver.ExportLastSessionWav(args[1], lead, tail);
                     if (BeatPatrolDriver.IsActive || BeatPatrolDriver.Audio.SessionEventCount > 0)
                         return BeatPatrolDriver.ExportLastSessionWav(args[1], lead, tail);
-                    string triageRes = DispatchTriageOverlay.ExportLastSessionWav(args[1], lead, tail);
-                    if (triageRes.StartsWith("ok ", StringComparison.Ordinal))
-                        return triageRes;
                     return CadetAcademyOverlay.ExportLastSessionWav(args[1], lead, tail);
                 }
                 case "close":
@@ -517,7 +514,7 @@ namespace Simitone.Conversations
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
-                    DispatchTriageOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     if (BeatPatrolDriver.IsActive) BeatPatrolDriver.RequestReturnHome(false);
                     return "closed";
                 default:

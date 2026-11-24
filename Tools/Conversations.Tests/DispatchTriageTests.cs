@@ -152,7 +152,8 @@ namespace Simitone.Conversations.Tests
             {
                 new DispatchAudioEvent { TimeSec = 0.2f, Cue = DispatchSfxId.PhoneRing, Gain = 0.5f },
                 new DispatchAudioEvent { TimeSec = 1.0f, Cue = DispatchSfxId.WalkInBell, Gain = 0.5f },
-                new DispatchAudioEvent { TimeSec = 1.6f, Cue = DispatchSfxId.RadioDispatchPatrol, Gain = 0.5f },
+                new DispatchAudioEvent { TimeSec = 1.4f, Cue = DispatchSfxId.PaperFormStamp, Gain = 0.55f },
+                new DispatchAudioEvent { TimeSec = 1.8f, Cue = DispatchSfxId.RadioDispatchPatrol, Gain = 0.5f },
             };
             byte[] wav = DispatchAudioSynth.RenderTimelineToWav(events, 3.0f, 0.18f);
             Assert.True(wav.Length > 44 + DispatchAudioSynth.SampleRate * 2 * 2);

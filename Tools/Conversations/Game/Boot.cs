@@ -121,7 +121,9 @@ namespace Simitone.Conversations
         {
             try { BeatPatrolDriver.OnTick(vm); }
             catch (Exception e) { Log("patrol tick error: " + e.GetType().Name + ": " + e.Message); }
-            if (!BeatPatrolDriver.IsActive)
+            try { DispatchTriageDriver.OnTick(vm); }
+            catch (Exception e) { Log("triage tick error: " + e.GetType().Name + ": " + e.Message); }
+            if (!BeatPatrolDriver.IsActive && !DispatchTriageDriver.IsActive)
             {
                 try { ParallelSocialDriver.OnTick(vm); }
                 catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
@@ -137,7 +139,12 @@ namespace Simitone.Conversations
 
         public static bool TryHandleInteraction(FSO.SimAntics.NetPlay.Model.Commands.VMNetInteractionCmd cmd, VM vm, VMAvatar caller)
         {
-            try { return BeatPatrolDriver.TryHandleInteraction(cmd, vm, caller); }
+            try
+            {
+                if (BeatPatrolDriver.TryHandleInteraction(cmd, vm, caller)) return true;
+                if (DispatchTriageDriver.TryHandleInteraction(cmd, vm, caller)) return true;
+                return false;
+            }
             catch (Exception e) { Log("interaction hook error: " + e.GetType().Name + ": " + e.Message); return false; }
         }
 

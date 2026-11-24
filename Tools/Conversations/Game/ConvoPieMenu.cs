@@ -19,6 +19,11 @@ namespace Simitone.Conversations
                     var patrolMenu = BeatPatrolDriver.TryBuildPieMenu(target, vm, caller);
                     if (patrolMenu != null) return patrolMenu;
                 }
+                if (Boot.Enabled && DispatchTriageDriver.IsActiveOn(vm))
+                {
+                    var triageMenu = DispatchTriageDriver.TryBuildPieMenu(target, vm, caller);
+                    if (triageMenu != null) return triageMenu;
+                }
 
                 if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu) return raw;
                 var targetAv = target as VMAvatar;

@@ -21,7 +21,8 @@ namespace Simitone.Conversations
         UrgentBeep = 12,
         CorrectChime = 13,
         WrongBuzzer = 14,
-        ShiftFanfare = 15
+        ShiftFanfare = 15,
+        PaperFormStamp = 16
     }
 
     public sealed class DispatchAudioEvent
@@ -33,7 +34,7 @@ namespace Simitone.Conversations
 
     // Pure-C# 16-bit 22.05 kHz PCM synthesizer for Law Enforcement Level 4 ("Desk Sergeant"):
     // 911 Dispatch Triage — retro precinct switchboard rings, lobby door chimes, footsteps,
-    // police/fire radio squelch + siren/klaxon cues, handset hang-up, calm chime, & fanfare.
+    // police/fire radio squelch + siren/klaxon cues, paper-form stamp, handset hang-up, & fanfare.
     public static class DispatchAudioSynth
     {
         public const int SampleRate = 22050;
@@ -58,6 +59,7 @@ namespace Simitone.Conversations
                 case DispatchSfxId.CorrectChime: return MakeCorrectChime();
                 case DispatchSfxId.WrongBuzzer: return MakeWrongBuzzer();
                 case DispatchSfxId.ShiftFanfare: return MakeShiftFanfare();
+                case DispatchSfxId.PaperFormStamp: return MakePaperFormStamp();
                 default: return MakePhonePickup();
             }
         }
@@ -420,6 +422,42 @@ namespace Simitone.Conversations
                     buf[i] += (float)(Math.Sin(2.0 * Math.PI * notes[k] * t) * 0.32 +
                                       Math.Sin(4.0 * Math.PI * notes[k] * t) * 0.12) * env;
                 }
+            }
+            return FloatToPcm16(buf);
+        }
+
+        static byte[] MakePaperFormStamp()
+        {
+            // Tactile wooden rubber-stamp thump followed by crisp paper handover rustle
+            float dur = 0.34f;
+            int n = (int)(dur * SampleRate);
+            var buf = new float[n];
+            uint rng = 94177u;
+            float lp = 0f;
+            for (int i = 0; i < n; i++)
+            {
+                float t = i / (float)SampleRate;
+                rng = rng * 1664525u + 1013904223u;
+                float noise = ((rng >> 9) / 4194304f) * 2f - 1f;
+                lp = lp * 0.72f + noise * 0.28f;
+                float hp = noise - lp;
+
+                // 0..0.09s: heavy rubber stamp thud onto desk
+                float stamp = 0f;
+                if (t < 0.11f)
+                {
+                    float env = (float)(Math.Min(1.0, t / 0.004) * Math.Exp(-t * 36.0));
+                    stamp = (float)(Math.Sin(2.0 * Math.PI * (155.0 - t * 480.0) * t) * 0.55 + lp * 0.28) * env;
+                }
+                // 0.09..0.32s: crisp paper slip rustle across counter
+                float paper = 0f;
+                if (t > 0.08f)
+                {
+                    float tp = t - 0.08f;
+                    float env = (float)(Math.Sin(Math.Min(1.0, tp / 0.22) * Math.PI) * Math.Exp(-tp * 6.5));
+                    paper = hp * 0.34f * env;
+                }
+                buf[i] = stamp + paper;
             }
             return FloatToPcm16(buf);
         }

@@ -155,20 +155,25 @@ Patrol **actual Sims 1 lots** across **Downtown (`House21–30`)**, **Old Town (
 
 ### Law Enforcement Lvl 4 — Desk Sergeant: *911 Dispatch Triage*
 
-Step behind the oak front counter of the **SimCity PD Precinct Lobby** (full-screen 3D Virtual Pocket Lot, home lot safely paused) wearing your Sim's authentic TS1 **Desk Sergeant** uniform. Juggle a live 6-case shift combining flashing multi-line **911 emergency phone calls** and **live 3D walk-in neighborhood townies** who physically stride through the precinct glass door, plead across the counter with floating speech bubbles, and depart once dispatched:
+Step behind the real **SimCity PD Precinct Front Desk** built on a live Sims 1 lot using **100% real TS1 game assets** — authentic walls, tiled lobby floors, stone reception counters, slotted desk telephone, computer, table lamp, office chairs, case-file bookcases, plants, and a parked **Police Squad Car** outside (works seamlessly in **both 3D and 2D Isometric mode**, with your home lot safely preserved). Your Sim wears their authentic TS1 **Desk Sergeant** uniform while verified, fully textured real neighborhood Sims physically walk up to the counter:
 
-- **Handcrafted Sims 1 Case Triage & Unit Cooldowns:** Route 12 handcrafted TS1 scenarios across **`[1] Patrol`** (`2` units — burglars, break-ins, prowlers), **`[2] Fire Dept`** (`1` unit — stove blazes, backyard grills, electrical sparks), **`[3] Community Aid`** (`2` units — El Bandito raccoons, lost pets, noise disputes), and **`[4] Dismiss / Hang Up`** (instant — pizza pranks & bogus calls). Watch outdoor 3D **Police Cruisers** and **Fire Engines** roll out past the precinct windows when dispatched!
-- **Logic & Charisma Skill Depth:** **Logic ≥ 2** unlocks dispatch audio & visual tells (exposing pranks and confirming real threats); **Charisma** stretches call urgency timers and grants **`[C] Calm Caller (+6s)`** charges. Assisting neighbors writes real TS1 relationship deltas & **Sim Memory** dossier entries alongside Simoleons, Job Performance, and Logic/Charisma XP.
-- **6 Custom Blender Desk Animations & 16 Procedural Precinct SFX:** `desk_idle_watch`, `desk_answer_phone`, `desk_radio_dispatch`, `desk_wave_dismiss`, `desk_walkin_walk`, and `desk_walkin_plead` paired with `DispatchAudioSynth` (precinct ambience, twin-bell 911 phone ring, handset pickup, front-door brass chime, marble footsteps, radio squelch + cruiser/fire-engine rollout sirens, calm-caller chime, hang-up click, and shift fanfare).
+- **Click the Ringing Desk Phone -> Phone Switchboard Modal:** Click the real TS1 **Desk Phone** (via pulsing world marker or native Simitone Pie Menu) to open a tactile **911 Switchboard Console** with green-phosphor caller ID readout, Logic line-scan tells, **`[C] Calm Caller (+6s)`**, and 4 clickable **Department Buttons** (**`[1] Patrol Dept`**, **`[2] Fire Dept`**, **`[3] Community Aid`**, **`[4] Hang Up / Prank`**).
+- **Click the Walk-In Sim -> Paper Forms Clipboard Modal:** When a real neighborhood citizen walks up to the front counter, click them (via pulsing world marker or native Pie Menu) to open the **Precinct Paper Forms Clipboard** with a cream citizen intake slip and **4 physical color-coded stamped Referral Forms** (`FORM 10-A | Patrol Division`, `FORM 22-F | Fire Marshal`, `FORM 07-C | Community Aid`, `FORM 00-X | No-Action Slip`) — stamp & hand over the right form so the citizen heads straight to that department!
+- **Logic & Charisma Skill Depth:** **Logic ≥ 2** unlocks dispatch audio & visual tells (exposing pranks and confirming real threats); **Charisma** stretches call urgency timers and grants **`[C] Calm / Reassure (+6s)`** charges. Returning home writes real TS1 Simoleons, Job Performance, Logic/Charisma XP, relationship deltas, and **Sim Memory** dossier entries.
+- **6 Custom Blender Desk Animations & 17 Procedural Precinct SFX:** `desk_idle_watch`, `desk_answer_phone`, `desk_radio_dispatch`, `desk_wave_dismiss`, `desk_walkin_walk`, and `desk_walkin_plead` paired with `DispatchAudioSynth` (precinct ambience, twin-bell 911 phone ring, handset pickup, rubber paper-form stamp & rustle, front-door brass chime, footsteps, radio squelch + cruiser/fire-engine rollout sirens, calm-caller chime, hang-up click, and shift fanfare).
 - **Gameplay Video (HD with Synced Precinct Audio):** [Watch Lvl 4 — Desk Sergeant 911 Triage Demo (MP4)](docs/career-minigames/media/lvl4-desk-sergeant-triage-demo.mp4)
 
-| 3D Precinct Front Desk & Shift Briefing | Incoming 911 Phone Call & Handset Pickup |
+| Real-Asset Precinct Front Desk & Shift Briefing | Click Desk Phone -> 911 Switchboard Modal |
 | :---: | :---: |
-| ![Desk Sergeant Briefing](docs/career-minigames/media/17-lvl4-triage-briefing.jpg) | ![Desk Sergeant 911 Phone Dispatch](docs/career-minigames/media/18-lvl4-triage-phone.jpg) |
+| ![Desk Sergeant Briefing](docs/career-minigames/media/17-lvl4-triage-briefing.jpg) | ![Desk Sergeant 911 Phone Switchboard Modal](docs/career-minigames/media/18-lvl4-triage-phone.jpg) |
 
-| Live 3D Walk-In Neighbor at Front Counter | S-Rank Shift Report & Victory Salute |
+| Real Walk-In Citizen & Ringing Phone Markers | Click Citizen -> Stamped Paper Forms Clipboard |
 | :---: | :---: |
-| ![Desk Sergeant Live 3D Walk-In](docs/career-minigames/media/19-lvl4-triage-walkin.jpg) | ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/20-lvl4-triage-scorecard.jpg) |
+| ![Desk Sergeant Real Walk-In Citizen](docs/career-minigames/media/19-lvl4-triage-walkin.jpg) | ![Desk Sergeant Paper Forms Clipboard Modal](docs/career-minigames/media/20-lvl4-triage-paperforms.jpg) |
+
+| S-Rank Shift Report & Return Home Rewards |
+| :---: |
+| ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/21-lvl4-triage-scorecard.jpg) |
 
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
 > - `convo dispatch toast <SimName> [cadet|patrol|triage]` — trigger the mid-shift Radio Dispatch toast
