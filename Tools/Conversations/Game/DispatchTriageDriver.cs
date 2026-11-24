@@ -293,8 +293,8 @@ namespace Simitone.Conversations
                     audio.Play(DispatchSfxId.ShiftFanfare, 0.52f);
                     if (sergeantAvatar != null)
                     {
-                        sergeantClip.Play("cadet_victory_salute", 0.20f, 0.95f, true, false);
-                        lastSergeantClipName = "cadet_victory_salute";
+                        sergeantClip.Play("desk_seated_salute", 0.20f, 0.95f, true, false);
+                        lastSergeantClipName = "desk_seated_salute";
                         ConvoOverlay.Show(precinctVm, sergeantAvatar, "Sgt. " + homeOfficerName,
                             "Shift complete — SimCity PD Precinct Desk secured!", null, null, null);
                     }
@@ -317,7 +317,7 @@ namespace Simitone.Conversations
                 : (1f / 60f);
             lastAnimSec = nowSec;
 
-            // 1. Update Sgt. Bob skeletal animation behind the real TS1 reception counter!
+            // 1. Update Sgt. Bob seated skeletal animation in his office chair behind the escrivaninha desk!
             if (sergeantAvatar != null && !sergeantAvatar.Dead && sergeantAvatar.Avatar != null)
             {
                 string desiredClip = "desk_idle_watch";
@@ -326,7 +326,7 @@ namespace Simitone.Conversations
 
                 if (game.IsFinished)
                 {
-                    desiredClip = "cadet_victory_salute";
+                    desiredClip = "desk_seated_salute";
                     loop = true;
                     speed = 0.95f;
                 }
@@ -813,102 +813,158 @@ namespace Simitone.Conversations
 
                 BuildPrecinctArchitecture(vm, roomMinX, roomMinY, roomW, roomH, cruiserTile, lobbyFloorId, walkFloorId, wallPatId);
 
-                // 4. Furnish the SimCity PD Precinct Front Desk using 100% REAL TS1 GAME OBJECTS!
+                // 4. Furnish the SimCity PD Precinct Office Desk (Escrivaninha) using 100% REAL TS1 GAME OBJECTS!
                 int deskY = roomMinY + 2;
                 int deskCenterX = roomMinX + 4;
                 counterCenterTile = new LotTilePos((short)(deskCenterX * 16), (short)(deskY * 16), 1);
 
                 var spawnedLog = new List<string>();
-                uint counterGuid = FindCatalogObjectGuid(content,
-                    new[] { "counter -", "numica", "tuscany", "monolith", "country counter", "counter" },
-                    new[] { "cotton", "candy", "food", "ice", "cream", "hotdog", "buffet", "espresso", "snack", "pie", "bakery", "sushi", "deli", "pastry", "grill", "popcorn", "drink", "juice", "vendor", "stall", "stand", "cart", "bar", "sink", "stove", "oven", "trash", "dishwasher", "island", "corner", "npc", "cash", "register", "barstool", "stool", "cabinet", "wall", "coffee" },
-                    preferSingleTile: true);
+                uint deskGuid = FindCatalogObjectGuid(content,
+                    new[] { "desk - executive", "desk - moderate", "desk - cheap", "desk - ", "writing desk", "office desk", "desk" },
+                    new[] { "chair", "lamp", "phone", "computer", "counter", "sink", "podium", "reception", "check", "cash", "register", "hotel", "npc", "teacher", "school", "bar", "vanity", "dresser", "buffet", "island", "food", "stand", "stall", "study", "magic", "castle", "western", "lab", "chemistry", "dj", "djbooth", "part b", "right" },
+                    preferSingleTile: false);
                 uint phoneGuid = FindCatalogObjectGuid(content,
-                    new[] { "phone", "tele" },
-                    new[] { "wall", "booth", "pay", "cell", "public", "npc" },
+                    new[] { "phone - desk", "desk phone", "phone" },
+                    new[] { "wall", "booth", "pay", "cell", "public", "npc", "television", "tv", "left", "right" },
                     preferSingleTile: true);
                 uint computerGuid = FindCatalogObjectGuid(content,
-                    new[] { "computer", "pc", "terminal" },
-                    new[] { "desk", "table", "chair", "npc" },
+                    new[] { "computer -", "computer" },
+                    new[] { "desk", "table", "chair", "npc", "popcorn", "left", "right" },
+                    preferSingleTile: true);
+                uint endTableGuid = FindCatalogObjectGuid(content,
+                    new[] { "end table", "table - end", "side table" },
+                    new[] { "coffee", "dining", "picnic", "patio", "outdoor", "magic", "castle", "western", "left", "right", "buffet" },
                     preferSingleTile: true);
                 uint lampGuid = FindCatalogObjectGuid(content,
-                    new[] { "table lamp", "desk lamp", "lamp - table", "lamp - desk", "banker", "lamp" },
-                    new[] { "garden", "yard", "lawn", "tiki", "torch", "lantern", "patio", "outdoor", "floor", "wall", "street", "sconce", "hanging", "chandelier", "lava", "post", "path", "unleashed", "camping", "pool", "tomb", "magic" },
+                    new[] { "lamp - table", "table lamp", "desk lamp", "lamp - desk", "banker", "lamp" },
+                    new[] { "garden", "yard", "lawn", "tiki", "torch", "lantern", "patio", "outdoor", "floor", "wall", "street", "sconce", "hanging", "chandelier", "lava", "post", "path", "unleashed", "camping", "pool", "tomb", "magic", "left", "right" },
                     preferSingleTile: true);
                 uint chairGuid = FindCatalogObjectGuid(content,
-                    new[] { "office", "desk chair", "dining chair", "chair" },
-                    new[] { "recliner", "lounge", "beach", "lawn", "bar", "stool", "sofa", "couch", "loveseat", "high", "electric", "massage" },
+                    new[] { "chair - office", "office chair", "desk chair", "office" },
+                    new[] { "recliner", "lounge", "beach", "lawn", "bar", "stool", "sofa", "couch", "loveseat", "high", "electric", "massage", "throne", "western", "left", "right", "desk", "table" },
                     preferSingleTile: true);
+                if (chairGuid == 0)
+                {
+                    chairGuid = FindCatalogObjectGuid(content,
+                        new[] { "dining chair", "chair - dining", "chair" },
+                        new[] { "recliner", "lounge", "beach", "lawn", "bar", "stool", "sofa", "couch", "loveseat", "high", "electric", "massage", "throne", "western", "left", "right" },
+                        preferSingleTile: true);
+                }
                 uint bookcaseGuid = FindCatalogObjectGuid(content,
-                    new[] { "bookcase", "bookshelf", "shelf" },
-                    new[] { "wall", "magic", "spell", "npc" },
+                    new[] { "bookshelf - dorm", "bookcase - pine", "bookcase - amish", "bookcase - cheap", "bookcase - expensive", "bookcase", "bookshelf" },
+                    new[] { "western", "left", "right", "center", "wall", "magic", "spell", "secret", "door", "castle", "dungeon", "store", "shop", "display", "rack", "counter", "npc" },
                     preferSingleTile: true);
                 uint plantGuid = FindCatalogObjectGuid(content,
-                    new[] { "plant", "ficus", "palm", "fern", "rubber" },
-                    new[] { "shrub", "hedge", "tree", "flower", "garden", "hanging", "wall", "cactus", "table" },
+                    new[] { "plant - floor", "ficus", "palm", "fern", "plant" },
+                    new[] { "shrub", "hedge", "tree", "flower", "garden", "hanging", "wall", "cactus", "table", "left", "right" },
                     preferSingleTile: true);
 
-                // Place 3-tile Reception Counter row (facing SOUTH toward the lobby entrance!)
-                VMEntity leftCounter = SpawnPrecinctProp(vm, counterGuid, deskCenterX - 1, deskY, Direction.SOUTH);
-                centerCounterEntity = SpawnPrecinctProp(vm, counterGuid, deskCenterX, deskY, Direction.SOUTH);
-                VMEntity rightCounter = SpawnPrecinctProp(vm, counterGuid, deskCenterX + 1, deskY, Direction.SOUTH);
-                if (centerCounterEntity != null) spawnedLog.Add("Counters=" + SafeObjName(centerCounterEntity));
-
-                // Place REAL TS1 Table Telephone directly ON TOP of the Center Reception Counter!
-                if (phoneGuid != 0)
+                // Place Sergeant's Escrivaninha (real TS1 Office Desk, kneehole facing NORTH toward seated Sgt. Bob!)
+                // If it's a 2-tile Executive Desk, it gives us 2 seamless surface tiles automatically (Computer + Phone);
+                // if it's a 1-tile Desk, spawn a matching second desk right beside it so BOTH Computer & Phone sit on top!
+                VMEntity mainDesk = null;
+                VMEntity phoneDesk = null;
+                if (deskGuid != 0)
                 {
-                    deskPhoneEntity = SpawnPrecinctProp(vm, phoneGuid, deskCenterX, deskY + 1, Direction.SOUTH);
-                    if (deskPhoneEntity != null && centerCounterEntity != null)
+                    var deskPos = new LotTilePos((short)(deskCenterX * 16), (short)(deskY * 16), 1);
+                    var deskGrp = vm.Context.CreateObjectInstance(deskGuid, deskPos, Direction.NORTH);
+                    if (deskGrp != null && deskGrp.Objects != null && deskGrp.Objects.Count > 0)
+                    {
+                        FreezeGroup(deskGrp, pauseThread: true);
+                        for (int i = 0; i < deskGrp.Objects.Count; i++)
+                            precinctProps.Add(deskGrp.Objects[i]);
+
+                        var tiles = deskGrp.Objects
+                            .Where(o => o != null && o.Position != LotTilePos.OUT_OF_WORLD)
+                            .OrderBy(o => o.Position.TileX)
+                            .ToList();
+                        if (tiles.Count >= 2)
+                        {
+                            mainDesk = tiles[0];
+                            phoneDesk = tiles[1];
+                        }
+                        else
+                        {
+                            mainDesk = deskGrp.BaseObject ?? deskGrp.Objects[0];
+                            phoneDesk = SpawnPrecinctProp(vm, deskGuid, deskCenterX + 1, deskY, Direction.NORTH);
+                        }
+                    }
+                }
+                int seatX = (mainDesk != null && mainDesk.Position != LotTilePos.OUT_OF_WORLD) ? mainDesk.Position.TileX : deskCenterX;
+                int seatY = (mainDesk != null && mainDesk.Position != LotTilePos.OUT_OF_WORLD) ? (mainDesk.Position.TileY - 1) : (deskY - 1);
+                int phoneDeskX = (phoneDesk != null && phoneDesk.Position != LotTilePos.OUT_OF_WORLD) ? phoneDesk.Position.TileX : (seatX + 1);
+                int phoneDeskY = (phoneDesk != null && phoneDesk.Position != LotTilePos.OUT_OF_WORLD) ? phoneDesk.Position.TileY : deskY;
+
+                centerCounterEntity = phoneDesk ?? mainDesk;
+                if (mainDesk != null) spawnedLog.Add("Desk=" + SafeObjName(mainDesk));
+
+                // Place REAL TS1 Computer directly ON TOP of Sgt. Bob's Main Office Desk!
+                if (computerGuid != 0 && mainDesk != null)
+                {
+                    var comp = SpawnPrecinctProp(vm, computerGuid, seatX, deskY + 1, Direction.NORTH);
+                    if (comp != null)
                     {
                         bool slotted = false;
-                        try { slotted = centerCounterEntity.PlaceInSlot(deskPhoneEntity, 0, true, vm.Context); } catch { }
+                        try { slotted = mainDesk.PlaceInSlot(comp, 0, true, vm.Context); } catch { }
                         if (!slotted)
                         {
-                            // Keep phone cleanly visible right beside desk if slot 0 wasn't accepted
-                            try { deskPhoneEntity.SetPosition(new LotTilePos((short)(deskCenterX * 16), (short)((deskY + 1) * 16), 1), Direction.SOUTH, vm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
+                            try { comp.SetPosition(new LotTilePos((short)(seatX * 16), (short)(deskY * 16), 1), Direction.NORTH, vm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
+                        }
+                        spawnedLog.Add("PC=" + SafeObjName(comp) + (slotted ? "(slotted)" : "(placed)"));
+                    }
+                }
+
+                // Place REAL TS1 Desk Telephone directly ON TOP of the Phone Desk surface!
+                if (phoneGuid != 0)
+                {
+                    VMEntity phoneSurface = phoneDesk ?? mainDesk;
+                    deskPhoneEntity = SpawnPrecinctProp(vm, phoneGuid, phoneDeskX, phoneDeskY + 1, Direction.SOUTH);
+                    if (deskPhoneEntity != null && phoneSurface != null)
+                    {
+                        bool slotted = false;
+                        try { slotted = phoneSurface.PlaceInSlot(deskPhoneEntity, 0, true, vm.Context); } catch { }
+                        if (!slotted)
+                        {
+                            try { deskPhoneEntity.SetPosition(new LotTilePos((short)(phoneDeskX * 16), (short)(phoneDeskY * 16), 1), Direction.SOUTH, vm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
                         }
                         spawnedLog.Add("Phone=" + SafeObjName(deskPhoneEntity) + (slotted ? "(slotted)" : "(placed)"));
                     }
                 }
 
-                // Place REAL TS1 Computer on Left Counter
-                if (computerGuid != 0 && leftCounter != null)
-                {
-                    var comp = SpawnPrecinctProp(vm, computerGuid, deskCenterX - 1, deskY + 1, Direction.SOUTH);
-                    if (comp != null)
-                    {
-                        bool slotted = false;
-                        try { slotted = leftCounter.PlaceInSlot(comp, 0, true, vm.Context); } catch { }
-                        if (!slotted) { try { comp.Delete(true, vm.Context); } catch { } }
-                        else spawnedLog.Add("PC=" + SafeObjName(comp));
-                    }
-                }
-
-                // Place REAL TS1 Lamp on Right Counter
-                if (lampGuid != 0 && rightCounter != null)
-                {
-                    var lamp = SpawnPrecinctProp(vm, lampGuid, deskCenterX + 1, deskY + 1, Direction.SOUTH);
-                    if (lamp != null)
-                    {
-                        bool slotted = false;
-                        try { slotted = rightCounter.PlaceInSlot(lamp, 0, true, vm.Context); } catch { }
-                        if (!slotted) { try { lamp.Delete(true, vm.Context); } catch { } }
-                        else spawnedLog.Add("Lamp=" + SafeObjName(lamp));
-                    }
-                }
-
-                // Back-wall Case File Bookcases, Office Chair, Lobby Waiting Chair & Entrance Plants
-                if (bookcaseGuid != 0)
-                {
-                    var b1 = SpawnPrecinctProp(vm, bookcaseGuid, roomMinX + 1, roomMinY, Direction.SOUTH);
-                    var b2 = SpawnPrecinctProp(vm, bookcaseGuid, roomMinX + 6, roomMinY, Direction.SOUTH);
-                    if (b1 != null || b2 != null) spawnedLog.Add("Files=" + SafeObjName(b1 ?? b2));
-                }
+                // Place Sgt. Bob's REAL TS1 Office Chair directly behind the Computer Desk (facing SOUTH toward the desk)!
                 if (chairGuid != 0)
                 {
+                    var deskChair = SpawnPrecinctProp(vm, chairGuid, seatX, seatY, Direction.SOUTH);
+                    if (deskChair != null) spawnedLog.Add("DeskChair=" + SafeObjName(deskChair));
+
+                    // Waiting chairs along the left wall cleanly away from the desk
                     var wait1 = SpawnPrecinctProp(vm, chairGuid, roomMinX + 1, roomMinY + 4, Direction.EAST);
                     var wait2 = SpawnPrecinctProp(vm, chairGuid, roomMinX + 1, roomMinY + 5, Direction.EAST);
-                    if (wait1 != null || wait2 != null) spawnedLog.Add("Chairs=" + SafeObjName(wait1 ?? wait2));
+                    if (wait1 != null || wait2 != null) spawnedLog.Add("WaitChairs=" + SafeObjName(wait1 ?? wait2));
+                }
+
+                // Side End Table with Table Lamp neatly beside waiting chairs
+                if (endTableGuid != 0 && lampGuid != 0)
+                {
+                    var sideTbl = SpawnPrecinctProp(vm, endTableGuid, roomMinX + 1, roomMinY + 3, Direction.EAST);
+                    if (sideTbl != null)
+                    {
+                        var lamp = SpawnPrecinctProp(vm, lampGuid, roomMinX + 2, roomMinY + 3, Direction.SOUTH);
+                        if (lamp != null)
+                        {
+                            bool slotted = false;
+                            try { slotted = sideTbl.PlaceInSlot(lamp, 0, true, vm.Context); } catch { }
+                            if (!slotted) { try { lamp.Delete(true, vm.Context); } catch { } }
+                            else spawnedLog.Add("Lamp=" + SafeObjName(lamp));
+                        }
+                    }
+                }
+
+                // One clean single-tile classic indoor wood Bookshelf inside the room (away from back wall corners!)
+                if (bookcaseGuid != 0)
+                {
+                    var b1 = SpawnPrecinctProp(vm, bookcaseGuid, roomMinX + 1, roomMinY + 1, Direction.EAST);
+                    if (b1 != null) spawnedLog.Add("Files=" + SafeObjName(b1));
                 }
                 if (plantGuid != 0)
                 {
@@ -919,10 +975,10 @@ namespace Simitone.Conversations
 
                 spawnedAssetsSummary = string.Join(", ", spawnedLog);
 
-                // 5. Spawn Sgt. Bob behind the Reception Counter dressed in authentic Desk Sergeant uniform!
-                var sgtTile = new LotTilePos((short)(deskCenterX * 16), (short)((deskY - 1) * 16), 1);
-                sergeantStandTile = new Vector2(deskCenterX + 0.5f, (deskY - 1) + 0.62f);
-                sergeantFacingYaw = (float)Math.PI; // Facing SOUTH across the counter toward the phone & citizens!
+                // 5. Spawn Sgt. Bob SEATED in his Office Chair behind the Escrivaninha Desk in authentic Desk Sergeant uniform!
+                var sgtTile = new LotTilePos((short)(seatX * 16), (short)(seatY * 16), 1);
+                sergeantStandTile = new Vector2(seatX + 0.50f, seatY + 0.48f);
+                sergeantFacingYaw = (float)Math.PI; // Facing SOUTH across the escrivaninha toward the computer, phone & citizens!
                 sergeantAvatar = SpawnAndDressSergeant(vm, sgtTile);
                 if (sergeantAvatar != null)
                 {
@@ -935,10 +991,10 @@ namespace Simitone.Conversations
                 }
 
                 // Key walk-in choreography tiles:
-                // Citizens enter from the front walkway, walk straight up to the front counter facing Sgt. Bob,
-                // and after receiving their Paper Form walk right toward the department corridor & exit!
-                walkInEntryTile = new Vector2(deskCenterX + 0.5f, roomMinY + roomH + 1.2f);
-                walkInCounterTile = new Vector2(deskCenterX + 0.5f, deskY + 1.38f);
+                // Citizens enter from the front walkway, walk straight up to the front of the Sergeant's escrivaninha,
+                // and after receiving their stamped Paper Form walk right toward the department corridor & exit!
+                walkInEntryTile = new Vector2(seatX + 0.5f, roomMinY + roomH + 1.2f);
+                walkInCounterTile = new Vector2(seatX + 0.5f, deskY + 1.38f);
                 walkInDeptExitTile = new Vector2(roomMinX + roomW + 0.8f, deskY + 2.5f);
 
                 // 6. Create pure-C# DispatchTriageGame with verified textured neighborhood callers!
@@ -1440,9 +1496,12 @@ namespace Simitone.Conversations
                     var obj = content.WorldObjects?.Get(item.GUID);
                     if (obj == null || obj.OBJ == null) continue;
                     if (obj.OBJ.ObjectType == OBJDType.Person || obj.OBJ.ObjectType == OBJDType.SimType) continue;
+                    // Never pick secondary half-tile sub-pieces (SubIndex > 0)
+                    if (obj.OBJ.SubIndex > 0) continue;
+                    if (preferSingleTile && obj.OBJ.MasterID != 0) continue;
 
                     int score = matchRank * 100;
-                    if (preferSingleTile && obj.OBJ.SubIndex == -1) score += 60;
+                    if (preferSingleTile && obj.OBJ.MasterID == 0) score += 40;
                     // Prefer moderate-priced base TS1 items (classic clean styling)
                     if (item.Price > 0 && item.Price <= 1800) score += 20;
 

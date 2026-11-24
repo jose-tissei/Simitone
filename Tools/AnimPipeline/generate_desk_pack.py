@@ -59,42 +59,48 @@ def validate_clip_arms(spec):
                 )
 
 
+SEATED_LEGS = {
+    # Authentic 90-deg seated office-chair posture (pelvis drops to exact TS1 chair cushion height y=1.61)
+    "L_LEG": (-86.0, 5.0, 3.0),
+    "L_LEG1": (86.0, 0.0, -2.0),
+    "L_FOOT": (0.0, 0.0, 0.0),
+    "R_LEG": (-86.0, -5.0, -3.0),
+    "R_LEG1": (86.0, 0.0, 2.0),
+    "R_FOOT": (0.0, 0.0, 0.0),
+}
+
+
 def make_desk_idle_watch(rig):
-    """Desk Sergeant standing alert behind the front counter, hands resting near switchboard & ledger."""
+    """Desk Sergeant seated in office chair at computer desk, typing gently & scanning phone/lobby."""
     fps = 30.0
     n = 48
     frames = []
     for i in range(n):
         p = (i / n) * 2.0 * math.pi
         breathe = math.sin(p)
-        scan = math.sin(p * 0.5) * 1.0 if False else math.sin(p)
-        subtle = math.cos(p * 2.0)
+        scan = math.sin(p)
+        type_l = math.sin(p * 4.0)
+        type_r = math.cos(p * 4.0)
 
         d = {
-            "PELVIS": (1.5, 2.0 * scan, 0.0),
-            "SPINE": (2.5 + 1.0 * breathe, 2.5 * scan, 0.0),
-            "SPINE1": (2.0 + 1.0 * breathe, 2.0 * scan, 0.0),
-            "SPINE2": (1.5, 1.5 * scan, 0.0),
-            "NECK": (3.0, 6.0 * scan, 0.0),
-            "HEAD": (4.0 - 1.5 * breathe, 9.0 * scan, 1.5 * subtle),
+            "PELVIS": (2.0, 1.5 * scan, 0.0),
+            "SPINE": (4.0 + 1.0 * breathe, 2.0 * scan, 0.0),
+            "SPINE1": (3.0 + 1.0 * breathe, 1.5 * scan, 0.0),
+            "SPINE2": (2.0, 1.0 * scan, 0.0),
+            "NECK": (2.0, 5.0 * scan, 0.0),
+            "HEAD": (3.0 - 1.5 * breathe, 8.0 * scan, 1.5 * math.cos(p * 2.0)),
 
-            # Both hands resting forward at desk height (bent elbows cleanly outside shoulders)
+            # Both hands resting forward on the escrivaninha desk typing lightly at the computer keyboard
             "L_ARM": (0.0, 0.0, 4.0),
-            "L_ARM1": (-24.0 + 2.0 * breathe, -10.0, 14.0),
-            "L_ARM2": (-68.0 - 3.0 * breathe, -12.0, -8.0),
-            "L_HAND": (10.0, 0.0, 0.0),
+            "L_ARM1": (-34.0 + 2.5 * type_l, -8.0, 12.0),
+            "L_ARM2": (-64.0 - 3.5 * type_l, -10.0, -6.0),
+            "L_HAND": (12.0 + 4.0 * type_l, 0.0, 0.0),
 
             "R_ARM": (0.0, 0.0, -4.0),
-            "R_ARM1": (-24.0 + 2.0 * breathe, 10.0, -14.0),
-            "R_ARM2": (-68.0 - 3.0 * breathe, 12.0, 8.0),
-            "R_HAND": (10.0, 0.0, 0.0),
-
-            "L_LEG": (-3.0, 4.0, 2.5),
-            "L_LEG1": (5.0, 0.0, -1.5),
-            "L_FOOT": (-2.0, 0.0, 0.0),
-            "R_LEG": (-3.0, -4.0, -2.5),
-            "R_LEG1": (5.0, 0.0, 1.5),
-            "R_FOOT": (-2.0, 0.0, 0.0),
+            "R_ARM1": (-34.0 + 2.5 * type_r, 8.0, -12.0),
+            "R_ARM2": (-64.0 - 3.5 * type_r, 10.0, 6.0),
+            "R_HAND": (12.0 + 4.0 * type_r, 0.0, 0.0),
+            **SEATED_LEGS,
         }
         frames.append(rig.build_pose(d, root_offset=(0.0, 0.0, 0.0), ground_feet=True))
 
@@ -111,7 +117,7 @@ def make_desk_idle_watch(rig):
 
 
 def make_desk_answer_phone(rig):
-    """Desk Sergeant holds 911 telephone handset to right ear while jotting notes on desk pad with left hand."""
+    """Seated Desk Sergeant holds 911 telephone handset to right ear while typing/jotting notes on desk."""
     fps = 30.0
     n = 36
     frames = []
@@ -122,31 +128,25 @@ def make_desk_answer_phone(rig):
         scrib_p = math.cos(p * 3.0)
 
         d = {
-            "PELVIS": (2.0, -3.0, 0.0),
-            "SPINE": (4.0, 2.0, -2.0),
+            "PELVIS": (2.5, -2.5, 0.0),
+            "SPINE": (4.5, 2.0, -2.0),
             "SPINE1": (4.0, 2.0, -2.5),
             "SPINE2": (2.5, 1.0, -2.0),
-            "NECK": (5.0 + 3.0 * nod, -4.0, -5.0),
-            "HEAD": (6.0 + 5.0 * nod, -5.0, -7.0),
+            "NECK": (4.0 + 3.0 * nod, -4.0, -5.0),
+            "HEAD": (5.0 + 5.0 * nod, -5.0, -7.0),
 
-            # Left arm (+X): taking notes briskly on the dispatch ledger on the counter
+            # Left arm (+X): jotting notes / typing on the desk
             "L_ARM": (0.0, 0.0, 4.0),
-            "L_ARM1": (-30.0 + 3.0 * scrib_p, -14.0 + 6.0 * scrib_y, 16.0),
-            "L_ARM2": (-82.0 + 5.0 * scrib_p, -18.0, -8.0),
-            "L_HAND": (8.0, 0.0, 0.0),
+            "L_ARM1": (-34.0 + 3.0 * scrib_p, -12.0 + 6.0 * scrib_y, 14.0),
+            "L_ARM2": (-76.0 + 5.0 * scrib_p, -16.0, -8.0),
+            "L_HAND": (10.0, 0.0, 0.0),
 
-            # Right arm (-X): elbow raised outward-forward, forearm flexed sharply bringing hand to right ear!
+            # Right arm (-X): elbow raised outward-forward, forearm flexed bringing handset to right ear
             "R_ARM": (0.0, 0.0, -6.0),
             "R_ARM1": (-62.0 + 2.0 * nod, 10.0, -34.0),
             "R_ARM2": (-118.0 + 2.0 * nod, 26.0, 14.0),
             "R_HAND": (6.0, 8.0, 0.0),
-
-            "L_LEG": (-3.0, 4.0, 2.5),
-            "L_LEG1": (5.0, 0.0, -1.5),
-            "L_FOOT": (-2.0, 0.0, 0.0),
-            "R_LEG": (-3.0, -4.0, -2.5),
-            "R_LEG1": (5.0, 0.0, 1.5),
-            "R_FOOT": (-2.0, 0.0, 0.0),
+            **SEATED_LEGS,
         }
         frames.append(rig.build_pose(d, root_offset=(0.0, 0.0, 0.0), ground_feet=True))
 
@@ -163,7 +163,7 @@ def make_desk_answer_phone(rig):
 
 
 def make_desk_radio_dispatch(rig):
-    """Authoritative dispatch call: lean forward, press desk/shoulder mic with right hand, signal with left."""
+    """Seated authoritative dispatch / form-handover gesture over the escrivaninha desk."""
     fps = 30.0
     n = 30
     frames = []
@@ -173,31 +173,25 @@ def make_desk_radio_dispatch(rig):
         pulse = math.sin(u * math.pi * 4.0) * reach
 
         d = {
-            "PELVIS": (3.0 + 3.0 * reach, 0.0, 0.0),
-            "SPINE": (4.0 + 5.0 * reach, -4.0 * reach, 0.0),
+            "PELVIS": (3.0 + 2.5 * reach, 0.0, 0.0),
+            "SPINE": (5.0 + 5.0 * reach, -4.0 * reach, 0.0),
             "SPINE1": (4.0 + 4.0 * reach, -3.0 * reach, 0.0),
-            "SPINE2": (2.0 + 2.0 * reach, 0.0, 0.0),
+            "SPINE2": (2.5 + 2.0 * reach, 0.0, 0.0),
             "NECK": (-2.0 + 4.0 * pulse * 0.4, 4.0 * reach, 0.0),
             "HEAD": (-3.0 + 5.0 * pulse * 0.4, 6.0 * reach, 0.0),
 
-            # Left arm (+X): crisp forward-outward authoritative dispatch gesture
+            # Left arm (+X): crisp forward dispatch / paper-form handover reach across the desk
             "L_ARM": (0.0, 0.0, 5.0),
-            "L_ARM1": (-28.0 - 28.0 * reach + 4.0 * pulse, -10.0 - 8.0 * reach, 16.0 + 10.0 * reach),
-            "L_ARM2": (-72.0 + 26.0 * reach, -12.0, -8.0),
+            "L_ARM1": (-32.0 - 26.0 * reach + 4.0 * pulse, -10.0 - 8.0 * reach, 15.0 + 8.0 * reach),
+            "L_ARM2": (-68.0 + 24.0 * reach, -12.0, -8.0),
             "L_HAND": (-8.0 * reach, 0.0, 0.0),
 
             # Right arm (-X): presses shoulder/chest radio transceiver mic firmly
             "R_ARM": (0.0, 0.0, -5.0),
-            "R_ARM1": (-30.0 - 20.0 * reach, 14.0 + 8.0 * reach, -18.0 - 8.0 * reach),
+            "R_ARM1": (-32.0 - 20.0 * reach, 14.0 + 8.0 * reach, -18.0 - 8.0 * reach),
             "R_ARM2": (-74.0 - 34.0 * reach, 22.0 + 10.0 * reach, 10.0),
             "R_HAND": (6.0, 0.0, 0.0),
-
-            "L_LEG": (-4.0, 5.0, 3.0),
-            "L_LEG1": (6.0, 0.0, -2.0),
-            "L_FOOT": (-2.0, 0.0, 0.0),
-            "R_LEG": (-4.0, -5.0, -3.0),
-            "R_LEG1": (6.0, 0.0, 2.0),
-            "R_FOOT": (-2.0, 0.0, 0.0),
+            **SEATED_LEGS,
         }
         frames.append(rig.build_pose(d, root_offset=(0.0, 0.0, 0.0), ground_feet=True))
 
@@ -217,7 +211,7 @@ def make_desk_radio_dispatch(rig):
 
 
 def make_desk_wave_dismiss(rig):
-    """Crisp head-shake and dismissive right-hand sweep for prank calls & false alarms."""
+    """Seated crisp head-shake and dismissive right-hand sweep for prank calls & false alarms."""
     fps = 30.0
     n = 30
     frames = []
@@ -228,31 +222,25 @@ def make_desk_wave_dismiss(rig):
         shake = math.sin(u * math.pi * 4.0) * lift
 
         d = {
-            "PELVIS": (1.0, 0.0, 0.0),
-            "SPINE": (2.0, -3.0 * lift, 0.0),
-            "SPINE1": (2.0, -2.0 * lift, 0.0),
-            "SPINE2": (1.0, 0.0, 0.0),
+            "PELVIS": (2.0, 0.0, 0.0),
+            "SPINE": (3.0, -3.0 * lift, 0.0),
+            "SPINE1": (2.5, -2.0 * lift, 0.0),
+            "SPINE2": (1.5, 0.0, 0.0),
             "NECK": (2.0, 12.0 * shake, 0.0),
             "HEAD": (2.0, 18.0 * shake, -4.0 * shake),
 
-            # Left arm (+X): resting on hip/desk edge
+            # Left arm (+X): resting on desk edge
             "L_ARM": (0.0, 0.0, 4.0),
-            "L_ARM1": (-20.0, -8.0, 16.0),
-            "L_ARM2": (-68.0, -10.0, -8.0),
+            "L_ARM1": (-30.0, -8.0, 14.0),
+            "L_ARM2": (-66.0, -10.0, -8.0),
             "L_HAND": (10.0, 0.0, 0.0),
 
             # Right arm (-X): raises and waves briskly side-to-side ("move along / hang up!")
             "R_ARM": (0.0, 0.0, -6.0),
-            "R_ARM1": (-24.0 - 38.0 * lift, 8.0 + 22.0 * wave, -16.0 - 20.0 * lift),
-            "R_ARM2": (-70.0 - 18.0 * lift, 12.0 + 18.0 * wave, 8.0),
+            "R_ARM1": (-28.0 - 34.0 * lift, 8.0 + 22.0 * wave, -16.0 - 18.0 * lift),
+            "R_ARM2": (-70.0 - 16.0 * lift, 12.0 + 18.0 * wave, 8.0),
             "R_HAND": (-12.0 * lift, 10.0 * wave, 0.0),
-
-            "L_LEG": (-3.0, 4.0, 2.5),
-            "L_LEG1": (5.0, 0.0, -1.5),
-            "L_FOOT": (-2.0, 0.0, 0.0),
-            "R_LEG": (-3.0, -4.0, -2.5),
-            "R_LEG1": (5.0, 0.0, 1.5),
-            "R_FOOT": (-2.0, 0.0, 0.0),
+            **SEATED_LEGS,
         }
         frames.append(rig.build_pose(d, root_offset=(0.0, 0.0, 0.0), ground_feet=True))
 
@@ -264,6 +252,51 @@ def make_desk_wave_dismiss(rig):
         "root_speed": 0.0,
         "hand_gestures": [{"frame": 0, "left": "Open", "right": "Open"}],
         "events": [{"frame": 10, "name": "dismiss_wave"}],
+        "frames": frames,
+    }
+
+
+def make_desk_seated_salute(rig):
+    """Proud seated police salute right from the Desk Sergeant's office chair at shift completion."""
+    fps = 30.0
+    n = 36
+    frames = []
+    for i in range(n):
+        u = i / (n - 1)
+        hold = smoothstep(0.05, 0.25, u)
+        breathe = math.sin(u * math.pi * 2.0)
+
+        d = {
+            "PELVIS": (1.0, 0.0, 0.0),
+            "SPINE": (1.5 + 0.8 * breathe, 0.0, 0.0),
+            "SPINE1": (1.0 + 0.6 * breathe, 0.0, 0.0),
+            "SPINE2": (0.5, 0.0, 0.0),
+            "NECK": (-1.0, 0.0, 0.0),
+            "HEAD": (-1.5 + 1.0 * breathe, 0.0, 0.0),
+
+            # Left arm (+X): neatly resting on desk
+            "L_ARM": (0.0, 0.0, 4.0),
+            "L_ARM1": (-30.0, -8.0, 12.0),
+            "L_ARM2": (-66.0, -10.0, -6.0),
+            "L_HAND": (10.0, 0.0, 0.0),
+
+            # Right arm (-X): crisp brow salute while seated proudly at desk
+            "R_ARM": (0.0, 0.0, -6.0),
+            "R_ARM1": (-32.0 - 38.0 * hold, 10.0, -14.0 - 26.0 * hold),
+            "R_ARM2": (-68.0 - 52.0 * hold, 24.0 * hold, 14.0 * hold),
+            "R_HAND": (4.0, 6.0, 0.0),
+            **SEATED_LEGS,
+        }
+        frames.append(rig.build_pose(d, root_offset=(0.0, 0.0, 0.0), ground_feet=True))
+
+    return {
+        "name": "desk_seated_salute",
+        "fps": fps,
+        "loop": True,
+        "mask": "full",
+        "root_speed": 0.0,
+        "hand_gestures": [{"frame": 0, "left": "Open", "right": "Open"}],
+        "events": [],
         "frames": frames,
     }
 
@@ -395,6 +428,7 @@ def main():
         make_desk_answer_phone(rig),
         make_desk_radio_dispatch(rig),
         make_desk_wave_dismiss(rig),
+        make_desk_seated_salute(rig),
         make_desk_walkin_walk(rig),
         make_desk_walkin_plead(rig),
     ]

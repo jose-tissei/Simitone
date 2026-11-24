@@ -178,6 +178,7 @@ namespace Simitone.Conversations.Tests
                 "desk_answer_phone",
                 "desk_radio_dispatch",
                 "desk_wave_dismiss",
+                "desk_seated_salute",
                 "desk_walkin_walk",
                 "desk_walkin_plead"
             };
