@@ -121,8 +121,11 @@ namespace Simitone.Conversations
         {
             try { BeatPatrolDriver.OnTick(vm); }
             catch (Exception e) { Log("patrol tick error: " + e.GetType().Name + ": " + e.Message); }
-            try { ParallelSocialDriver.OnTick(vm); }
-            catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
+            if (!BeatPatrolDriver.IsActive)
+            {
+                try { ParallelSocialDriver.OnTick(vm); }
+                catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
+            }
             try { CareerDispatchDriver.OnTick(vm); }
             catch (Exception e) { Log("dispatch tick error: " + e.GetType().Name + ": " + e.Message); }
         }

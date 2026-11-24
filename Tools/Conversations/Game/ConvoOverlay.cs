@@ -48,6 +48,12 @@ namespace Simitone.Conversations
             catch (Exception e) { Boot.Log("overlay: " + e.Message); }
         }
 
+        public static void Clear()
+        {
+            try { instance?.lines.Clear(); }
+            catch { }
+        }
+
         ConvoOverlay()
         {
             name = SimUiTokens.MakeStyle(14, SimUiTokens.Mint, true);

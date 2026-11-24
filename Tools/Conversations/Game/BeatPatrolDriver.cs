@@ -11,6 +11,7 @@ using FSO.Files.Formats.IFF.Chunks;
 using FSO.LotView;
 using FSO.LotView.Model;
 using FSO.SimAntics;
+using FSO.SimAntics.Engine;
 using FSO.SimAntics.Entities;
 using FSO.SimAntics.Model;
 using FSO.SimAntics.NetPlay.Model.Commands;
@@ -643,6 +644,7 @@ namespace Simitone.Conversations
                 }
                 vm.SpeedMultiplier = 1;
                 alertSweepRemainingSec = 4.5f;
+                ConvoOverlay.Clear();
                 DismissBlockingAlerts(vm);
 
                 // 2. Find street curb & spawn the real TS1 Police Squad Car parked cleanly at the curb
@@ -653,7 +655,7 @@ namespace Simitone.Conversations
                 {
                     cruiserLead = cruiserGroup.BaseObject ?? cruiserGroup.Objects[0];
                     cruiserTile = cruiserLead.Position;
-                    FreezeGroup(cruiserGroup);
+                    FreezeGroup(cruiserGroup, pauseThread: true);
                     // Re-verify a walkable sidewalk tile right beside the parked cruiser
                     curbStandTile = FindNearestWalkableTile(vm, cruiserTile, minDist: 2, maxDist: 6, avoidTiles: null);
                 }
@@ -663,6 +665,7 @@ namespace Simitone.Conversations
                 if (officerAvatar != null)
                 {
                     // Start INSIDE the parked Police Squad Car while player surveys the real lot!
+                    FreezeEntity(officerAvatar, pauseThread: true);
                     officerSmoothTile = new Vector2(curbStandTile.TileX + 0.5f, curbStandTile.TileY + 0.5f);
                     officerYaw = (float)Math.PI;
                     officerAvatar.SetPosition(LotTilePos.OUT_OF_WORLD, Direction.SOUTH, vm.Context);
@@ -700,12 +703,14 @@ namespace Simitone.Conversations
                 var spawnTiles = PickIncidentSpawnTiles(vm, curbStandTile, 4);
 
                 // Slot 0: Real TS1 Burglar NPC (striped shirt & mask) prowling in crouched sneak pose!
+                // Pause its VMThread immediately so thief.iff's autonomous "steal object" / VMRoutingFrame
+                // Main tree never runs in the background while VitaboyClipPlayer drives its skeleton.
                 var burglarTile = spawnTiles[0];
                 var burglarEnd = FindProwlEndTile(vm, burglarTile);
                 var burglarEnt = SpawnAvatarAt(vm, GuidBurglarNpc, burglarTile, Direction.SOUTH);
                 if (burglarEnt != null)
                 {
-                    FreezeEntity(burglarEnt);
+                    FreezeEntity(burglarEnt, pauseThread: true);
                     burglarSmoothTile = new Vector2(burglarTile.TileX + 0.5f, burglarTile.TileY + 0.5f);
                     burglarYaw = 0f;
                     burglarHasSmoothPos = true;
@@ -726,12 +731,12 @@ namespace Simitone.Conversations
                 if (noiseEnt != null)
                 {
                     if (!string.IsNullOrWhiteSpace(disturbName)) noiseEnt.Name = disturbName;
-                    FreezeEntity(noiseEnt);
+                    FreezeEntity(noiseEnt, pauseThread: false);
                 }
                 var boomTile = FindNearestWalkableTile(vm, noiseTile, minDist: 1, maxDist: 2, avoidTiles: new[] { noiseTile });
                 var boomGroup = TrySpawnObjectNear(vm, GuidBoombox, boomTile, Direction.SOUTH, 2);
                 VMEntity boomEnt = boomGroup != null ? (boomGroup.BaseObject ?? boomGroup.Objects.FirstOrDefault()) : null;
-                if (boomGroup != null) FreezeGroup(boomGroup);
+                if (boomGroup != null) FreezeGroup(boomGroup, pauseThread: true);
                 actorSlots.Add(new PatrolActorSlot
                 {
                     IncidentIndex = 1,
@@ -746,7 +751,7 @@ namespace Simitone.Conversations
                 var hazardGroup = TrySpawnObjectNear(vm, GuidTrashPile, hazardTile, Direction.SOUTH, 2)
                                   ?? TrySpawnObjectNear(vm, GuidTrashOutside, hazardTile, Direction.SOUTH, 2);
                 VMEntity hazardEnt = hazardGroup != null ? (hazardGroup.BaseObject ?? hazardGroup.Objects.FirstOrDefault()) : null;
-                if (hazardGroup != null) FreezeGroup(hazardGroup);
+                if (hazardGroup != null) FreezeGroup(hazardGroup, pauseThread: true);
                 actorSlots.Add(new PatrolActorSlot
                 {
                     IncidentIndex = 2,
@@ -761,7 +766,7 @@ namespace Simitone.Conversations
                 if (innocentEnt != null)
                 {
                     if (!string.IsNullOrWhiteSpace(innocentName)) innocentEnt.Name = innocentName;
-                    FreezeEntity(innocentEnt);
+                    FreezeEntity(innocentEnt, pauseThread: false);
                 }
                 actorSlots.Add(new PatrolActorSlot
                 {
@@ -1264,9 +1269,9 @@ namespace Simitone.Conversations
                             officerAvatar,
                             "Officer " + homeOfficerName,
                             "Into the back seat — precinct booking awaits!",
-                            escortBurglar,
-                            "Burglar",
-                            "Okay, okay... watch the head!");
+                            null,
+                            null,
+                            "");
                     }
                     catch { }
                 }
@@ -1282,7 +1287,7 @@ namespace Simitone.Conversations
 
                 if (!escortLoadedIntoCruiser && escortBurglar != null && !escortBurglar.Dead)
                 {
-                    float u = Math.Max(0f, Math.Min(1f, escortLoadTimerSec / 0.65f));
+                    float u = Math.Max(0f, Math.Min(1f, escortLoadTimerSec / 0.95f));
                     burglarSmoothTile = Vector2.Lerp(escortBurglarDoorStart, escortCruiserDoorPoint, u);
                     Vector2 toDoor = escortCruiserDoorPoint - escortBurglarDoorStart;
                     if (toDoor.LengthSquared() > 1e-4f)
@@ -1290,7 +1295,7 @@ namespace Simitone.Conversations
                     escortBurglar.VisualPosition = new Vector3(burglarSmoothTile.X, burglarSmoothTile.Y, 0f);
                     escortBurglar.RadianDirection = burglarYaw;
 
-                    if (escortLoadTimerSec >= 0.65f)
+                    if (escortLoadTimerSec >= 0.95f)
                     {
                         escortLoadedIntoCruiser = true;
                         try
@@ -1307,7 +1312,7 @@ namespace Simitone.Conversations
                     }
                 }
 
-                if (escortLoadTimerSec >= 1.10f)
+                if (escortLoadTimerSec >= 1.45f)
                 {
                     FinishEscortToCruiser();
                 }
@@ -1518,30 +1523,44 @@ namespace Simitone.Conversations
 
         static void KeepPatrolActorsControlled()
         {
-            if (cruiserGroup != null) FreezeGroup(cruiserGroup);
-            if (officerAvatar != null) FreezeEntity(officerAvatar);
+            if (cruiserGroup != null) FreezeGroup(cruiserGroup, pauseThread: true);
+            if (officerAvatar != null) FreezeEntity(officerAvatar, pauseThread: true);
             for (int i = 0; i < actorSlots.Count; i++)
             {
                 var s = actorSlots[i];
-                if (s.PrimaryEntity != null) FreezeEntity(s.PrimaryEntity);
-                if (s.SecondaryEntity != null) FreezeEntity(s.SecondaryEntity);
+                bool pausePrimary = (s.Kind == PatrolIncidentKind.BurglarProwler || s.Kind == PatrolIncidentKind.CivicHazard);
+                if (s.PrimaryEntity != null) FreezeEntity(s.PrimaryEntity, pauseThread: pausePrimary);
+                if (s.SecondaryEntity != null) FreezeEntity(s.SecondaryEntity, pauseThread: true);
             }
         }
 
-        static void FreezeGroup(VMMultitileGroup grp)
+        static void FreezeGroup(VMMultitileGroup grp, bool pauseThread = true)
         {
             if (grp == null || grp.Objects == null) return;
             for (int i = 0; i < grp.Objects.Count; i++)
-                FreezeEntity(grp.Objects[i]);
+                FreezeEntity(grp.Objects[i], pauseThread);
         }
 
-        static void FreezeEntity(VMEntity ent)
+        static void FreezeEntity(VMEntity ent, bool pauseThread = true)
         {
             if (ent == null || ent.Dead) return;
             try
             {
-                if (ent.Thread != null && ent.Thread.Queue != null && ent.Thread.Queue.Count > 0)
-                    ent.Thread.Queue.Clear();
+                var th = ent.Thread;
+                if (th == null) return;
+
+                if (pauseThread)
+                {
+                    if (th.ThreadBreak != VMThreadBreakMode.Pause)
+                        th.ThreadBreak = VMThreadBreakMode.Pause;
+                    if (th.Stack != null && th.Stack.Count > 0)
+                        th.Stack.Clear();
+                    if (th.BlockingState != null)
+                        th.BlockingState = null;
+                }
+
+                if (th.Queue != null && th.Queue.Count > 0)
+                    th.Queue.Clear();
             }
             catch { }
         }
