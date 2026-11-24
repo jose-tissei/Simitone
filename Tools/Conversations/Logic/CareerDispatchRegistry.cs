@@ -81,12 +81,12 @@ namespace Simitone.Conversations
                 PromotionLevel = 2,
                 RankTitle = "Patrol Officer",
                 MiniGameTitle = "Beat Patrol",
-                DispatchTeaser = "Handle street-patrol calls across the neighborhood.",
+                DispatchTeaser = "Real-lot evening patrol — sneak up on burglars, warn or ticket disturbances, inspect hazards.",
                 AssignmentButtonText = "WORK ASSIGNMENT: BEAT PATROL",
                 DefaultShiftStartHour = 17,
                 DefaultShiftEndHour = 1,
                 Kind = CareerMiniGameKind.BeatPatrol,
-                IsImplemented = false,
+                IsImplemented = true,
             },
             new LawEnforcementRankDescriptor
             {

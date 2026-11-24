@@ -75,8 +75,8 @@ Built into the same `Tools/Conversations` mod, **Interactive Career Mini-Games**
 | :---: | :--- | :--- | :--- | :---: |
 | **1** | **Security Guard** | **CCTV Night Watch** | 4-camera night-vision CRT desk monitor (5 rounds): spot 3D threats (`Burglar`, `Vandal`, `Prowler`) vs. false alarms (`Raccoon`, `Stray Cat`, `Pizza Delivery`), manage `Stay Awake` alertness (`Energy` + 3 `Sip Coffee` charges), eerie procedural booth hum & alarms. | **Playable** |
 | **2** | **Cadet** | **Academy Obstacle & Drill** | Full-screen 3D **Virtual Pocket Lot** (*SimCity Police Academy*): 3 timing stages (**Sprint Dash → Wall Vault → Target Drill**), **Body** skill widens the green hit zone, custom 3D animations, authentic TS1 career uniforms, Sideline Drill Sergeant, and 18 procedural Police Academy SFX + outdoor ambience. | **Playable** |
-| **3** | **Patrol Officer** | **Beat Patrol — Spot the Violation** | Full-screen 3D SimCity street corner patrol featuring real neighborhood Sims: handle timed street incidents (`Jaywalker`, `Noise Complaint`, `Broken Streetlight`, `Suspicious Prowler`) via **Warn / Ticket / Investigate**; unlocks on-lot **Neighborhood Watch**. | **Next Up (Planned)** |
-| **4** | **Desk Sergeant** | **911 Dispatch Triage** | Multi-call incoming emergency queue (`Cat in Tree`, `Burglar Alarm`, `Kitchen Fire`, `Prank Call`); route to **Patrol / Fire / Ignore** before queue overflow. | Planned |
+| **3** | **Patrol Officer** | **Real-Lot Live Beat Patrol** | Patrols real Sims 1 **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential (`House01–10`)** lots with a parked TS1 **Police Squad Car** at the street curb: survey the live lot, use native Simitone **Pie Menus** on suspects & hazards, **Sneak Up & Apprehend** the prowling TS1 Burglar with custom Blender stealth animations, issue friendly warnings/tickets to real townies (saving real relationship & Sim Memory deltas), and return seamlessly to your saved home lot. | **Playable** |
+| **4** | **Desk Sergeant** | **911 Dispatch Triage** | Multi-call incoming emergency queue (`Cat in Tree`, `Burglar Alarm`, `Kitchen Fire`, `Prank Call`); route to **Patrol / Fire / Ignore** before queue overflow. | **Next Up (Planned)** |
 | **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | 3-turn undercover conversation powered by **Laya + Charisma**; pick Gentle / Playful / Bold cover lines to keep Suspicion low until confession and record intel in **Sim Memory**. | Planned |
 | **6** | **Detective** | **Crime Scene Deduction** | Evidence board with 3 clues (`Footprint`, `Motive`, `Alibi`) and 3 real neighborhood Sims as suspects; **Logic** flags contradictions; unlocks on-lot **Question Sim**. | Planned |
 | **7** | **Lieutenant** | **Precinct Squad Briefing** | Assign 3 rookie officers (*Fast*, *Observant*, *Charming*) to 3 city incidents (`Foot Chase`, `Stakeout`, `Community Mediation`). | Planned |
@@ -86,7 +86,7 @@ Built into the same `Tools/Conversations` mod, **Interactive Career Mini-Games**
 
 ### Other Sims 1 Careers
 
-Once Law Enforcement establishes the full suite of mini-game templates (CRT console, full-screen 3D Virtual Pocket Lot, Laya social investigation, triage/strategy boards), the same `CareerDispatchRegistry` pipeline is designed to expand to **Criminal**, **Military**, **Science**, **Medicine**, **Politics**, **Business**, **Entertainment**, **Pro Athlete**, and **X-Treme**.
+Once Law Enforcement establishes the full suite of mini-game templates (CRT console, full-screen 3D Virtual Pocket Lot, real-lot live patrol, Laya social investigation, triage/strategy boards), the same `CareerDispatchRegistry` pipeline is designed to expand to **Criminal**, **Military**, **Science**, **Medicine**, **Politics**, **Business**, **Entertainment**, **Pro Athlete**, and **X-Treme**.
 
 ---
 
@@ -124,10 +124,34 @@ Step straight into a full-screen 3D **SimCity Police Academy — Training Ground
 | :---: | :---: |
 | ![Cadet Academy Target Drill](docs/career-minigames/media/07-lvl2-cadet-target.jpg) | ![Cadet Academy Victory Salute](docs/career-minigames/media/08-lvl2-cadet-victory.jpg) |
 
+---
+
+### Law Enforcement Lvl 3 — Patrol Officer: *Real-Lot Live Beat Patrol*
+
+Patrol **actual Sims 1 lots** across **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential lots (`House01–10`)** in warm golden-hour lighting — without overwriting your saved home lot. Your Officer arrives inside a real TS1 **Police Squad Car** (`CarSquad.iff`) parked at the street curb while you pan and zoom the live lot to spot incidents and click suspects or hazards for native Simitone **Pie Menus**:
+
+- **Stealth Burglar Apprehension:** Select **`Sneak Up & Apprehend`** on the prowling striped TS1 Burglar to step out of the cruiser and drive our custom Blender-baked crouched stealth cycle (`patrol_sneak_loop.simanim.json`) right up behind them, followed by `patrol_apprehend.simanim.json`, handcuff clicks, and live overhead speech balloons.
+- **Real Neighborhood Townies & Civic Hazards:** Resolve a **Noise Disturbance** (`Friendly Warning` or `Issue Citation` to a real townie with a Boombox — saving real TS1 relationship & Sim Memory deltas), inspect & log a **Civic Hazard** (`patrol_inspect_clue.simanim.json`), and avoid falsely ticketing innocent citizens.
+- **Custom 3D Patrol Animations & 17 Procedural Audio Cues:** 4 Blender-authored patrol clips (`patrol_sneak_loop`, `patrol_apprehend`, `patrol_write_ticket`, `patrol_inspect_clue`) + `PatrolAudioSynth` (city dusk ambience, cruiser arrival siren blip, car doors, stealth footsteps, handcuffs, ticket rip, flashlight click, radio squelch, and shift fanfare).
+- **Gameplay Video (HD with Synced Beat Patrol Audio):** [Watch Lvl 3 — Real-Lot Live Beat Patrol Demo (MP4)](docs/career-minigames/media/lvl3-patrol-officer-reallot-demo.mp4)
+
+| Parked TS1 Police Squad Car & Briefing (Lot 21) | Live Crouched Sneak-Up (`patrol_sneak_loop`) |
+| :---: | :---: |
+| ![Beat Patrol Cruiser Briefing](docs/career-minigames/media/10-lvl3-patrol-cruiser-briefing.jpg) | ![Beat Patrol Live Sneak Catch](docs/career-minigames/media/11-lvl3-patrol-sneak-catch.jpg) |
+
+| Burglar Apprehension & Overhead Speech Balloons | Civic Hazard Inspection (`patrol_inspect_clue`) |
+| :---: | :---: |
+| ![Beat Patrol Arrest & Balloons](docs/career-minigames/media/12-lvl3-patrol-arrest-balloons.jpg) | ![Beat Patrol Hazard Inspection](docs/career-minigames/media/13-lvl3-patrol-hazard-inspect.jpg) |
+
+| S-Rank Shift Scorecard & Seamless Return Home |
+| :---: |
+| ![Beat Patrol S-Rank Scorecard](docs/career-minigames/media/14-lvl3-patrol-scorecard.jpg) |
+
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
-> - `convo dispatch toast <SimName> cadet` — trigger the mid-shift Radio Dispatch toast
+> - `convo dispatch toast <SimName> [cadet|patrol]` — trigger the mid-shift Radio Dispatch toast
 > - `convo dispatch start` — jump straight into **Lvl 1 Security Guard (CCTV Night Watch)**
 > - `convo dispatch cadet <SimName> <BodyLvl>` — jump straight into **Lvl 2 Cadet (Academy Obstacle & Drill)**
+> - `convo dispatch patrol <SimName> [lotId] [seed]` — jump straight into **Lvl 3 Patrol Officer (Real-Lot Live Beat Patrol)**
 
 # Why is it called Simitone?
 

@@ -1,11 +1,18 @@
 # State
 
-**Last Updated:** 2026-11-24T09:56:00-03:00
-**Current Work:** Full-Screen Virtual Pocket Lot (`CadetAcademyOverlay` + `VirtualLotTransition` + Sideline Drill Sergeant w/ authentic `c_police.apr`/`c_police` head + 18-cue Police Academy Procedural SFX Engine) — Implemented, tested (303+28), and verified in 16:9 HD video with synced AAC audio; ready for Milestone 2 Rank 3 (Patrol Officer)
+**Last Updated:** 2026-11-24T12:22:00-03:00
+**Current Work:** Law Enforcement Level 3 — Patrol Officer (*Real-Lot Live Beat Patrol*, `DISP-06`: real TS1 Downtown/Old Town/Neighbor lots, parked `CarSquad.iff` Police Squad Car, Blender 4.5 stealth/arrest/ticket/inspect `.simanim.json` pack, Cecil `VMNetInteractionCmd::Execute` Pie Menu hook, 17 procedural patrol SFX, seamless return to saved Home Lot) — Implemented, tested (**372/372** passing), and visually verified in 1280×720 HD video with synced AAC audio; ready for Level 4 Desk Sergeant (*911 Dispatch Triage*)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-006: Real-Lot Live Beat Patrol Architecture (`BeatPatrolDriver` + `VMNetInteractionCmd` Hook) (2026-11-24)
+
+**Decision:** Run Law Enforcement Level 3 (*Patrol Officer — Real-Lot Live Beat Patrol*) directly on **real Sims 1 lots** rotating across Downtown (`House21–30`), Old Town (`House50–78`), and Neighbor Residential lots (`House01–10`, excluding player's home lot) via `TS1GameScreen.SwitchLot` after safely saving the player's home lot, then spawn a real TS1 **Police Squad Car** (`CarSquad.iff`, `0x76ECEDA7`) at the street curb, a prowling striped TS1 **Burglar** (`0xC7857D8A`), a real Neighborhood townie + Boombox, a Trash Pile hazard, and an innocent bystander. Intercept native Simitone **Pie Menus** via `Boot.FilterPieMenu` and Cecil hook `(e)` on `VMNetInteractionCmd::Execute` (`Boot.TryHandleInteraction`) so clicking suspects/hazards/cruiser triggers live bounded-BFS movement + Blender-baked `.simanim.json` skeletal playback (`patrol_sneak_loop`, `patrol_apprehend`, `patrol_write_ticket`, `patrol_inspect_clue`) right on `VMAvatar.Avatar.Skeleton`, with zero on-lot perk in this pass.
+**Reason:** Using real game lots with the parked cruiser and native Simitone Pie Menus feels seamlessly integrated with core Sims 1 gameplay while keeping full reliability via bounded BFS, frozen autonomous queues on patrol actors, and clean non-saving return to the player's real Home Lot.
+**Trade-off:** Requires auto-dismissing lot-load `UIMobileAlert`s and syncing `UILotControl.FoundMe` / `TargetZoom` after `SwitchLot`.
+**Impact:** Adds a third reusable career mini-game template (**Real-Lot Live Assignment**) alongside CRT consoles (Lvl 1) and Virtual Pocket Lots (Lvl 2), and adds the `VMNetInteractionCmd::Execute` Cecil hook for future native-Pie-Menu gameplay hooks.
 
 ### AD-005: Full-Screen "Virtual Pocket Lot" Pattern for Work Minigames (`VirtualLotTransition`) (2026-11-24)
 
@@ -80,6 +87,20 @@
 **Solution:** Always validate BOTH `content.AvatarAppearances?.Get(apr) != null` AND `content.AvatarTextures?.Get(tex + ".bmp") != null` (or `Get(tex) != null`) before returning any `Outfit`, and surface the resolved head tag in diagnostics (`instrHead=c_police.apr/c_police`).
 **Prevents:** Untextured solid-black NPC heads or bodies across upcoming career shifts (Patrol Officer beat NPCs, SWAT, Detective, etc.).
 
+### L-005: Split VM/UI Mutations (`OnTick`) from Read-Only Skeletal Application (`PreDraw`) (2026-11-24)
+
+**Context:** Resolving arrests & speech balloons in `BeatPatrolDriver` during `BeatPatrolOverlay.PreDraw`.
+**Problem:** Calling `ConvoOverlay.Show` (which mutates `UIScreen.Current.Children`) or `entity.Delete` / `SetPosition` inside `PreDraw` crashed/stalled `UIScreen`'s `Children` enumeration on the arrest frame.
+**Solution:** Run all VM/UI state updates (`BeatPatrolDriver.UpdateFrame`) at the end of `VM.InternalTick` via `Boot.OnTick(VM)` and keep `BeatPatrolDriver.PreDrawFrame` strictly read-only (only updating `VisualPosition`, `RadianDirection`, and `VitaboyClipPlayer.UpdateAndApply` on `Avatar.Skeleton`).
+**Prevents:** Mid-frame collection-modified crashes or freezes in any real-lot career assignment.
+
+### L-006: Sync `UILotControl.FoundMe` & `TargetZoom` and Auto-Dismiss Lot-Load `UIMobileAlert`s (2026-11-24)
+
+**Context:** Framing the parked TS1 Police Squad Car on Downtown Lot 21 after `TS1GameScreen.SwitchLot`.
+**Problem:** `InitializeLot` popped a full-screen `UIMobileAlert` covering the lot, `UILotControl.Update` snapped `CenterTile` to `(6.5, 6.5)` on frame 1 because `FoundMe == false`, and `UILotControl.TargetZoom` lerped `Camera3D.Zoom3D` back out every frame.
+**Solution:** Populate `Neighborhood.GameState` before `SwitchLot`, run `DismissBlockingAlerts` during initial tick sweep and return-home, set `vm.MyUID = officer.PersistID` + `lotCtrl.FoundMe = true`, and sync `lotCtrl.TargetZoom` to the inverse of Simitone's 3D zoom formula (`0.25f + (9.75f - zoom3D) / 5.7f`).
+**Prevents:** Obstructed modal dialogs and drifting 3D cameras in future real-lot assignments.
+
 ---
 
 ## Quick Tasks Completed
@@ -91,7 +112,8 @@
 | 003 | Multi-Rank Dispatch Router + Level 2 Cadet Academy 3D Obstacle Course | 2026-11-23 | `ec04deb` | Done   |
 | 004 | Cadet Academy briefing wrap, sprint arm posture & victory camera polish | 2026-11-23 | `04923b0` | Done   |
 | 005 | Custom 3D Skeletal Animation Engine + Blender 4.5 Pipeline + 7 Cadet Clips | 2026-11-24 | `52037f3` | Done   |
-| 006 | Full-Screen Virtual Pocket Lot HUD + Sideline Drill Instructor & Scenery | 2026-11-24 | pending   | Done   |
+| 006 | Full-Screen Virtual Pocket Lot HUD + Sideline Drill Instructor & Scenery | 2026-11-24 | `eb00c9a` | Done   |
+| 007 | Law Enforcement Lvl 3 — Real-Lot Live Beat Patrol + Stealth Sneak Pack | 2026-11-24 | pending   | Done   |
 
 ---
 
@@ -107,7 +129,8 @@
 ## Todos
 
 - [x] Execute `custom-animations` (`T1`–`T8`) and verify live Cadet Academy 3D gameplay video with all 7 custom clips
-- [ ] Continue Milestone 2 with Level 3 Patrol Officer (**Beat Patrol**) & Level 4 Desk Sergeant (**911 Dispatch Triage**)
+- [x] Implement & verify Level 3 Patrol Officer (**Real-Lot Live Beat Patrol**, `DISP-06`)
+- [ ] Continue Milestone 2 with Level 4 Desk Sergeant (**911 Dispatch Triage**)
 
 ---
 

@@ -119,6 +119,8 @@ namespace Simitone.Conversations
 
         public static void OnTick(VM vm)
         {
+            try { BeatPatrolDriver.OnTick(vm); }
+            catch (Exception e) { Log("patrol tick error: " + e.GetType().Name + ": " + e.Message); }
             try { ParallelSocialDriver.OnTick(vm); }
             catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
             try { CareerDispatchDriver.OnTick(vm); }
@@ -128,6 +130,12 @@ namespace Simitone.Conversations
         public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
         {
             return ConvoPieMenu.Filter(raw, target, vm, caller);
+        }
+
+        public static bool TryHandleInteraction(FSO.SimAntics.NetPlay.Model.Commands.VMNetInteractionCmd cmd, VM vm, VMAvatar caller)
+        {
+            try { return BeatPatrolDriver.TryHandleInteraction(cmd, vm, caller); }
+            catch (Exception e) { Log("interaction hook error: " + e.GetType().Name + ": " + e.Message); return false; }
         }
 
         public static bool MemoryMenuOpen { get { return SimMemoryMenu.IsOpen; } }

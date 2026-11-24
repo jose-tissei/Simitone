@@ -14,6 +14,12 @@ namespace Simitone.Conversations
         {
             try
             {
+                if (Boot.Enabled && BeatPatrolDriver.IsActiveOn(vm))
+                {
+                    var patrolMenu = BeatPatrolDriver.TryBuildPieMenu(target, vm, caller);
+                    if (patrolMenu != null) return patrolMenu;
+                }
+
                 if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu) return raw;
                 var targetAv = target as VMAvatar;
                 var callerAv = caller as VMAvatar;

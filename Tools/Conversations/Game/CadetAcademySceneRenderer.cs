@@ -1385,7 +1385,7 @@ namespace Simitone.Conversations
         // Mirrors VMSuitProvider.GetPersonSuitTS1 (case 3: Work Outfit) to dress any Sim
         // (matching their exact gender, fit/fat/skn build, and lgt/med/drk skin tone)
         // in the authentic Sims 1 Law Enforcement Cadet / Police uniform from work.iff.
-        static Outfit ResolveLawEnforcementUniform(Content content, VMAvatar sourceSim, out string tag, int[] preferredLevels = null)
+        internal static Outfit ResolveLawEnforcementUniform(Content content, VMAvatar sourceSim, out string tag, int[] preferredLevels = null)
         {
             tag = "fallback";
             try

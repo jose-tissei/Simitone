@@ -366,6 +366,34 @@ if (conversationsPath != null)
         Console.WriteLine("patched " + getPie.FullName + ": Boot.FilterPieMenu(list, this, vm, caller) before every return");
         changed = true;
     }
+    // (e) VMNetInteractionCmd.Execute(VM, VMAvatar): allow active custom patrol / career pie menu actions (sentinel IDs >= 0x7000) to run directly
+    var tryHandle = boot.Methods.FirstOrDefault(m => m.Name == "TryHandleInteraction" && m.Parameters.Count == 3);
+    var interCmdType = mod.GetType("FSO.SimAntics.NetPlay.Model.Commands.VMNetInteractionCmd");
+    if (tryHandle != null && interCmdType != null)
+    {
+        var interExec = interCmdType.Methods.FirstOrDefault(m => m.Name == "Execute" && m.HasBody && m.Parameters.Count == 2);
+        if (interExec != null)
+        {
+            if (interExec.Body.Instructions.Take(8).Any(i => i.Operand is MethodReference r && r.Name == "TryHandleInteraction"))
+                Console.WriteLine("conversations interaction hook already installed");
+            else
+            {
+                interExec.Body.SimplifyMacros();
+                var il = interExec.Body.GetILProcessor();
+                var firstIns = interExec.Body.Instructions[0];
+                il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_0));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_1));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Ldarg_2));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Call, mod.ImportReference(tryHandle)));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Brfalse, firstIns));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Ldc_I4_1));
+                il.InsertBefore(firstIns, il.Create(OpCodes.Ret));
+                interExec.Body.OptimizeMacros();
+                Console.WriteLine("patched " + interExec.FullName + ": Boot.TryHandleInteraction(this, vm, caller) first");
+                changed = true;
+            }
+        }
+    }
     if (changed) { mod.Write(Path.Combine(outDir, "FSO.SimAntics.dll")); total++; }
     // ship the library next to the game; skipped when the game folder already has an identical copy (keeps re-runs a no-op)
     var installed = Path.Combine(appDir, "Conversations.dll");

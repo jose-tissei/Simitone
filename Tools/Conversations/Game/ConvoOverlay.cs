@@ -37,9 +37,12 @@ namespace Simitone.Conversations
                 if (screen == null) return;
                 LastPlacement = "none";   // set again when the balloons are drawn
                 if (instance == null) instance = new ConvoOverlay();
-                if (instance.Parent != null && instance.Parent != screen)
-                    instance.Parent.Remove(instance);
-                screen.Add(instance);
+                if (instance.Parent != screen)
+                {
+                    if (instance.Parent != null)
+                        instance.Parent.Remove(instance);
+                    screen.Add(instance);
+                }
                 instance.Add(vm, speaker, speakerName, line, listener, listenerName, reply);
             }
             catch (Exception e) { Boot.Log("overlay: " + e.Message); }
@@ -60,9 +63,11 @@ namespace Simitone.Conversations
                 || (listener != null && ReferenceEquals(e.Entity, listener))
                 || clock - e.Born > Seconds);
             while (lines.Count > MaxLines - 2) lines.RemoveAt(0);
-            lines.Add(new Entry { Who = speakerName, Text = "“" + line + "”", Entity = speaker, Vm = vm, Born = clock });
+            if (!string.IsNullOrWhiteSpace(line))
+                lines.Add(new Entry { Who = speakerName, Text = "“" + line + "”", Entity = speaker, Vm = vm, Born = clock });
             // the answer appears a moment later, as in a real exchange
-            lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.6 });
+            if (!string.IsNullOrWhiteSpace(reply))
+                lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.4 });
         }
 
         public override void Update(UpdateState state)

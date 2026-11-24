@@ -161,6 +161,28 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
     }
 
     [SkippableFact]
+    public void VMNetInteractionCmdExecute_CallsBootTryHandleInteraction_First()
+    {
+        NeedsRelease();
+        using (var m = Open("FSO.SimAntics.dll"))
+        using (var lib = ModuleDefinition.ReadModule(Path.Combine(f.Out, "Conversations.dll")))
+        {
+            var cmd = m.GetType("FSO.SimAntics.NetPlay.Model.Commands.VMNetInteractionCmd");
+            Assert.NotNull(cmd);
+            var exec = cmd.Methods.Single(x => x.Name == "Execute" && x.Parameters.Count == 2);
+            Assert.Contains(exec.Body.Instructions.Take(8), i => i.Operand is MethodReference r && r.Name == "TryHandleInteraction" && r.DeclaringType.Name == "Boot");
+
+            var real = lib.GetType("Simitone.Conversations.Boot").Methods.Single(x => x.Name == "TryHandleInteraction");
+            Assert.True(real.IsStatic && real.IsPublic);
+            Assert.Equal(3, real.Parameters.Count);
+            Assert.Equal("VMNetInteractionCmd", real.Parameters[0].ParameterType.Name);
+            Assert.Equal("VM", real.Parameters[1].ParameterType.Name);
+            Assert.Equal("VMAvatar", real.Parameters[2].ParameterType.Name);
+            Assert.Equal("Boolean", real.ReturnType.Name);
+        }
+    }
+
+    [SkippableFact]
     public void EarlyStartupClass_MentionsNoGameTypes()
     {
         NeedsRelease();
