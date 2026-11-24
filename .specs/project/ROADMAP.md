@@ -40,8 +40,8 @@
 
 **Lvl 2 — Cadet: Academy Obstacle & Drill (`DISP-05`)** - COMPLETE
 
-- Full 3D live-rendered Academy obstacle course (`CadetAcademyOverlay` + `CadetAcademy3DView`) with Career Uniform dressing and pre-game Briefing screen (Start / Skip) (`ec04deb`, `04923b0`)
-- 3-round timing/sweet-spot rhythm bar (`Sprint`, `Vault`, `Target Drill`)
+- Full-screen "Virtual Pocket Lot" 3D Academy Training Grounds (`CadetAcademyOverlay` + `CadetAcademySceneRenderer` + `VirtualLotTransition`) with smooth fade-from/to-black transitions, translucent arrival location banner, Career Uniform dressing, live Sideline Drill Instructor (`SimAvatar`), Precinct Building, bleachers, parked Patrol Cruisers with pulsing lightbars, waving flagpole, and minimal floating HUD (`ec04deb`, `04923b0`, `52037f3`)
+- 3-round timing/sweet-spot rhythm bar (`Sprint`, `Vault`, `Target Drill`) with left-anchored Briefing & Scorecard cards
 - Sim's **Body** skill dynamically widens the green hit zone; rewards `+Body XP` and `+Job Performance`
 
 **Custom 3D Skeletal Animation Pipeline (`custom-animations`)** - COMPLETE

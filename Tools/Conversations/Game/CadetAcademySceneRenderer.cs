@@ -23,21 +23,27 @@ namespace Simitone.Conversations
     // render into ONE shared RenderTarget2D + Depth24 Z-buffer through ONE dynamic 3D follow-camera.
     internal sealed class CadetAcademySceneRenderer : IDisposable
     {
-        public const int TargetW = 760;
-        public const int TargetH = 340;
+        public const int DefaultTargetW = 1280;
+        public const int DefaultTargetH = 720;
+        const int MaxTargetW = 1600;
+        const int MaxTargetH = 900;
 
         // Standard adult Vitaboy height (~5.45 units at scale 1.0) -> ~3.0 world units tall at 0.55
         const float SimScale = 0.55f;
 
         GraphicsDevice boundDevice;
         RenderTarget2D renderTarget;
+        int targetW = DefaultTargetW;
+        int targetH = DefaultTargetH;
         BasicEffect worldEffect;
         BasicCamera camera;
         _3DScene avatarScene;
 
         SimAvatar cadetAvatar;
+        SimAvatar instructorAvatar;
         string boundSimKey;
         string boundUniformTag = "none";
+        string instructorTag = "none";
         string lastActiveAnimName = "none";
         string lastAnimSource = "none";
         float lastElapsedSeconds = -1f;
@@ -45,6 +51,7 @@ namespace Simitone.Conversations
         double lastWallSeconds = -1.0;
         float finishExtraSeconds;
         readonly VitaboyClipPlayer customPlayer = new VitaboyClipPlayer();
+        readonly VitaboyClipPlayer instructorPlayer = new VitaboyClipPlayer();
         Animation runAnim;
         Animation walkAnim;
         Animation idleAnim;
@@ -57,8 +64,8 @@ namespace Simitone.Conversations
         bool hasFrame;
 
         // Reusable geometry buffer per frame (zero GC churn after warm-up)
-        readonly List<VertexPositionColorNormal> litTris = new List<VertexPositionColorNormal>(4096);
-        readonly List<VertexPositionColor> unlitTris = new List<VertexPositionColor>(1024);
+        readonly List<VertexPositionColorNormal> litTris = new List<VertexPositionColorNormal>(8192);
+        readonly List<VertexPositionColor> unlitTris = new List<VertexPositionColor>(2048);
         VertexPositionColorNormal[] litArray = new VertexPositionColorNormal[0];
         VertexPositionColor[] unlitArray = new VertexPositionColor[0];
 
@@ -89,7 +96,9 @@ namespace Simitone.Conversations
         public string DiagnosticSummary()
         {
             return "live3d=" + HasLiveFrame +
+                   " res=" + targetW + "x" + targetH +
                    " sim=" + (cadetAvatar != null) +
+                   " instr=" + (instructorAvatar != null) +
                    " key=" + (boundSimKey ?? "none") +
                    " uniform=" + boundUniformTag +
                    " source=" + lastAnimSource +
@@ -109,6 +118,7 @@ namespace Simitone.Conversations
             EnsureDevice(gd);
             if (!EnsureResources(gd)) return;
             EnsureCadetAvatar(sourceSim);
+            EnsureDrillInstructorAvatar(sourceSim);
 
             try
             {
@@ -157,35 +167,49 @@ namespace Simitone.Conversations
                 bool showShotFlash = false;
                 Vector3 shotImpactPos = new Vector3(0f, 1.75f, 7.45f);
 
+                Vector3 instructorPos = new Vector3(-5.2f, 0f, 2.0f);
+                float instructorYaw = 1.45f;
+                string instructorClip = "cadet_idle_attention";
+
                 if (game.IsBriefing)
                 {
-                    // Pre-drill establishing shot: Cadet stands sharp at attention at the starting line (z = -7.8)
-                    // in full Police Cadet uniform; camera orbits cleanly so Bob fits head-to-boots inside Briefing.
-                    simPos = new Vector3(0f, 0f, -7.8f);
-                    simYaw = 0.24f + (float)Math.Sin(t * 0.65f) * 0.12f;
+                    // Full-screen 16:9 establishing shot: Bob + Drill Instructor stand sharp at the starting line
+                    // framed cleanly in the right 65% of the screen so the floating Briefing card on the left never covers them!
+                    simPos = new Vector3(0.4f, 0f, -7.8f);
+                    simYaw = 0.22f + (float)Math.Sin(t * 0.65f) * 0.10f;
                     customClipName = "cadet_idle_attention";
                     customFade = 0.18f;
                     customSpeed = 1.0f;
                     activeAnim = idleAnim ?? walkAnim ?? runAnim;
                     animSpeed = 0.85f;
-                    float orbit = (float)Math.Sin(t * 0.45f) * 0.90f;
-                    camera.Position = new Vector3(3.6f + orbit, 2.85f, 1.35f);
-                    camera.Target = new Vector3(0f, 1.56f, -7.8f);
+
+                    instructorPos = new Vector3(2.85f, 0f, -8.3f);
+                    instructorYaw = -0.32f + (float)Math.Sin(t * 0.45f) * 0.08f;
+                    instructorClip = "cadet_idle_attention";
+
+                    float orbit = (float)Math.Sin(t * 0.40f) * 0.95f;
+                    camera.Position = new Vector3(3.4f + orbit, 2.95f, 2.1f);
+                    camera.Target = new Vector3(-1.35f, 1.62f, -7.8f);
                 }
                 else if (game.IsFinished)
                 {
-                    // Victory showcase right past the Police Academy Finish Gantry (arch at z = 10.0)
-                    // with crisp Police Academy right-hand temple salute!
-                    simPos = new Vector3(0f, 0f, 11.4f);
-                    simYaw = 0.18f + (float)Math.Sin(t * 0.85f) * 0.10f;
+                    // Full-screen Victory Showcase right past the Police Academy Finish Gantry (arch at z = 10.0)
+                    // with BOTH Cadet Bob and the Sideline Drill Instructor rendering crisp temple salutes!
+                    simPos = new Vector3(0.4f, 0f, 11.4f);
+                    simYaw = 0.16f + (float)Math.Sin(t * 0.80f) * 0.09f;
                     customClipName = "cadet_victory_salute";
                     customFade = 0.20f;
                     customSpeed = 1.0f;
                     activeAnim = cheerAnim ?? idleAnim ?? walkAnim;
                     animSpeed = 0.95f;
-                    float sway = (float)Math.Sin(t * 0.50f) * 0.85f;
-                    camera.Position = new Vector3(2.8f + sway, 2.75f, 18.2f);
-                    camera.Target = new Vector3(0f, 1.72f, 10.8f);
+
+                    instructorPos = new Vector3(2.75f, 0f, 11.0f);
+                    instructorYaw = -0.18f;
+                    instructorClip = "cadet_victory_salute";
+
+                    float sway = (float)Math.Sin(t * 0.45f) * 0.90f;
+                    camera.Position = new Vector3(3.1f + sway, 2.85f, 19.4f);
+                    camera.Target = new Vector3(-1.35f, 1.72f, 10.8f);
                 }
                 else if (kind == CadetDrillStageKind.Sprint)
                 {
@@ -255,9 +279,14 @@ namespace Simitone.Conversations
                             : ((resP > 0.72f && rating == CadetHitRating.Perfect) ? 0f : 0.10f);
                     }
 
-                    // Dynamic 3/4 side-front tracking camera glides smoothly beside the sprinter
-                    camera.Position = new Vector3(simPos.X + 6.4f, 3.55f, simPos.Z + 5.2f);
-                    camera.Target = new Vector3(simPos.X, 1.55f, simPos.Z + 1.2f);
+                    // Sideline Drill Instructor tracks Bob along the grass sideline and salutes on Perfect!
+                    instructorPos = new Vector3(-5.35f, 0f, Math.Max(-4.0f, Math.Min(8.5f, simPos.Z + 1.2f)));
+                    instructorYaw = (float)Math.Atan2(simPos.X - instructorPos.X, simPos.Z - instructorPos.Z);
+                    instructorClip = (resolving && rating == CadetHitRating.Perfect) ? "cadet_victory_salute" : "cadet_idle_attention";
+
+                    // Dynamic 16:9 3/4 tracking camera framing Cadet, hurdles, sideline Instructor & Academy grounds
+                    camera.Position = new Vector3(simPos.X + 7.2f, 3.65f, simPos.Z + 5.9f);
+                    camera.Target = new Vector3(simPos.X - 0.85f, 1.60f, simPos.Z + 1.3f);
                 }
                 else if (kind == CadetDrillStageKind.Vault)
                 {
@@ -338,9 +367,16 @@ namespace Simitone.Conversations
                         }
                     }
 
-                    // Heroic side-quarter vault camera with generous headroom above the timber wall
-                    camera.Position = new Vector3(9.2f, 4.05f, 2.4f);
-                    camera.Target = new Vector3(0f, 2.25f, 1.9f);
+                    // Sideline Drill Instructor watches right beside the vault wall & landing mat
+                    instructorPos = new Vector3(-5.15f, 0f, 2.3f);
+                    instructorYaw = (float)Math.Atan2(simPos.X - instructorPos.X, simPos.Z - instructorPos.Z);
+                    instructorClip = (resolving && rating == CadetHitRating.Perfect && resP > 0.45f)
+                        ? "cadet_victory_salute"
+                        : "cadet_idle_attention";
+
+                    // Heroic 16:9 side-quarter vault camera with generous headroom above the timber wall
+                    camera.Position = new Vector3(10.0f, 4.15f, 2.3f);
+                    camera.Target = new Vector3(-0.6f, 2.15f, 1.9f);
                 }
                 else // TargetDrill
                 {
@@ -398,15 +434,22 @@ namespace Simitone.Conversations
                         }
                     }
 
-                    // Over-the-shoulder academy firing range view framing both Cadet and all 3 steel targets
-                    camera.Position = new Vector3(4.3f, 3.35f, -7.6f);
-                    camera.Target = new Vector3(0f, 1.62f, 5.2f);
+                    // Range Safety Officer / Drill Instructor observes beside the firing line
+                    instructorPos = new Vector3(-3.35f, 0f, -3.1f);
+                    instructorYaw = 0.34f;
+                    instructorClip = (resolving && rating == CadetHitRating.Perfect && resP > 0.30f)
+                        ? "cadet_victory_salute"
+                        : "cadet_idle_attention";
+
+                    // Full-screen 16:9 over-the-shoulder firing range view framing Cadet, Instructor, and all 3 steel targets
+                    camera.Position = new Vector3(4.9f, 3.45f, -8.3f);
+                    camera.Target = new Vector3(-0.45f, 1.62f, 5.2f);
                 }
 
-                // 2. Build all 3D Academy Training Yard meshes for this frame
+                // 2. Build all 3D Virtual Police Academy Grounds meshes for this frame
                 litTris.Clear();
                 unlitTris.Clear();
-                BuildAcademyEnvironment(kind, simPos, targetKnockAngle, showShotFlash, shotImpactPos, t);
+                BuildAcademyEnvironment(kind, simPos, instructorPos, targetKnockAngle, showShotFlash, shotImpactPos, t);
 
                 // 3. Pose & animate the real 3D Vitaboy SimAvatar in the EXACT SAME 3D coordinates!
                 if (cadetAvatar != null)
@@ -452,7 +495,34 @@ namespace Simitone.Conversations
                     cadetAvatar.ReloadSkeleton();
                 }
 
-                // 4. Render unified 3D world + SimAvatar into our RenderTarget2D with full Depth24 Z-buffering
+                // 3b. Pose & animate the live Sideline Drill Instructor in the same 3D world!
+                if (instructorAvatar != null)
+                {
+                    bool instrCustom = !string.IsNullOrEmpty(instructorClip) &&
+                                       instructorPlayer.Play(instructorClip, 0.22f, 0.92f, true) &&
+                                       instructorPlayer.UpdateAndApply(instructorAvatar, dt, useSquad: true);
+                    if (!instrCustom)
+                    {
+                        ResetSkeletonToBase(instructorAvatar);
+                        if (idleAnim != null)
+                        {
+                            float fps = idleAnim.FramesPerSecond > 0 ? idleAnim.FramesPerSecond : 30f;
+                            int numFrames = Math.Max(1, idleAnim.NumFrames);
+                            float exact = (Math.Max(0f, t) * fps * 0.85f) % numFrames;
+                            int frame = (int)exact;
+                            Animator.RenderFrame(instructorAvatar, idleAnim, frame, exact - frame, 1.0f);
+                        }
+                    }
+
+                    instructorAvatar.Scale = Vector3.One * SimScale;
+                    instructorAvatar.Position = instructorPos;
+                    instructorAvatar.RotationY = instructorYaw;
+                    instructorAvatar.RotationX = 0f;
+                    instructorAvatar.AmbientLight = new Vector4(1.14f, 1.13f, 1.10f, 1.0f);
+                    instructorAvatar.ReloadSkeleton();
+                }
+
+                // 4. Render unified 3D world + SimAvatars into our full-screen RenderTarget2D with Depth24 Z-buffering
                 var prevTargets = gd.GetRenderTargets();
                 var prevVp = gd.Viewport;
                 var prevRast = gd.RasterizerState;
@@ -462,9 +532,9 @@ namespace Simitone.Conversations
                 try
                 {
                     gd.SetRenderTarget(renderTarget);
-                    gd.Viewport = new Viewport(0, 0, TargetW, TargetH);
+                    gd.Viewport = new Viewport(0, 0, targetW, targetH);
                     camera.AspectRatioMultiplier = 1f;
-                    gd.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(116, 174, 228), 1f, 0);
+                    gd.Clear(ClearOptions.Target | ClearOptions.DepthBuffer, new Color(108, 168, 226), 1f, 0);
 
                     gd.RasterizerState = RasterizerState.CullNone;
                     gd.DepthStencilState = DepthStencilState.Default;
@@ -556,17 +626,22 @@ namespace Simitone.Conversations
         void BuildAcademyEnvironment(
             CadetDrillStageKind kind,
             Vector3 simPos,
+            Vector3 instructorPos,
             float targetKnockAngle,
             bool showShotFlash,
             Vector3 shotImpactPos,
             float elapsed)
         {
             // 1. Mowed green academy turf field (striped for crisp speed & depth cues!)
-            for (int iz = -22; iz < 36; iz += 4)
+            for (int iz = -28; iz < 44; iz += 4)
             {
                 Color grass = ((iz / 4) % 2 == 0) ? new Color(78, 134, 72) : new Color(68, 120, 64);
-                AddQuadY(-26f, 26f, iz, iz + 4f, 0f, grass);
+                AddQuadY(-34f, 34f, iz, iz + 4f, 0f, grass);
             }
+
+            // 1b. Paved academy service apron along the -X precinct side for squad cars & bleachers
+            AddQuadY(-22f, -6.4f, -20f, 30f, 0.008f, new Color(118, 124, 132));
+            AddBox(new Vector3(-6.4f, 0.06f, 5f), new Vector3(0.32f, 0.12f, 50f), new Color(188, 194, 200));
 
             // 2. Terracotta running track surface + crisp white chalk lane dividers
             AddQuadY(-4.4f, 4.4f, -18f, 30f, 0.012f, new Color(166, 78, 58));
@@ -578,14 +653,36 @@ namespace Simitone.Conversations
             for (int i = 0; i < laneXs.Length; i++)
                 AddQuadY(laneXs[i] - 0.06f, laneXs[i] + 0.06f, -17.5f, 29.5f, 0.022f, new Color(242, 245, 248));
 
-            // 3. Perimeter concrete wall + navy police academy trim + distant skyline silhouettes
-            AddBox(new Vector3(-11.5f, 1.1f, 6f), new Vector3(0.5f, 2.2f, 54f), new Color(160, 168, 178));
-            AddBox(new Vector3(-11.5f, 2.25f, 6f), new Vector3(0.62f, 0.22f, 54f), new Color(40, 82, 148));
-            AddBox(new Vector3(11.5f, 1.1f, 6f), new Vector3(0.5f, 2.2f, 54f), new Color(160, 168, 178));
-            AddBox(new Vector3(11.5f, 2.25f, 6f), new Vector3(0.62f, 0.22f, 54f), new Color(40, 82, 148));
+            // 3. Perimeter walls, Police Academy Precinct Building, Bleachers, Patrol Cruisers, Flagpole, Trees & Skyline
+            AddBox(new Vector3(-12.6f, 1.05f, 6f), new Vector3(0.45f, 2.1f, 56f), new Color(156, 164, 174));
+            AddBox(new Vector3(-12.6f, 2.18f, 6f), new Vector3(0.58f, 0.22f, 56f), new Color(36, 76, 142));
+            AddBox(new Vector3(12.6f, 1.05f, 6f), new Vector3(0.45f, 2.1f, 56f), new Color(156, 164, 174));
+            AddBox(new Vector3(12.6f, 2.18f, 6f), new Vector3(0.58f, 0.22f, 56f), new Color(36, 76, 142));
             // Back stadium wall with gold academy crest stripe
-            AddBox(new Vector3(0f, 1.8f, 31f), new Vector3(24f, 3.6f, 0.7f), new Color(56, 78, 114));
-            AddBox(new Vector3(0f, 3.1f, 30.6f), new Vector3(22f, 0.32f, 0.18f), new Color(235, 192, 66));
+            AddBox(new Vector3(0f, 1.8f, 31f), new Vector3(26f, 3.6f, 0.7f), new Color(52, 74, 110));
+            AddBox(new Vector3(0f, 3.1f, 30.6f), new Vector3(24f, 0.32f, 0.18f), new Color(235, 192, 66));
+
+            // Police Academy Precinct Building along the -X flank (visible in Sprint, Vault, Target Drill)
+            AddPrecinctBuilding(-16.8f, 4.0f);
+            // 3-tier sideline viewing bleachers behind the Drill Instructor
+            AddBleachers(-8.4f, 3.2f);
+            // Parked SimCity Police Patrol Cruisers with live pulsing red/blue roof lightbars!
+            AddPatrolCruiser(-9.6f, -8.8f, 0.08f, elapsed);
+            AddPatrolCruiser(8.4f, -12.6f, -0.35f, elapsed + 0.8f);
+            // Tall Academy flagpole with gently waving navy-and-gold banner beside the Finish Gantry
+            AddAcademyFlagpole(-6.8f, 10.4f, elapsed);
+            // Perimeter trees & hedges framing both sides of the virtual Academy lot
+            float[] treeZs = { -16f, -6f, 14f, 24f };
+            for (int i = 0; i < treeZs.Length; i++)
+            {
+                AddAcademyTree(14.8f, treeZs[i], (i % 2 == 0) ? 1.15f : 0.95f);
+                if (i == 0 || i >= 2)
+                    AddAcademyTree(-14.6f, treeZs[i], 1.05f);
+            }
+            AddAcademyTree(-7.6f, -15.8f, 1.1f);
+            AddAcademyTree(7.4f, 23.5f, 1.2f);
+            // Distant SimCity skyline silhouettes along both horizons for rich 16:9 depth
+            AddDistantSkyline();
 
             // Tall stadium floodlight towers along both flanks
             float[] poleZs = { -6f, 8f, 22f };
@@ -668,10 +765,128 @@ namespace Simitone.Conversations
                 }
             }
 
-            // 5. Grounded 3D contact shadow beneath the Sim's feet (scales down dynamically during Vault leap!)
+            // 5. Grounded 3D contact shadows beneath both Cadet and Sideline Drill Instructor
             float shadowScale = Math.Max(0.32f, 1.0f - simPos.Y * 0.22f);
             byte shadowAlpha = (byte)Math.Round(135f * shadowScale);
             AddUnlitDisc(simPos.X, 0.032f, simPos.Z, 0.85f * shadowScale, new Color((byte)10, (byte)16, (byte)24, shadowAlpha));
+            if (instructorAvatar != null)
+                AddUnlitDisc(instructorPos.X, 0.032f, instructorPos.Z, 0.82f, new Color((byte)10, (byte)16, (byte)24, (byte)130));
+        }
+
+        void AddPrecinctBuilding(float x, float centerZ)
+        {
+            // Two-story brick & slate Police Academy Precinct facade along the left perimeter
+            AddBox(new Vector3(x, 2.2f, centerZ), new Vector3(4.2f, 4.4f, 24f), new Color(156, 86, 68));
+            AddBox(new Vector3(x, 5.4f, centerZ), new Vector3(4.3f, 2.2f, 24.2f), new Color(64, 82, 112));
+            // Gold Academy fascia cornice & roofline trim
+            AddBox(new Vector3(x + 2.15f, 4.35f, centerZ), new Vector3(0.24f, 0.28f, 24.2f), new Color(235, 194, 70));
+            AddBox(new Vector3(x, 6.65f, centerZ), new Vector3(4.6f, 0.34f, 24.6f), new Color(40, 56, 84));
+            // Recessed illuminated Academy windows (two stories)
+            for (float wz = centerZ - 9.5f; wz <= centerZ + 9.5f; wz += 3.8f)
+            {
+                AddBox(new Vector3(x + 2.14f, 2.55f, wz), new Vector3(0.14f, 1.45f, 1.65f), new Color(216, 224, 232));
+                AddBox(new Vector3(x + 2.19f, 2.55f, wz), new Vector3(0.08f, 1.22f, 1.42f), new Color(92, 146, 198));
+                AddBox(new Vector3(x + 2.14f, 5.35f, wz), new Vector3(0.14f, 1.15f, 1.65f), new Color(210, 218, 228));
+                AddBox(new Vector3(x + 2.19f, 5.35f, wz), new Vector3(0.08f, 0.92f, 1.42f), new Color(118, 174, 224));
+            }
+            // Navy entrance awning + gold badge emblem at centerZ
+            AddBox(new Vector3(x + 2.75f, 2.85f, centerZ), new Vector3(1.4f, 0.22f, 4.2f), new Color(26, 62, 122));
+            AddBox(new Vector3(x + 3.42f, 2.85f, centerZ), new Vector3(0.08f, 0.14f, 4.2f), new Color(240, 198, 66));
+        }
+
+        void AddBleachers(float x, float centerZ)
+        {
+            // 3-tier aluminum sideline viewing bleachers facing the track (+X)
+            for (int tier = 0; tier < 3; tier++)
+            {
+                float bx = x - tier * 0.95f;
+                float by = 0.55f + tier * 0.62f;
+                AddBox(new Vector3(bx, by, centerZ), new Vector3(0.72f, 0.14f, 11.6f), new Color(196, 204, 214));
+                AddBox(new Vector3(bx + 0.15f, by - 0.28f, centerZ), new Vector3(0.55f, 0.10f, 11.6f), new Color(142, 152, 166));
+            }
+            // Steel support frames + navy side handrails
+            for (float fz = centerZ - 5.2f; fz <= centerZ + 5.3f; fz += 2.6f)
+            {
+                AddBox(new Vector3(x - 1.0f, 0.9f, fz), new Vector3(2.8f, 1.75f, 0.14f), new Color(66, 78, 96));
+            }
+            AddBox(new Vector3(x - 2.35f, 1.95f, centerZ), new Vector3(0.12f, 1.2f, 11.8f), new Color(36, 74, 134));
+            AddBox(new Vector3(x - 2.35f, 2.52f, centerZ), new Vector3(0.16f, 0.12f, 11.8f), new Color(235, 194, 70));
+        }
+
+        void AddPatrolCruiser(float x, float z, float yawRad, float elapsed)
+        {
+            var pivot = new Vector3(x, 0f, z);
+            var rot = Matrix.CreateRotationY(yawRad);
+
+            // Lower navy/black chassis + crisp white police doors
+            AddTransformedBox(new Vector3(0f, 0.68f, 0f), new Vector3(1.92f, 0.68f, 4.45f), pivot, rot, new Color(24, 34, 52));
+            AddTransformedBox(new Vector3(0f, 0.72f, 0.05f), new Vector3(1.98f, 0.56f, 1.95f), pivot, rot, new Color(242, 246, 250));
+            // Gold police star stripe along sides
+            AddTransformedBox(new Vector3(0f, 0.74f, 0.05f), new Vector3(2.01f, 0.12f, 1.85f), pivot, rot, new Color(236, 192, 62));
+            // Cabin roof (white) + dark tinted windshield & side glass
+            AddTransformedBox(new Vector3(0f, 1.32f, -0.15f), new Vector3(1.66f, 0.62f, 2.05f), pivot, rot, new Color(242, 246, 250));
+            AddTransformedBox(new Vector3(0f, 1.30f, -0.15f), new Vector3(1.70f, 0.44f, 1.82f), pivot, rot, new Color(38, 60, 86));
+            // Front chrome push-bumper + headlights + taillights
+            AddTransformedBox(new Vector3(0f, 0.58f, 2.28f), new Vector3(1.55f, 0.42f, 0.18f), pivot, rot, new Color(46, 54, 66));
+            AddTransformedBox(new Vector3(-0.68f, 0.72f, 2.24f), new Vector3(0.32f, 0.18f, 0.08f), pivot, rot, new Color(255, 246, 200));
+            AddTransformedBox(new Vector3(0.68f, 0.72f, 2.24f), new Vector3(0.32f, 0.18f, 0.08f), pivot, rot, new Color(255, 246, 200));
+            AddTransformedBox(new Vector3(-0.68f, 0.72f, -2.24f), new Vector3(0.34f, 0.16f, 0.08f), pivot, rot, new Color(214, 42, 46));
+            AddTransformedBox(new Vector3(0.68f, 0.72f, -2.24f), new Vector3(0.34f, 0.16f, 0.08f), pivot, rot, new Color(214, 42, 46));
+            // 4 Wheels
+            float[] wx = { -0.92f, 0.92f };
+            float[] wz = { -1.35f, 1.35f };
+            for (int ix = 0; ix < 2; ix++)
+                for (int iz = 0; iz < 2; iz++)
+                    AddTransformedBox(new Vector3(wx[ix], 0.34f, wz[iz]), new Vector3(0.28f, 0.68f, 0.68f), pivot, rot, new Color(26, 28, 32));
+            // Alternating pulsing red / blue roof lightbar!
+            bool flashA = Math.Sin(elapsed * 7.5f) >= 0.0;
+            Color redLamp = flashA ? new Color(255, 58, 62) : new Color(138, 30, 36);
+            Color blueLamp = flashA ? new Color(36, 92, 180) : new Color(64, 178, 255);
+            AddTransformedBox(new Vector3(0f, 1.70f, -0.05f), new Vector3(1.18f, 0.12f, 0.24f), pivot, rot, new Color(190, 198, 210));
+            AddTransformedBox(new Vector3(-0.34f, 1.74f, -0.05f), new Vector3(0.46f, 0.16f, 0.22f), pivot, rot, redLamp);
+            AddTransformedBox(new Vector3(0.34f, 1.74f, -0.05f), new Vector3(0.46f, 0.16f, 0.22f), pivot, rot, blueLamp);
+        }
+
+        void AddAcademyFlagpole(float x, float z, float elapsed)
+        {
+            // Concrete plinth + tall brushed steel pole + gold finial orb
+            AddBox(new Vector3(x, 0.22f, z), new Vector3(0.9f, 0.44f, 0.9f), new Color(180, 186, 196));
+            AddBox(new Vector3(x, 4.4f, z), new Vector3(0.14f, 8.8f, 0.14f), new Color(214, 222, 232));
+            AddBox(new Vector3(x, 8.95f, z), new Vector3(0.32f, 0.32f, 0.32f), new Color(242, 202, 68));
+            // Gently waving 4-segment navy-and-gold Police Academy banner
+            for (int seg = 0; seg < 4; seg++)
+            {
+                float sx = x + 0.36f + seg * 0.50f;
+                float waveZ = z + (float)Math.Sin(elapsed * 3.8f - seg * 0.9f) * (0.06f + seg * 0.05f);
+                AddBox(new Vector3(sx, 8.15f, waveZ), new Vector3(0.52f, 1.15f, 0.06f), new Color(28, 66, 134));
+                AddBox(new Vector3(sx, 8.15f, waveZ), new Vector3(0.52f, 0.22f, 0.08f), new Color(240, 198, 68));
+            }
+        }
+
+        void AddAcademyTree(float x, float z, float scale)
+        {
+            // Stylized sunlit SimCity cypress / maple silhouette
+            AddBox(new Vector3(x, 1.2f * scale, z), new Vector3(0.52f * scale, 2.4f * scale, 0.52f * scale), new Color(116, 82, 54));
+            AddBox(new Vector3(x, 3.2f * scale, z), new Vector3(2.4f * scale, 2.2f * scale, 2.4f * scale), new Color(54, 118, 56));
+            AddBox(new Vector3(x, 4.7f * scale, z), new Vector3(1.75f * scale, 1.6f * scale, 1.75f * scale), new Color(68, 138, 64));
+            AddBox(new Vector3(x, 5.8f * scale, z), new Vector3(1.05f * scale, 1.1f * scale, 1.05f * scale), new Color(86, 156, 76));
+        }
+
+        void AddDistantSkyline()
+        {
+            // Soft atmospheric blue-grey distant SimCity towers far past both ends of the Academy yard
+            Color b1 = new Color(116, 152, 194);
+            Color b2 = new Color(102, 138, 182);
+            AddBox(new Vector3(-22f, 7.5f, 44f), new Vector3(6.5f, 15f, 5f), b1);
+            AddBox(new Vector3(-12f, 10.5f, 46f), new Vector3(7.0f, 21f, 5f), b2);
+            AddBox(new Vector3(0f, 8.5f, 47f), new Vector3(8.5f, 17f, 5f), b1);
+            AddBox(new Vector3(13f, 11.5f, 45f), new Vector3(6.8f, 23f, 5f), b2);
+            AddBox(new Vector3(24f, 6.5f, 43f), new Vector3(7.2f, 13f, 5f), b1);
+
+            AddBox(new Vector3(-20f, 6.5f, -34f), new Vector3(7f, 13f, 5f), b2);
+            AddBox(new Vector3(-8f, 9.0f, -36f), new Vector3(8f, 18f, 5f), b1);
+            AddBox(new Vector3(8f, 7.5f, -35f), new Vector3(7.5f, 15f, 5f), b2);
+            AddBox(new Vector3(21f, 8.5f, -34f), new Vector3(7f, 17f, 5f), b1);
         }
 
         void AddHurdle(float z)
@@ -836,20 +1051,47 @@ namespace Simitone.Conversations
 
         bool EnsureResources(GraphicsDevice gd)
         {
-            if (initialized && renderTarget != null && !renderTarget.IsDisposed && worldEffect != null && !worldEffect.IsDisposed)
-                return true;
             if (initFailed) return false;
+
+            int bbW = gd.PresentationParameters != null ? gd.PresentationParameters.BackBufferWidth : DefaultTargetW;
+            int bbH = gd.PresentationParameters != null ? gd.PresentationParameters.BackBufferHeight : DefaultTargetH;
+            if (bbW < 320 || bbH < 240) { bbW = DefaultTargetW; bbH = DefaultTargetH; }
+
+            float scale = Math.Min(1f, Math.Min((float)MaxTargetW / bbW, (float)MaxTargetH / bbH));
+            int desiredW = Math.Max(640, ((int)Math.Round(bbW * scale)) & ~1);
+            int desiredH = Math.Max(360, ((int)Math.Round(bbH * scale)) & ~1);
+
+            if (initialized && renderTarget != null && !renderTarget.IsDisposed &&
+                worldEffect != null && !worldEffect.IsDisposed &&
+                targetW == desiredW && targetH == desiredH)
+                return true;
 
             try
             {
-                renderTarget = new RenderTarget2D(gd, TargetW, TargetH, false, SurfaceFormat.Color, DepthFormat.Depth24);
-                worldEffect = new BasicEffect(gd);
-                camera = new BasicCamera(gd, new Vector3(6.8f, 3.65f, 5.8f), new Vector3(0f, 1.55f, 1.3f), Vector3.Up);
-                camera.NearPlane = 0.1f;
-                camera.FarPlane = 140f;
-                avatarScene = new _3DScene(gd, camera);
-                if (GameFacade.Scenes != null)
-                    avatarScene.Initialize(GameFacade.Scenes);
+                if (renderTarget != null && !renderTarget.IsDisposed)
+                {
+                    try { renderTarget.Dispose(); } catch { }
+                    renderTarget = null;
+                }
+
+                targetW = desiredW;
+                targetH = desiredH;
+                renderTarget = new RenderTarget2D(gd, targetW, targetH, false, SurfaceFormat.Color, DepthFormat.Depth24);
+                if (worldEffect == null || worldEffect.IsDisposed)
+                    worldEffect = new BasicEffect(gd);
+
+                if (camera == null)
+                {
+                    camera = new BasicCamera(gd, new Vector3(6.8f, 3.65f, 5.8f), new Vector3(0f, 1.55f, 1.3f), Vector3.Up);
+                    camera.NearPlane = 0.1f;
+                    camera.FarPlane = 160f;
+                }
+                if (avatarScene == null)
+                {
+                    avatarScene = new _3DScene(gd, camera);
+                    if (GameFacade.Scenes != null)
+                        avatarScene.Initialize(GameFacade.Scenes);
+                }
                 initialized = true;
                 return true;
             }
@@ -982,10 +1224,119 @@ namespace Simitone.Conversations
             }
         }
 
+        void EnsureDrillInstructorAvatar(VMAvatar sourceSim)
+        {
+            if (instructorAvatar != null) return;
+            try
+            {
+                var content = Content.Get();
+                if (content == null || content.AvatarSkeletons == null) return;
+
+                var baseSkel = content.AvatarSkeletons.Get("adult.skel");
+                if (baseSkel == null) return;
+
+                var instr = new SimAvatar(baseSkel.Clone());
+
+                // 1. Pick a distinct, authentic TS1 adult head for the Drill Instructor (prefer police cap / senior officer,
+                //    then another adult Sim in the current VM, then verified TS1 adult head fallback)
+                Outfit headOutfit = TryPickInstructorHead(content, sourceSim);
+                if (headOutfit != null)
+                    instr.Head = headOutfit;
+
+                // 2. Dress the Drill Instructor in an authentic Senior Law Enforcement Officer / Sergeant uniform from work.iff
+                string tag;
+                var uniformOutfit = ResolveLawEnforcementUniform(content, null, out tag, new[] { 3, 2, 4, 1, 0 });
+                if (uniformOutfit != null)
+                {
+                    instr.Body = uniformOutfit;
+                    instr.Handgroup = uniformOutfit;
+                    instructorTag = tag;
+                }
+                else
+                {
+                    var fallbackBody = new Outfit
+                    {
+                        TS1AppearanceID = "b001mafit_01.apr",
+                        TS1TextureID = "pizzaguysuit",
+                        LiteralHandgroup = BuildAdultHands("lgt")
+                    };
+                    instr.Body = fallbackBody;
+                    instr.Handgroup = fallbackBody;
+                    instructorTag = "fallback";
+                }
+
+                if (instr.Head == null)
+                    instr.Head = new Outfit { TS1AppearanceID = "c_pizzaguy.apr", TS1TextureID = "pizzaguyface" };
+                if (instr.Handgroup == null)
+                    instr.Handgroup = new Outfit { LiteralHandgroup = BuildAdultHands("lgt") };
+
+                if (avatarScene != null)
+                    avatarScene.Add(instr);
+
+                instructorAvatar = instr;
+                Boot.Log("cadet3d sideline Drill Instructor ready uniform=" + instructorTag);
+            }
+            catch (Exception e)
+            {
+                Boot.Log("cadet3d instructor avatar error: " + e.Message);
+            }
+        }
+
+        static Outfit TryPickInstructorHead(Content content, VMAvatar sourceSim)
+        {
+            // Try authentic TS1 NPC cop / officer heads first
+            var candidates = new[]
+            {
+                new[] { "c_police.apr", "policeface" },
+                new[] { "c_cop.apr", "copface" },
+                new[] { "c001ma_cop.apr", "c001malgt_cop" },
+                new[] { "c001ma_police.apr", "c001malgt_police" },
+            };
+            for (int i = 0; i < candidates.Length; i++)
+            {
+                try
+                {
+                    var apr = content.AvatarAppearances?.Get(candidates[i][0]);
+                    if (apr != null)
+                        return new Outfit { TS1AppearanceID = candidates[i][0], TS1TextureID = candidates[i][1] };
+                }
+                catch { }
+            }
+
+            // Next try another adult Sim on the lot (excluding the player's Cadet) for a guaranteed crisp TS1 head
+            try
+            {
+                var vm = CareerDispatchDriver.CurrentVM();
+                if (vm != null && vm.Entities != null)
+                {
+                    foreach (var ent in vm.Entities)
+                    {
+                        var av = ent as VMAvatar;
+                        if (av == null || ReferenceEquals(av, sourceSim) || av.Avatar == null || av.Avatar.Head == null)
+                            continue;
+                        if (av.GetPersonData(VMPersonDataVariable.PersonsAge) < 18) continue;
+                        if (av.GetPersonData(VMPersonDataVariable.Gender) == 0)
+                            return av.Avatar.Head;
+                    }
+                    foreach (var ent in vm.Entities)
+                    {
+                        var av = ent as VMAvatar;
+                        if (av == null || ReferenceEquals(av, sourceSim) || av.Avatar == null || av.Avatar.Head == null)
+                            continue;
+                        if (av.GetPersonData(VMPersonDataVariable.PersonsAge) >= 18)
+                            return av.Avatar.Head;
+                    }
+                }
+            }
+            catch { }
+
+            return new Outfit { TS1AppearanceID = "c_pizzaguy.apr", TS1TextureID = "pizzaguyface" };
+        }
+
         // Mirrors VMSuitProvider.GetPersonSuitTS1 (case 3: Work Outfit) to dress any Sim
         // (matching their exact gender, fit/fat/skn build, and lgt/med/drk skin tone)
         // in the authentic Sims 1 Law Enforcement Cadet / Police uniform from work.iff.
-        static Outfit ResolveLawEnforcementUniform(Content content, VMAvatar sourceSim, out string tag)
+        static Outfit ResolveLawEnforcementUniform(Content content, VMAvatar sourceSim, out string tag, int[] preferredLevels = null)
         {
             tag = "fallback";
             try
@@ -1040,9 +1391,10 @@ namespace Simitone.Conversations
                 if (hands == null) hands = BuildAdultHands(skinTone);
 
                 string gChar = isMale ? "m" : "f";
-                // Prefer Level 2 (Cadet = index 1); if Cadet has an empty uniform string in work.iff,
-                // fall back to Patrol Officer [2], Security Guard [0], Desk Sergeant [3] — all authentic Law Enforcement uniforms!
-                int[] levelOrder = { 1, 2, 0, 3, 4 };
+                // Prefer Level 2 (Cadet = index 1) by default, or caller's preferred rank order (e.g. Sergeant/Officer for Drill Instructor)
+                int[] levelOrder = (preferredLevels != null && preferredLevels.Length > 0)
+                    ? preferredLevels
+                    : new[] { 1, 2, 0, 3, 4 };
                 for (int i = 0; i < levelOrder.Length; i++)
                 {
                     int idx = levelOrder[i];
@@ -1146,6 +1498,7 @@ namespace Simitone.Conversations
             camera = null;
             avatarScene = null;
             cadetAvatar = null;
+            instructorAvatar = null;
             boundSimKey = null;
             initialized = false;
             initFailed = false;

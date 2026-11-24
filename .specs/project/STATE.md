@@ -1,11 +1,18 @@
 # State
 
-**Last Updated:** 2026-11-24T00:08:00-03:00
-**Current Work:** custom-animations — Implemented, verified in live 3D Cadet Academy gameplay, and ready for Milestone 2 Rank 3 (Patrol Officer)
+**Last Updated:** 2026-11-24T00:40:00-03:00
+**Current Work:** Full-Screen Virtual Pocket Lot (`CadetAcademyOverlay` + `VirtualLotTransition` + Sideline Drill Instructor) — Implemented, tested (299+28), and verified in 16:9 HD video; ready for Milestone 2 Rank 3 (Patrol Officer)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-005: Full-Screen "Virtual Pocket Lot" Pattern for Work Minigames (`VirtualLotTransition`) (2026-11-24)
+
+**Decision:** Render 3D career work venues (starting with Level 2 Cadet: *SimCity Police Academy — Training Grounds*) edge-to-edge full-screen (`1600×900` dynamic aspect-matched `RenderTarget2D` covering 100% of the viewport) wrapped in a reusable pure-C# `VirtualLotTransition` (smooth fade-from-black entry, translucent arrival location ribbon, and fade-to-black return home) while keeping the player's real home lot `VM` safely paused in memory (`vm.SpeedMultiplier = 0`) instead of loading a separate TS1 `.iff` lot. Overlay only minimal translucent floating HUD chrome (top strip, left-anchored Briefing/Scorecard cards, bottom floating timing dock) so 3D Sims and sideline NPCs remain unobstructed.
+**Reason:** Feels like teleporting to a dedicated Police Academy lot without any of TS1's lot-loading pause, save/reload risk, or neighborhood slot consumption, and showcases full-screen 3D animation, custom scenery (Precinct Building, bleachers, patrol cruisers with pulsing lightbars, waving flagpole, trees, skyline), and live NPC sideline actors (Senior Law Enforcement Drill Instructor).
+**Trade-off:** Pure custom 3D staging rather than TS1 `.iff` build/buy objects, though fully compatible with authentic TS1 `SimAvatar` actors, uniforms, and custom `.simanim.json` clips.
+**Impact:** Establishes the standard full-screen Virtual Pocket Lot template (`VirtualLotTransition` + edge-to-edge 3D + minimal floating HUD) for upcoming Ranks 3–10 career shifts.
 
 ### AD-004: Pure-C# Custom Skeletal Animation Runtime (`.simanim.json`) + Offline Hybrid Authoring Pipeline (2026-11-23)
 
@@ -76,7 +83,8 @@
 | 002 | Simitone UI design tokens + responsive zero-overlap layout engine  | 2026-11-23 | `fc06dab` | Done   |
 | 003 | Multi-Rank Dispatch Router + Level 2 Cadet Academy 3D Obstacle Course | 2026-11-23 | `ec04deb` | Done   |
 | 004 | Cadet Academy briefing wrap, sprint arm posture & victory camera polish | 2026-11-23 | `04923b0` | Done   |
-| 005 | Custom 3D Skeletal Animation Engine + Blender 4.5 Pipeline + 7 Cadet Clips | 2026-11-24 | pending   | Done   |
+| 005 | Custom 3D Skeletal Animation Engine + Blender 4.5 Pipeline + 7 Cadet Clips | 2026-11-24 | `52037f3` | Done   |
+| 006 | Full-Screen Virtual Pocket Lot HUD + Sideline Drill Instructor & Scenery | 2026-11-24 | pending   | Done   |
 
 ---
 
