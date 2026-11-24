@@ -54,6 +54,14 @@ Not AI-owned, and the guide says keep as-is: bottom-left dial and bar, needs bar
 - **Pie menu: attempt the replacement** (UI-05). Spike first.
 - Order: quick wins first. Done: UI-04 balloons, UI-09 Options "Sims AI" page (opened with `simtool convo options`; the Options button entry still needs the patch reinstall), theme setting.
 
+## Spike results (2026-11-24, from the decompiled client: `the-sims-spike/decomp`)
+
+**Dialogs (gap 1) are replaceable, no new IL patch needed.** `UILotControl.vm_OnDialog` turns our `VMDialogInfo` (from `ConvoPrimitive.ShowChoice`) into a native `UIAlert` and answers with `DialogResponse(code)`, which only does this: `vm.SendCommand(new VMNetDialogResponseCmd { ActorUID = ActiveEntity.PersistID, ResponseCode = code, ResponseText = ... })`, then restores the speed from 0 to 1. So the Talk sheet can be our own `UIElement` (HtmlSurface) that sends that same command itself, exactly as the client's own `HouseSelected` does for the neighbourhood picker. Plan: `ShowChoice` stops calling `SignalDialog` for Talk, opens the sheet, keeps the thread's `VMDialogResult` blocking state, and the sheet sends `VMNetDialogResponseCmd` (0, 1, 2 for the three tones/subjects). Free text: the sheet captures the keyboard, the text goes to Laya on a worker thread (never blocks a frame), Laya classifies it into the nearest subject or tone, and the sheet answers with that code; the typed words themselves are kept in a static for the balloon line. To verify in the game: the speed handling (`SpeedMultiplier` 0 / -2 for TS1 blocking) when we skip the native alert.
+
+**Pie menu (UI-05) is replaceable as an overlay, again with no IL patch.** The native `UIPieMenu` is built in `UILotControl` (line ~623) from the `VMPieMenuInteraction` list. Choosing an item only does `VMNetInteractionCmd { Interaction = item.ID, ActorUID, CalleeID, Param0, Global }` (or `VMNetGotoCmd` when the target is the goto object), plays a sound and calls `ClosePie()`. Plan: our overlay notices that `UILotControl.PieMenu` appeared (reflection), hides it, draws the redesigned pie from its `m_CurrentItem.Children` (icon + label, 6-8 slots on an ellipse, "..." for categories) and on a click calls the native `PieButtonClick` with the matching button, so categories, goto, sounds and closing stay native. Risk: reflection into a private field and the head-scene render; both are inside the mod, so a failure falls back to the native pie.
+
+**Remaining first steps:** (a) Talk sheet page and sheet class, (b) Laya question set for free text, (c) pie overlay, (d) Options button entry (patch reinstall).
+
 ## Open questions (answered above, kept for history)
 
 - Is the Talk sheet's free-text field wanted? It is a new feature (needs a keyboard capture path), not only a restyle.
