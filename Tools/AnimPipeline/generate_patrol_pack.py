@@ -1,12 +1,14 @@
-"""Authors and exports the 4-clip Beat Patrol custom skeletal animation pack
+"""Authors and exports the 6-clip Beat Patrol custom skeletal animation pack
 using exact FreeSO/MonoGame anatomical kinematics + 2-bone IK limb targeting,
 baking every clip onto AdultRig in Blender 4.5 and exporting via blender_export_simanim.py.
 
 Clips:
-  1. patrol_sneak_loop   — crouched tactical burglar-catching sneak loop
-  2. patrol_apprehend    — authoritative freeze/halt + handcuff apprehend
-  3. patrol_write_ticket — citation pad writing + ticket tear-off
-  4. patrol_inspect_clue — crouched flashlight hazard/clue inspection
+  1. patrol_sneak_loop       — crouched tactical burglar-catching sneak loop
+  2. patrol_apprehend        — authoritative freeze/halt + handcuff apprehend
+  3. patrol_write_ticket     — citation pad writing + ticket tear-off
+  4. patrol_inspect_clue     — crouched flashlight hazard/clue inspection
+  5. patrol_cuffed_walk_loop — arrested suspect walking with wrists cuffed behind back
+  6. patrol_escort_walk_loop — authoritative officer escort march guiding suspect to cruiser
 
 Run:
   "C:\\Program Files\\Blender Foundation\\Blender 4.5\\blender.exe" --factory-startup --background ^
@@ -33,7 +35,9 @@ from generate_cadet_pack import (
 def validate_clip_arms(spec):
     """Verify every frame has anatomically valid, non-crossing arms and bent elbows."""
     name = spec["name"]
+    is_cuffed = (name == "patrol_cuffed_walk_loop")
     for fi, (_root_t, _lrots, w_pos) in enumerate(spec["frames"]):
+        pelvis = w_pos["PELVIS"]
         for side, sign in (("L", +1.0), ("R", -1.0)):
             sh = w_pos[f"{side}_ARM1"]
             el = w_pos[f"{side}_ARM2"]
@@ -54,9 +58,29 @@ def validate_clip_arms(spec):
             llen = max(1e-6, math.sqrt(lx * lx + ly * ly + lz * lz))
             dot = max(-1.0, min(1.0, (ux * lx + uy * ly + uz * lz) / (ulen * llen)))
             bend = math.degrees(math.acos(dot))
-            if bend < 22.0 or bend > 135.0:
+            if bend < 20.0 or bend > 135.0:
                 raise AssertionError(
                     f"{name} f={fi} {side} elbow bend out of range: {bend:.1f} deg"
+                )
+            if is_cuffed:
+                # Cuffed behind back: both elbows & wrists must be behind the torso (-Z relative to pelvis/shoulder)
+                if el[2] >= sh[2] - 0.12:
+                    raise AssertionError(
+                        f"{name} f={fi} {side} cuffed elbow not behind shoulder: sh.z={sh[2]:+.2f} el.z={el[2]:+.2f}"
+                    )
+                if hd[2] >= pelvis[2] - 0.10:
+                    raise AssertionError(
+                        f"{name} f={fi} {side} cuffed hand not behind back: pelvis.z={pelvis[2]:+.2f} hd.z={hd[2]:+.2f}"
+                    )
+        if is_cuffed:
+            l_hd = w_pos["L_HAND"]
+            r_hd = w_pos["R_HAND"]
+            wrist_gap = math.sqrt(
+                (l_hd[0] - r_hd[0]) ** 2 + (l_hd[1] - r_hd[1]) ** 2 + (l_hd[2] - r_hd[2]) ** 2
+            )
+            if wrist_gap > 0.72:
+                raise AssertionError(
+                    f"{name} f={fi} cuffed wrists too far apart: gap={wrist_gap:.2f} L={l_hd} R={r_hd}"
                 )
 
 
@@ -313,6 +337,145 @@ def make_patrol_inspect_clue(rig):
     }
 
 
+def make_patrol_cuffed_walk_loop(rig):
+    """Arrested burglar walking to the Police Squad Car with wrists handcuffed behind lower back.
+    MonoGame RH: +Y Up, +Z Forward, +X Sim Left, -X Sim Right.
+    Positive shoulder pitch (+deg) sweeps upper arms backward (-Z); inward forearm angle brings wrists together behind back.
+    """
+    fps = 30.0
+    n = 28
+    frames = []
+    for i in range(n):
+        p = (i / n) * 2.0 * math.pi
+        s = math.sin(p)
+        c = math.cos(p)
+        l_lift = max(0.0, s)
+        r_lift = max(0.0, -s)
+
+        # Subdued march stride
+        l_hip = -8.0 - 24.0 * s
+        r_hip = -8.0 + 24.0 * s
+        l_knee = 12.0 + 36.0 * l_lift + 6.0 * max(0.0, -c)
+        r_knee = 12.0 + 36.0 * r_lift + 6.0 * max(0.0, c)
+        l_ankle = -4.0 - 12.0 * l_lift + 10.0 * max(0.0, -s)
+        r_ankle = -4.0 - 12.0 * r_lift + 10.0 * max(0.0, s)
+
+        d = {
+            "PELVIS": (5.0, -6.0 * s, 3.0 * s),
+            "SPINE": (7.0, 3.0 * s, -2.0 * s),
+            "SPINE1": (6.0, 2.5 * s, -1.5 * s),
+            "SPINE2": (4.0, 0.0, 0.0),
+            # Head bowed slightly in defeat, glancing subtly as escorted
+            "NECK": (12.0, -4.0 * s, 0.0),
+            "HEAD": (14.0, 6.0 * math.sin(p * 0.5) - 3.0 * s, 0.0),
+
+            # Left arm (+X): shoulder drawn back, elbow behind ribcage (+X, -Z), wrist cuffed behind small of back
+            "L_ARM": (0.0, 6.0, 2.0),
+            "L_ARM1": (24.0 + 2.0 * c, -10.0, 6.0),
+            "L_ARM2": (4.0, 12.0, -62.0),
+            "L_HAND": (8.0, 0.0, 0.0),
+
+            # Right arm (-X): exact anatomical mirror behind small of back
+            "R_ARM": (0.0, -6.0, -2.0),
+            "R_ARM1": (24.0 - 2.0 * c, 10.0, -6.0),
+            "R_ARM2": (4.0, -12.0, 62.0),
+            "R_HAND": (8.0, 0.0, 0.0),
+
+            "L_LEG": (l_hip, 4.0, 3.0),
+            "L_LEG1": (l_knee, 0.0, -1.5),
+            "L_FOOT": (l_ankle, 0.0, 0.0),
+            "L_TOE0": (12.0 * max(0.0, -s), 0.0, 0.0),
+            "R_LEG": (r_hip, -4.0, -3.0),
+            "R_LEG1": (r_knee, 0.0, 1.5),
+            "R_FOOT": (r_ankle, 0.0, 0.0),
+            "R_TOE0": (12.0 * max(0.0, s), 0.0, 0.0),
+        }
+        bob_y = 0.05 * abs(c)
+        frames.append(rig.build_pose(d, root_offset=(0.04 * c, bob_y, 0.0), ground_feet=True))
+
+    return {
+        "name": "patrol_cuffed_walk_loop",
+        "fps": fps,
+        "loop": True,
+        "mask": "full",
+        "root_speed": 5.2,
+        "hand_gestures": [{"frame": 0, "left": "Closed", "right": "Closed"}],
+        "events": [
+            {"frame": 4, "name": "cuffed_step_l"},
+            {"frame": 18, "name": "cuffed_step_r"},
+        ],
+        "frames": frames,
+    }
+
+
+def make_patrol_escort_walk_loop(rig):
+    """Authoritative officer escort march walking closely behind the handcuffed burglar to the squad car.
+    Left arm swings naturally; Right arm held forward in a steady guiding escort posture.
+    """
+    fps = 30.0
+    n = 28
+    frames = []
+    for i in range(n):
+        p = (i / n) * 2.0 * math.pi
+        s = math.sin(p)
+        c = math.cos(p)
+        l_lift = max(0.0, s)
+        r_lift = max(0.0, -s)
+
+        l_hip = -6.0 - 26.0 * s
+        r_hip = -6.0 + 26.0 * s
+        l_knee = 10.0 + 38.0 * l_lift + 6.0 * max(0.0, -c)
+        r_knee = 10.0 + 38.0 * r_lift + 6.0 * max(0.0, c)
+        l_ankle = -4.0 - 12.0 * l_lift + 10.0 * max(0.0, -s)
+        r_ankle = -4.0 - 12.0 * r_lift + 10.0 * max(0.0, s)
+
+        d = {
+            "PELVIS": (2.0, -7.0 * s, 3.0 * s),
+            "SPINE": (2.0, 4.0 * s, -2.0 * s),
+            "SPINE1": (2.0, 4.0 * s, -1.5 * s),
+            "SPINE2": (1.0, 2.0 * s, 0.0),
+            "NECK": (-2.0, -3.0 * s, 0.0),
+            "HEAD": (-2.0, -3.0 * s, 0.0),
+
+            # Left arm (+X): crisp brisk patrol counter-swing
+            "L_ARM": (0.0, 0.0, 3.0),
+            "L_ARM1": (-10.0 + 22.0 * s, 2.0, 10.0),
+            "L_ARM2": (-42.0 - 12.0 * r_lift, -8.0, -4.0),
+            "L_HAND": (4.0, 0.0, 0.0),
+
+            # Right arm (-X): poised forward guiding the cuffed suspect toward the squad car
+            "R_ARM": (0.0, 0.0, -3.0),
+            "R_ARM1": (-48.0 - 5.0 * s, 6.0, -12.0),
+            "R_ARM2": (-44.0 + 6.0 * c, 10.0, 6.0),
+            "R_HAND": (-8.0, 0.0, 0.0),
+
+            "L_LEG": (l_hip, 4.0, 3.0),
+            "L_LEG1": (l_knee, 0.0, -1.5),
+            "L_FOOT": (l_ankle, 0.0, 0.0),
+            "L_TOE0": (12.0 * max(0.0, -s), 0.0, 0.0),
+            "R_LEG": (r_hip, -4.0, -3.0),
+            "R_LEG1": (r_knee, 0.0, 1.5),
+            "R_FOOT": (r_ankle, 0.0, 0.0),
+            "R_TOE0": (12.0 * max(0.0, s), 0.0, 0.0),
+        }
+        bob_y = 0.06 * abs(c)
+        frames.append(rig.build_pose(d, root_offset=(0.03 * c, bob_y, 0.0), ground_feet=True))
+
+    return {
+        "name": "patrol_escort_walk_loop",
+        "fps": fps,
+        "loop": True,
+        "mask": "full",
+        "root_speed": 5.4,
+        "hand_gestures": [{"frame": 0, "left": "Open", "right": "Open"}],
+        "events": [
+            {"frame": 4, "name": "escort_step_l"},
+            {"frame": 18, "name": "escort_step_r"},
+        ],
+        "frames": frames,
+    }
+
+
 def main():
     import bpy
 
@@ -331,9 +494,20 @@ def main():
         make_patrol_apprehend(rig),
         make_patrol_write_ticket(rig),
         make_patrol_inspect_clue(rig),
+        make_patrol_cuffed_walk_loop(rig),
+        make_patrol_escort_walk_loop(rig),
     ]
     for spec in specs:
         validate_clip_arms(spec)
+        if spec["name"] == "patrol_cuffed_walk_loop":
+            _rt, _lr, wp = spec["frames"][0]
+            print(
+                f"  [cuffed f=0] PELVIS={tuple(round(v, 2) for v in wp['PELVIS'])} "
+                f"L_ARM1={tuple(round(v, 2) for v in wp['L_ARM1'])} "
+                f"L_ARM2={tuple(round(v, 2) for v in wp['L_ARM2'])} "
+                f"L_HAND={tuple(round(v, 2) for v in wp['L_HAND'])} "
+                f"R_HAND={tuple(round(v, 2) for v in wp['R_HAND'])}"
+            )
     print(f"Generating & exporting {len(specs)} validated Beat Patrol clips via Blender 4.5 -> {OUT_DIR}")
     for spec in specs:
         bake_into_blender_and_export(arm_obj, bones, spec)

@@ -267,13 +267,18 @@ namespace Simitone.Conversations
                 stateLabel = "RESPONDING";
                 stateBg = new Color(204, 138, 36, 245);
             }
+            else if (mode == OfficerMotionMode.EscortingToCruiser)
+            {
+                stateLabel = "ESCORT TO CAR";
+                stateBg = new Color(44, 134, 214, 248);
+            }
             else
             {
                 stateLabel = "ON FOOT";
                 stateBg = new Color(64, 96, 144, 230);
             }
 
-            var stateRect = new Rectangle(bx + barW / 2 - 96, y1 - 2, 110, 22);
+            var stateRect = new Rectangle(bx + barW / 2 - 108, y1 - 2, 132, 22);
             DrawPill(batch, stateRect, stateBg, 6);
             DrawFittedLine(batch, stateLabel, ToSimRect(stateRect), badgeStyle, SimTextAlign.Center);
 
@@ -290,16 +295,25 @@ namespace Simitone.Conversations
 
             // Bottom row: Radio hint or latest callout
             int y2 = by + 37;
-            string line = !string.IsNullOrWhiteSpace(game.LastCallout) && game.Score > 0
-                ? game.LastCallout
-                : game.ActiveRadioHint();
-
+            string line;
             TextStyle lineStyle = bodyStyle;
-            if (game.Score > 0)
+            if (mode == OfficerMotionMode.EscortingToCruiser)
             {
-                if (game.LastRating == PatrolActionRating.Perfect) lineStyle = mintStyle;
-                else if (game.LastRating == PatrolActionRating.Good) lineStyle = goldStyle;
-                else if (game.LastRating == PatrolActionRating.Miss) lineStyle = redStyle;
+                line = "Escorting apprehended Burglar back to the parked Police Squad Car...";
+                lineStyle = cyanStyle;
+            }
+            else
+            {
+                line = !string.IsNullOrWhiteSpace(game.LastCallout) && game.Score > 0
+                    ? game.LastCallout
+                    : game.ActiveRadioHint();
+
+                if (game.Score > 0)
+                {
+                    if (game.LastRating == PatrolActionRating.Perfect) lineStyle = mintStyle;
+                    else if (game.LastRating == PatrolActionRating.Good) lineStyle = goldStyle;
+                    else if (game.LastRating == PatrolActionRating.Miss) lineStyle = redStyle;
+                }
             }
             DrawFittedLine(batch, line, new SimRect(x, y2, barW - 28, 20), lineStyle, SimTextAlign.Left);
         }

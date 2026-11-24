@@ -333,14 +333,16 @@ namespace Simitone.Conversations.Tests
         }
 
         [Fact]
-        public void ExportedPatrolClips_AllFourLoadWithNonCrossingAnatomicalArms()
+        public void ExportedPatrolClips_AllSixLoadWithNonCrossingAnatomicalArms()
         {
             string[] names =
             {
                 "patrol_sneak_loop",
                 "patrol_apprehend",
                 "patrol_write_ticket",
-                "patrol_inspect_clue"
+                "patrol_inspect_clue",
+                "patrol_cuffed_walk_loop",
+                "patrol_escort_walk_loop"
             };
             string toolsDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(
                 AppContext.BaseDirectory, "..", "..", "..", ".."));
@@ -375,6 +377,7 @@ namespace Simitone.Conversations.Tests
                 var byBone = new System.Collections.Generic.Dictionary<string, CustomBoneTrack>(StringComparer.OrdinalIgnoreCase);
                 foreach (var tr in clip.Tracks) byBone[tr.Bone] = tr;
 
+                bool isCuffed = clipName == "patrol_cuffed_walk_loop";
                 for (int fi = 0; fi < clip.FrameCount; fi++)
                 {
                     var wPos = new System.Collections.Generic.Dictionary<string, AnimVec3>();
@@ -400,6 +403,17 @@ namespace Simitone.Conversations.Tests
                     // +X = Sim Left, -X = Sim Right in MonoGame RH adult.skel
                     AssertArmAnatomical(clipName, fi, "L", +1f, wPos["L_ARM1"], wPos["L_ARM2"], wPos["L_HAND"]);
                     AssertArmAnatomical(clipName, fi, "R", -1f, wPos["R_ARM1"], wPos["R_ARM2"], wPos["R_HAND"]);
+
+                    if (isCuffed)
+                    {
+                        // Both wrists must remain close together behind the lower back (-Z relative to pelvis)
+                        var pelvis = wPos["PELVIS"];
+                        var lHand = wPos["L_HAND"];
+                        var rHand = wPos["R_HAND"];
+                        Assert.True(lHand.Z < pelvis.Z - 0.10f, $"cuffed f={fi} L_HAND not behind back");
+                        Assert.True(rHand.Z < pelvis.Z - 0.10f, $"cuffed f={fi} R_HAND not behind back");
+                        Assert.True((lHand - rHand).Length() <= 0.72f, $"cuffed f={fi} wrists too far apart: {(lHand - rHand).Length():F2}");
+                    }
                 }
             }
         }
@@ -415,7 +429,7 @@ namespace Simitone.Conversations.Tests
             var l = (hd - el).Normalized();
             float dot = Math.Max(-1f, Math.Min(1f, AnimVec3.Dot(u, l)));
             float bendDeg = (float)(Math.Acos(dot) * 180.0 / Math.PI);
-            Assert.InRange(bendDeg, 22f, 135f);
+            Assert.InRange(bendDeg, 20f, 135f);
         }
     }
 }

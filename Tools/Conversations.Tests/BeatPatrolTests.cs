@@ -161,5 +161,16 @@ namespace Conversations.Tests
             Assert.Equal(PatrolActionKind.ReturnToCruiser, onFoot[0].Action);
             Assert.Equal(PatrolActionKind.EndShift, onFoot[1].Action);
         }
+
+        [Fact]
+        public void ShouldEscortToCruiser_OnlyTriggersForArrestedBurglar()
+        {
+            Assert.True(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.BurglarProwler, PatrolActionKind.SneakApprehend));
+            Assert.True(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.BurglarProwler, PatrolActionKind.ConfrontLoud));
+            Assert.False(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.BurglarProwler, PatrolActionKind.WarnCitizen));
+            Assert.False(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.NoiseDisturbance, PatrolActionKind.IssueTicket));
+            Assert.False(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.CivicHazard, PatrolActionKind.InspectHazard));
+            Assert.False(BeatPatrolGame.ShouldEscortToCruiser(PatrolIncidentKind.InnocentCitizen, PatrolActionKind.CheckInCitizen));
+        }
     }
 }

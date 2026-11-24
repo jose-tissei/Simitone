@@ -32,7 +32,8 @@ namespace Simitone.Conversations
         InCruiser = 0,
         IdleOnFoot = 1,
         MovingToTarget = 2,
-        PerformingAction = 3
+        PerformingAction = 3,
+        EscortingToCruiser = 4
     }
 
     internal sealed class PatrolActorSlot
@@ -135,6 +136,17 @@ namespace Simitone.Conversations
         static bool cameraFollowOfficer;
         static float alertSweepRemainingSec;
         static string lastActiveClipName = "none";
+
+        // Arrest-to-cruiser escort state
+        static PatrolActorSlot escortSlot;
+        static VMAvatar escortBurglar;
+        static Vector2 escortBurglarStartPos;
+        static float escortBlendSec;
+        static bool escortLoadingPhase;
+        static bool escortLoadedIntoCruiser;
+        static float escortLoadTimerSec;
+        static Vector2 escortCruiserDoorPoint;
+        static Vector2 escortBurglarDoorStart;
 
         public static bool IsActive { get { return phase != PatrolPhase.Inactive; } }
         public static bool IsPatrolLotLive { get { return phase == PatrolPhase.Active && patrolVm != null && game != null; } }
@@ -292,7 +304,9 @@ namespace Simitone.Conversations
             lastFrameSec = nowSec;
 
             game.Tick(dt);
-            if (game.IsFinished && finalOutcome == null)
+            if (game.IsFinished && finalOutcome == null &&
+                officerMode != OfficerMotionMode.PerformingAction &&
+                officerMode != OfficerMotionMode.EscortingToCruiser)
             {
                 finalOutcome = game.ComputeOutcome();
                 if (!finishFanfarePlayed)
@@ -362,6 +376,9 @@ namespace Simitone.Conversations
             if (!IsActiveOn(vm) || target == null || game == null || game.IsFinished)
                 return null;
 
+            if (officerMode == OfficerMotionMode.EscortingToCruiser)
+                return new List<VMPieMenuInteraction>();
+
             // 1. Clicked any tile of the parked Police Squad Car?
             if (IsCruiserEntity(target))
             {
@@ -416,6 +433,9 @@ namespace Simitone.Conversations
                 }
                 return "ok shift ended grade=" + finalOutcome.Grade;
             }
+
+            if (officerMode == OfficerMotionMode.EscortingToCruiser)
+                return "err escorting suspect to cruiser";
 
             if (action == PatrolActionKind.ReturnToCruiser)
             {
@@ -898,6 +918,10 @@ namespace Simitone.Conversations
             var burglar = slot.PrimaryEntity as VMAvatar;
             if (burglar == null || burglar.Dead || burglar.Avatar == null) return;
 
+            // While being escorted to the Police Squad Car, UpdateEscortToCruiser drives position & cuffed walk
+            if (officerMode == OfficerMotionMode.EscortingToCruiser && ReferenceEquals(escortSlot, slot))
+                return;
+
             // Pause prowling while the Officer is right next to the Burglar performing the arrest
             bool beingArrested = (officerMode == OfficerMotionMode.PerformingAction && pendingIncidentIndex == slot.IncidentIndex);
 
@@ -927,7 +951,7 @@ namespace Simitone.Conversations
             }
             else
             {
-                // Turn toward the arresting officer in surprised stance
+                // Turn toward the arresting officer; once cuffs click mid-clip, lock hands behind back!
                 if (officerAvatar != null)
                 {
                     float dx = officerSmoothTile.X - burglarSmoothTile.X;
@@ -937,7 +961,10 @@ namespace Simitone.Conversations
                 }
                 burglar.VisualPosition = new Vector3(burglarSmoothTile.X, burglarSmoothTile.Y, 0f);
                 burglar.RadianDirection = burglarYaw;
-                burglarClip.Play("cadet_idle_attention", 0.14f, 0.9f, true, false);
+                if (actionMidCueFired && ShouldEscortToCruiser(slot.Kind, pendingAction))
+                    burglarClip.Play("patrol_cuffed_walk_loop", 0.16f, 0.06f, true, false);
+                else
+                    burglarClip.Play("cadet_idle_attention", 0.14f, 0.9f, true, false);
             }
         }
 
@@ -1036,12 +1063,291 @@ namespace Simitone.Conversations
                     FinishPerformingAction();
                 }
             }
+            else if (officerMode == OfficerMotionMode.EscortingToCruiser)
+            {
+                UpdateEscortToCruiser(dt);
+            }
             else // IdleOnFoot
             {
                 officerAvatar.VisualPosition = new Vector3(officerSmoothTile.X, officerSmoothTile.Y, 0f);
                 officerAvatar.RadianDirection = officerYaw;
                 officerClip.Play("cadet_idle_attention", 0.22f, 0.9f, true, false);
                 lastActiveClipName = "cadet_idle_attention";
+            }
+        }
+
+        internal static bool ShouldEscortToCruiser(PatrolIncidentKind kind, PatrolActionKind action)
+        {
+            return BeatPatrolGame.ShouldEscortToCruiser(kind, action);
+        }
+
+        internal static void SamplePointAheadAlongPath(
+            Vector2 currentPos,
+            IList<Vector2> path,
+            int nextWaypointIdx,
+            float aheadDist,
+            Vector2 fallbackDirTarget,
+            out Vector2 outPos,
+            out float outYaw)
+        {
+            outPos = currentPos;
+            Vector2 lastDir = fallbackDirTarget - currentPos;
+            float rem = Math.Max(0f, aheadDist);
+
+            if (path != null && path.Count > 0)
+            {
+                int idx = Math.Max(0, Math.Min(nextWaypointIdx, path.Count));
+                Vector2 p = currentPos;
+                while (idx < path.Count && rem > 1e-4f)
+                {
+                    Vector2 seg = path[idx] - p;
+                    float len = seg.Length();
+                    if (len > 1e-4f)
+                    {
+                        lastDir = seg / len;
+                        if (len >= rem)
+                        {
+                            p += lastDir * rem;
+                            rem = 0f;
+                            break;
+                        }
+                        p = path[idx];
+                        rem -= len;
+                    }
+                    idx++;
+                }
+                if (rem > 1e-4f && idx >= path.Count)
+                {
+                    p = path[path.Count - 1];
+                    Vector2 toCar = fallbackDirTarget - p;
+                    if (toCar.LengthSquared() > 1e-4f)
+                        lastDir = Vector2.Normalize(toCar);
+                }
+                outPos = p;
+            }
+
+            if (lastDir.LengthSquared() > 1e-4f)
+                outYaw = (float)Math.Atan2(lastDir.X, -lastDir.Y);
+            else
+                outYaw = 0f;
+        }
+
+        static void BeginEscortToCruiser(PatrolActorSlot slot, VMAvatar burglar)
+        {
+            escortSlot = slot;
+            escortBurglar = burglar;
+            escortBurglarStartPos = burglarHasSmoothPos
+                ? burglarSmoothTile
+                : new Vector2(burglar.VisualPosition.X, burglar.VisualPosition.Y);
+            escortBlendSec = 0f;
+            escortLoadingPhase = false;
+            escortLoadedIntoCruiser = false;
+            escortLoadTimerSec = 0f;
+
+            var curbPt = new Vector2(curbStandTile.TileX + 0.5f, curbStandTile.TileY + 0.5f);
+            var cruiserPt = cruiserTile != LotTilePos.OUT_OF_WORLD
+                ? new Vector2(cruiserTile.TileX + 0.5f, cruiserTile.TileY + 0.5f)
+                : curbPt;
+            escortCruiserDoorPoint = Vector2.Lerp(curbPt, cruiserPt, 0.55f);
+
+            var startTile = new LotTilePos(
+                (short)(Math.Max(1, Math.Round(officerSmoothTile.X - 0.5f)) * 16),
+                (short)(Math.Max(1, Math.Round(officerSmoothTile.Y - 0.5f)) * 16),
+                1);
+
+            movePath.Clear();
+            BuildWalkablePath(patrolVm, startTile, curbStandTile, movePath);
+            moveWaypointIdx = 0;
+
+            pendingIncidentIndex = -1;
+            footstepAccumSec = 0f;
+            officerMode = OfficerMotionMode.EscortingToCruiser;
+            cameraFollowOfficer = true;
+
+            officerClip.Play("patrol_escort_walk_loop", 0.16f, 1.05f, true, true);
+            lastActiveClipName = "patrol_escort_walk_loop";
+            burglarClip.Play("patrol_cuffed_walk_loop", 0.16f, 1.02f, true, true);
+            Boot.Log("beat-patrol: escorting handcuffed Burglar to Police Squad Car at (" + curbStandTile.TileX + "," + curbStandTile.TileY + ")");
+        }
+
+        static void UpdateEscortToCruiser(float dt)
+        {
+            if (escortSlot == null || patrolVm == null || (!escortLoadedIntoCruiser && (escortBurglar == null || escortBurglar.Dead)))
+            {
+                FinishEscortToCruiser();
+                return;
+            }
+
+            if (!escortLoadingPhase)
+            {
+                const float escortSpeed = 2.65f;
+                float step = escortSpeed * dt;
+
+                while (step > 0f && moveWaypointIdx < movePath.Count)
+                {
+                    Vector2 targetPt = movePath[moveWaypointIdx];
+                    Vector2 delta = targetPt - officerSmoothTile;
+                    float dist = delta.Length();
+                    if (dist <= step || dist < 0.05f)
+                    {
+                        officerSmoothTile = targetPt;
+                        step -= dist;
+                        moveWaypointIdx++;
+                    }
+                    else
+                    {
+                        Vector2 dir = delta / dist;
+                        officerSmoothTile += dir * step;
+                        officerYaw = (float)Math.Atan2(dir.X, -dir.Y);
+                        step = 0f;
+                    }
+                }
+
+                // Keep the handcuffed Burglar walking ~0.92 tiles directly ahead of the Officer along the exact path!
+                Vector2 targetBurglarPos;
+                float targetBurglarYaw;
+                SamplePointAheadAlongPath(
+                    officerSmoothTile,
+                    movePath,
+                    moveWaypointIdx,
+                    0.92f,
+                    escortCruiserDoorPoint,
+                    out targetBurglarPos,
+                    out targetBurglarYaw);
+
+                escortBlendSec += dt;
+                float blend = Math.Max(0f, Math.Min(1f, escortBlendSec / 0.35f));
+                burglarSmoothTile = Vector2.Lerp(escortBurglarStartPos, targetBurglarPos, blend);
+                burglarYaw = targetBurglarYaw;
+                burglarHasSmoothPos = true;
+
+                officerAvatar.VisualPosition = new Vector3(officerSmoothTile.X, officerSmoothTile.Y, 0f);
+                officerAvatar.RadianDirection = officerYaw;
+                escortBurglar.VisualPosition = new Vector3(burglarSmoothTile.X, burglarSmoothTile.Y, 0f);
+                escortBurglar.RadianDirection = burglarYaw;
+
+                // Stride-synced escort footsteps
+                footstepAccumSec += dt;
+                if (footstepAccumSec >= 0.31f)
+                {
+                    footstepAccumSec -= 0.31f;
+                    footstepToggle = !footstepToggle;
+                    audio.Play(footstepToggle ? PatrolSfxId.PavementStepA : PatrolSfxId.PavementStepB, 0.30f);
+                }
+
+                if (cameraFollowOfficer)
+                    SmoothCameraToward(Vector2.Lerp(officerSmoothTile, burglarSmoothTile, 0.5f), dt * 3.8f);
+
+                // Reached the curb right beside the parked Police Squad Car?
+                if (moveWaypointIdx >= movePath.Count)
+                {
+                    try { officerAvatar.SetPosition(curbStandTile, Direction.SOUTH, patrolVm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
+                    officerAvatar.VisualPosition = new Vector3(officerSmoothTile.X, officerSmoothTile.Y, 0f);
+
+                    Vector2 toCar = escortCruiserDoorPoint - officerSmoothTile;
+                    if (toCar.LengthSquared() > 1e-4f)
+                        officerYaw = (float)Math.Atan2(toCar.X, -toCar.Y);
+
+                    escortLoadingPhase = true;
+                    escortLoadedIntoCruiser = false;
+                    escortLoadTimerSec = 0f;
+                    escortBurglarDoorStart = burglarSmoothTile;
+
+                    audio.Play(PatrolSfxId.CarDoorOpen, 0.48f);
+                    officerClip.Play("cadet_idle_attention", 0.16f, 0.9f, true, false);
+                    lastActiveClipName = "cadet_idle_attention";
+
+                    try
+                    {
+                        ConvoOverlay.Show(
+                            patrolVm,
+                            officerAvatar,
+                            "Officer " + homeOfficerName,
+                            "Into the back seat — precinct booking awaits!",
+                            escortBurglar,
+                            "Burglar",
+                            "Okay, okay... watch the head!");
+                    }
+                    catch { }
+                }
+            }
+            else
+            {
+                escortLoadTimerSec += dt;
+                officerAvatar.VisualPosition = new Vector3(officerSmoothTile.X, officerSmoothTile.Y, 0f);
+                officerAvatar.RadianDirection = officerYaw;
+
+                if (cameraFollowOfficer)
+                    SmoothCameraToward(Vector2.Lerp(officerSmoothTile, escortCruiserDoorPoint, 0.45f), dt * 3.4f);
+
+                if (!escortLoadedIntoCruiser && escortBurglar != null && !escortBurglar.Dead)
+                {
+                    float u = Math.Max(0f, Math.Min(1f, escortLoadTimerSec / 0.65f));
+                    burglarSmoothTile = Vector2.Lerp(escortBurglarDoorStart, escortCruiserDoorPoint, u);
+                    Vector2 toDoor = escortCruiserDoorPoint - escortBurglarDoorStart;
+                    if (toDoor.LengthSquared() > 1e-4f)
+                        burglarYaw = (float)Math.Atan2(toDoor.X, -toDoor.Y);
+                    escortBurglar.VisualPosition = new Vector3(burglarSmoothTile.X, burglarSmoothTile.Y, 0f);
+                    escortBurglar.RadianDirection = burglarYaw;
+
+                    if (escortLoadTimerSec >= 0.65f)
+                    {
+                        escortLoadedIntoCruiser = true;
+                        try
+                        {
+                            escortBurglar.Delete(true, patrolVm.Context);
+                        }
+                        catch { }
+                        escortSlot.PrimaryEntity = null;
+                        escortSlot.ArrestedOrCleared = true;
+                        escortBurglar = null;
+                        audio.Play(PatrolSfxId.CarDoorClose, 0.46f);
+                        audio.Play(PatrolSfxId.RadioSquelch, 0.36f);
+                        Boot.Log("beat-patrol: Burglar secured inside Police Squad Car!");
+                    }
+                }
+
+                if (escortLoadTimerSec >= 1.10f)
+                {
+                    FinishEscortToCruiser();
+                }
+            }
+        }
+
+        static void FinishEscortToCruiser()
+        {
+            if (escortSlot != null && !escortSlot.ArrestedOrCleared)
+            {
+                try
+                {
+                    if (escortSlot.PrimaryEntity != null && patrolVm != null)
+                        escortSlot.PrimaryEntity.Delete(true, patrolVm.Context);
+                }
+                catch { }
+                escortSlot.PrimaryEntity = null;
+                escortSlot.ArrestedOrCleared = true;
+            }
+
+            escortSlot = null;
+            escortBurglar = null;
+            escortLoadingPhase = false;
+            escortLoadedIntoCruiser = false;
+            escortLoadTimerSec = 0f;
+            escortBlendSec = 0f;
+
+            officerMode = OfficerMotionMode.IdleOnFoot;
+            cameraFollowOfficer = false;
+            officerClip.Play("cadet_idle_attention", 0.20f, 0.9f, true, false);
+            lastActiveClipName = "cadet_idle_attention";
+
+            if (game != null && game.IsFinished && finalOutcome == null)
+            {
+                finalOutcome = game.ComputeOutcome();
+                if (!finishFanfarePlayed)
+                {
+                    finishFanfarePlayed = true;
+                    audio.Play(PatrolSfxId.ShiftCompleteFanfare, 0.52f);
+                }
             }
         }
 
@@ -1159,10 +1465,19 @@ namespace Simitone.Conversations
             var slot = actorSlots.FirstOrDefault(s => s.IncidentIndex == pendingIncidentIndex);
             if (slot != null && patrolVm != null)
             {
+                // Arrested the Burglar? Escort them handcuffed all the way back to the parked Police Squad Car!
+                if (ShouldEscortToCruiser(slot.Kind, pendingAction) &&
+                    slot.PrimaryEntity is VMAvatar arrestedBurglar &&
+                    !arrestedBurglar.Dead)
+                {
+                    BeginEscortToCruiser(slot, arrestedBurglar);
+                    return;
+                }
+
                 slot.ArrestedOrCleared = true;
                 try
                 {
-                    // Remove apprehended/escaped Burglar, cleared Trash Hazard, and silenced Boombox
+                    // Remove escaped Burglar (if WarnCitizen missed), cleared Trash Hazard, and silenced Boombox
                     if (slot.Kind == PatrolIncidentKind.BurglarProwler && slot.PrimaryEntity != null)
                     {
                         slot.PrimaryEntity.Delete(true, patrolVm.Context);
@@ -2006,6 +2321,12 @@ namespace Simitone.Conversations
             officerMode = OfficerMotionMode.InCruiser;
             cameraFollowOfficer = false;
             lastActiveClipName = "none";
+            escortSlot = null;
+            escortBurglar = null;
+            escortLoadingPhase = false;
+            escortLoadedIntoCruiser = false;
+            escortLoadTimerSec = 0f;
+            escortBlendSec = 0f;
             audio.StopAmbience();
             BeatPatrolOverlay.Close();
         }

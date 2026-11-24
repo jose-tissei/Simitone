@@ -367,6 +367,12 @@ namespace Simitone.Conversations
             return list;
         }
 
+        public static bool ShouldEscortToCruiser(PatrolIncidentKind kind, PatrolActionKind action)
+        {
+            return kind == PatrolIncidentKind.BurglarProwler &&
+                   (action == PatrolActionKind.SneakApprehend || action == PatrolActionKind.ConfrontLoud);
+        }
+
         public PatrolActionRating ResolveIncident(int incidentIndex, PatrolActionKind action)
         {
             if (IsFinished) return PatrolActionRating.None;

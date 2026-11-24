@@ -130,18 +130,22 @@ Step straight into a full-screen 3D **SimCity Police Academy — Training Ground
 
 Patrol **actual Sims 1 lots** across **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential lots (`House01–10`)** in warm golden-hour lighting — without overwriting your saved home lot. Your Officer arrives inside a real TS1 **Police Squad Car** (`CarSquad.iff`) parked at the street curb while you pan and zoom the live lot to spot incidents and click suspects or hazards for native Simitone **Pie Menus**:
 
-- **Stealth Burglar Apprehension:** Select **`Sneak Up & Apprehend`** on the prowling striped TS1 Burglar to step out of the cruiser and drive our custom Blender-baked crouched stealth cycle (`patrol_sneak_loop.simanim.json`) right up behind them, followed by `patrol_apprehend.simanim.json`, handcuff clicks, and live overhead speech balloons.
+- **Stealth Burglar Apprehension & Cruiser Escort:** Select **`Sneak Up & Apprehend`** on the prowling striped TS1 Burglar to step out of the cruiser and drive our custom Blender-baked crouched stealth cycle (`patrol_sneak_loop.simanim.json`) right up behind them, followed by `patrol_apprehend.simanim.json`, handcuff clicks, live overhead speech balloons, and a full **handcuffed escort walk back to the parked Police Squad Car** (`patrol_cuffed_walk_loop` + `patrol_escort_walk_loop`) where the officer opens the rear door, loads the burglar inside, and shuts the cruiser door before continuing patrol.
 - **Real Neighborhood Townies & Civic Hazards:** Resolve a **Noise Disturbance** (`Friendly Warning` or `Issue Citation` to a real townie with a Boombox — saving real TS1 relationship & Sim Memory deltas), inspect & log a **Civic Hazard** (`patrol_inspect_clue.simanim.json`), and avoid falsely ticketing innocent citizens.
-- **Custom 3D Patrol Animations & 17 Procedural Audio Cues:** 4 Blender-authored patrol clips (`patrol_sneak_loop`, `patrol_apprehend`, `patrol_write_ticket`, `patrol_inspect_clue`) + `PatrolAudioSynth` (city dusk ambience, cruiser arrival siren blip, car doors, stealth footsteps, handcuffs, ticket rip, flashlight click, radio squelch, and shift fanfare).
+- **Custom 3D Patrol Animations & 17 Procedural Audio Cues:** 6 Blender-authored patrol clips (`patrol_sneak_loop`, `patrol_apprehend`, `patrol_write_ticket`, `patrol_inspect_clue`, `patrol_cuffed_walk_loop`, `patrol_escort_walk_loop`) + `PatrolAudioSynth` (city dusk ambience, cruiser arrival siren blip, car doors, stealth footsteps, handcuffs, ticket rip, flashlight click, radio squelch, and shift fanfare).
 - **Gameplay Video (HD with Synced Beat Patrol Audio):** [Watch Lvl 3 — Real-Lot Live Beat Patrol Demo (MP4)](docs/career-minigames/media/lvl3-patrol-officer-reallot-demo.mp4)
 
 | Parked TS1 Police Squad Car & Briefing (Lot 21) | Live Crouched Sneak-Up (`patrol_sneak_loop`) |
 | :---: | :---: |
 | ![Beat Patrol Cruiser Briefing](docs/career-minigames/media/10-lvl3-patrol-cruiser-briefing.jpg) | ![Beat Patrol Live Sneak Catch](docs/career-minigames/media/11-lvl3-patrol-sneak-catch.jpg) |
 
-| Burglar Apprehension & Overhead Speech Balloons | Civic Hazard Inspection (`patrol_inspect_clue`) |
+| Burglar Apprehension & Overhead Speech Balloons | Handcuffed Escort Back to Police Car |
 | :---: | :---: |
-| ![Beat Patrol Arrest & Balloons](docs/career-minigames/media/12-lvl3-patrol-arrest-balloons.jpg) | ![Beat Patrol Hazard Inspection](docs/career-minigames/media/13-lvl3-patrol-hazard-inspect.jpg) |
+| ![Beat Patrol Arrest & Balloons](docs/career-minigames/media/12-lvl3-patrol-arrest-balloons.jpg) | ![Beat Patrol Handcuffed Escort](docs/career-minigames/media/15-lvl3-patrol-escort-walk.jpg) |
+
+| Loading Burglar Into Parked Police Squad Car | Civic Hazard Inspection (`patrol_inspect_clue`) |
+| :---: | :---: |
+| ![Beat Patrol Loading Cruiser](docs/career-minigames/media/16-lvl3-patrol-load-cruiser.jpg) | ![Beat Patrol Hazard Inspection](docs/career-minigames/media/13-lvl3-patrol-hazard-inspect.jpg) |
 
 | S-Rank Shift Scorecard & Seamless Return Home |
 | :---: |
