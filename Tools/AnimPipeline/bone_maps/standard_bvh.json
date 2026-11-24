@@ -1,0 +1,35 @@
+{
+  "description": "Maps standard CC-BY BVH bone names (100STYLE, ACCAD/OSU, CMU, MotionBuilder) to TS1 adult.skel 29-bone names.",
+  "bvhToAdult": {
+    "Hips": "PELVIS",
+    "hips": "PELVIS",
+    "Spine": "SPINE",
+    "LowerBack": "SPINE",
+    "Spine1": "SPINE1",
+    "Spine2": "SPINE2",
+    "Chest": "SPINE2",
+    "Neck": "NECK",
+    "Neck1": "NECK",
+    "Head": "HEAD",
+
+    "RightShoulder": "R_ARM",
+    "RightArm": "R_ARM1",
+    "RightForeArm": "R_ARM2",
+    "RightHand": "R_HAND",
+
+    "LeftShoulder": "L_ARM",
+    "LeftArm": "L_ARM1",
+    "LeftForeArm": "L_ARM2",
+    "LeftHand": "L_HAND",
+
+    "RightUpLeg": "R_LEG",
+    "RightLeg": "R_LEG1",
+    "RightFoot": "R_FOOT",
+    "RightToeBase": "R_TOE0",
+
+    "LeftUpLeg": "L_LEG",
+    "LeftLeg": "L_LEG1",
+    "LeftFoot": "L_FOOT",
+    "LeftToeBase": "L_TOE0"
+  }
+}

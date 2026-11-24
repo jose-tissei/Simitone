@@ -44,11 +44,11 @@
 - 3-round timing/sweet-spot rhythm bar (`Sprint`, `Vault`, `Target Drill`)
 - Sim's **Body** skill dynamically widens the green hit zone; rewards `+Body XP` and `+Job Performance`
 
-**Custom 3D Skeletal Animation Pipeline (`custom-animations`)** - SPEC / DESIGN READY
+**Custom 3D Skeletal Animation Pipeline (`custom-animations`)** - COMPLETE
 
-- Pure-C# `.simanim.json` v1 runtime evaluator with quaternion SLERP, seamless loop-wrap interpolation, smooth crossfades, and root-motion-matched playback (`ANIM-01`–`ANIM-09`)
-- Offline hybrid authoring pipeline: CC-BY/public-domain BVH mocap retargeter + local **Blender 4.5** `adult.skel` IK rig & exporter (`Tools/AnimPipeline/`)
-- Initial 6 custom Cadet Academy clips (`sprint`, `vault`, `aim`, `shoot`, `idle_ready`, `victory_salute`) replacing stiff 1999 TS1 animations
+- Pure-C# `.simanim.json` v1 runtime evaluator with wrap-safe SQUAD/SLERP interpolation, smooth multi-clip crossfades, `SPINE`-split upper/lower masking, events, and analytical 2-bone IK (`Logic/CustomAnim*.cs`, `Logic/TwoBoneIkSolver.cs`, `Game/VitaboyClipPlayer.cs`)
+- Offline hybrid authoring pipeline: exact `adult.skel` BCF dumper (`dump_adult_skel.py`), global-delta BVH mocap retargeter (`bvh_to_simanim.py`), local **Blender 4.5** `adult_rig.blend` rig & exporter (`Tools/AnimPipeline/`), and automated verification (`verify_pipeline.py`)
+- 7 custom Blender-authored Cadet Academy clips (`cadet_idle_attention`, `cadet_sprint_loop`, `cadet_hurdle_hop`, `cadet_wall_vault`, `cadet_target_aim_loop`, `cadet_target_fire_recoil`, `cadet_victory_salute`) driving `CadetAcademySceneRenderer` with zero `simPitch` tilt hack and stride-matched ground speed
 
 **Lvl 3 — Patrol Officer: Beat Patrol — Spot the Violation** - PLANNED
 

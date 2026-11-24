@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-11-23T23:36:00-03:00
-**Current Work:** custom-animations - Deep research, spec, design, and task breakdown ready for user approval
+**Last Updated:** 2026-11-24T00:08:00-03:00
+**Current Work:** custom-animations — Implemented, verified in live 3D Cadet Academy gameplay, and ready for Milestone 2 Rank 3 (Patrol Officer)
 
 ---
 
@@ -59,6 +59,13 @@
 **Solution:** Always call `screen.Add(instance)` unconditionally on open (it is idempotent and brings the element to the front of Z-order), only calling `instance.Parent.Remove(instance)` first if `instance.Parent != null && instance.Parent != screen`.
 **Prevents:** Invisible overlays on reopen across all reusable singleton UI elements.
 
+### L-003: Always Advance Crossfade Weights with Real `dt` When Scrubbing One-Shot Clips (2026-11-24)
+
+**Context:** Driving timeline-locked one-shots (`cadet_wall_vault`, `cadet_target_fire_recoil`) via `seekTime` inside `CadetAcademySceneRenderer`.
+**Problem:** Passing `dt = 0f` whenever `customSeekTime.HasValue` prevented `CustomAnimBlender` from advancing `Weight` from `0 -> 1`, leaving the previous looping clip frozen at 100% weight across the entire vault/shot. Similarly, relying solely on `game.ElapsedSeconds` froze the Victory Salute animation once `game.IsFinished` stopped the game timer.
+**Solution:** Always tick `blender.Tick(dt)` first so crossfade weights converge smoothly, then apply `blender.SetTime(seekTime)` right before bone evaluation (`VitaboyClipPlayer.UpdateAndApply(..., seekTime)`). Use a live `Stopwatch` delta to keep post-completion Victory showcase animations running smoothly.
+**Prevents:** Frozen crossfade deadlocks and static completion screens in all upcoming 3D mini-games.
+
 ---
 
 ## Quick Tasks Completed
@@ -69,6 +76,7 @@
 | 002 | Simitone UI design tokens + responsive zero-overlap layout engine  | 2026-11-23 | `fc06dab` | Done   |
 | 003 | Multi-Rank Dispatch Router + Level 2 Cadet Academy 3D Obstacle Course | 2026-11-23 | `ec04deb` | Done   |
 | 004 | Cadet Academy briefing wrap, sprint arm posture & victory camera polish | 2026-11-23 | `04923b0` | Done   |
+| 005 | Custom 3D Skeletal Animation Engine + Blender 4.5 Pipeline + 7 Cadet Clips | 2026-11-24 | pending   | Done   |
 
 ---
 
@@ -83,8 +91,8 @@
 
 ## Todos
 
-- [ ] Get user sign-off on `custom-animations` (`research.md`, `spec.md`, `design.md`, `tasks.md`) before executing Phase 1 (`T1`–`T6`)
-- [ ] After `custom-animations` ships, continue Milestone 2 with Level 3 Patrol Officer (**Beat Patrol**) & Level 4 Desk Sergeant (**911 Dispatch Triage**)
+- [x] Execute `custom-animations` (`T1`–`T8`) and verify live Cadet Academy 3D gameplay video with all 7 custom clips
+- [ ] Continue Milestone 2 with Level 3 Patrol Officer (**Beat Patrol**) & Level 4 Desk Sergeant (**911 Dispatch Triage**)
 
 ---
 

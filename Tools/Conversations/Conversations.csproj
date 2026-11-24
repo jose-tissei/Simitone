@@ -24,5 +24,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Assets\Cctv\*.png" />
+    <EmbeddedResource Include="Assets\Animations\*.simanim.json" />
   </ItemGroup>
 </Project>

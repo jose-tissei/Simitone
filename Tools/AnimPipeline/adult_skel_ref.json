@@ -1,0 +1,1342 @@
+{
+  "skeleton": "adult",
+  "boneCount": 29,
+  "hipHeight": 3.01362,
+  "sourceFar": "C:\\Program Files (x86)\\Maxis\\The Sims\\GameData\\Animation\\Animation.far",
+  "bones": [
+    {
+      "index": 0,
+      "name": "ROOT",
+      "parent": "NULL",
+      "localTranslation": [
+        5.9e-05,
+        3.01362,
+        0.008076
+      ],
+      "localRotation": [
+        -0.0263,
+        0.706899,
+        -0.026279,
+        0.706336
+      ],
+      "canTranslate": true,
+      "canRotate": true,
+      "restWorldPos": [
+        5.9e-05,
+        3.01362,
+        0.008076
+      ],
+      "restWorldRot": [
+        -0.0263,
+        0.706899,
+        -0.026279,
+        0.706336
+      ],
+      "tposeWorldPos": [
+        5.9e-05,
+        3.01362,
+        0.008076
+      ],
+      "tposeWorldRot": [
+        -0.0263,
+        0.706899,
+        -0.026279,
+        0.706336
+      ],
+      "tposeLocalRot": [
+        -0.0263,
+        0.706899,
+        -0.026279,
+        0.706336
+      ]
+    },
+    {
+      "index": 1,
+      "name": "PELVIS",
+      "parent": "ROOT",
+      "localTranslation": [
+        0.036678,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        0.499999,
+        -0.5,
+        -0.5,
+        0.500001
+      ],
+      "canTranslate": true,
+      "canRotate": true,
+      "restWorldPos": [
+        3e-05,
+        3.010895,
+        -0.028501
+      ],
+      "restWorldRot": [
+        -0.026572,
+        -0.026007,
+        -0.706607,
+        0.706629
+      ],
+      "tposeWorldPos": [
+        3e-05,
+        3.010895,
+        -0.028501
+      ],
+      "tposeWorldRot": [
+        -0.026572,
+        -0.026007,
+        -0.706607,
+        0.706629
+      ],
+      "tposeLocalRot": [
+        0.499999,
+        -0.5,
+        -0.5,
+        0.500001
+      ]
+    },
+    {
+      "index": 2,
+      "name": "SPINE",
+      "parent": "PELVIS",
+      "localTranslation": [
+        -0.381066,
+        1e-06,
+        -0.000335
+      ],
+      "localRotation": [
+        2e-06,
+        0.031523,
+        -1e-06,
+        0.999503
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        7e-06,
+        3.390882,
+        -0.05715
+      ],
+      "restWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeWorldPos": [
+        7e-06,
+        3.390882,
+        -0.05715
+      ],
+      "tposeWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeLocalRot": [
+        2e-06,
+        0.031523,
+        -1e-06,
+        0.999503
+      ]
+    },
+    {
+      "index": 3,
+      "name": "SPINE1",
+      "parent": "SPINE",
+      "localTranslation": [
+        -0.421059,
+        -0.0,
+        -0.000335
+      ],
+      "localRotation": [
+        -0.0,
+        -0.0,
+        0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        3e-06,
+        3.81191,
+        -0.062251
+      ],
+      "restWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeWorldPos": [
+        3e-06,
+        3.81191,
+        -0.062251
+      ],
+      "tposeWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 4,
+      "name": "SPINE2",
+      "parent": "SPINE1",
+      "localTranslation": [
+        -0.421059,
+        -0.0,
+        -0.000335
+      ],
+      "localRotation": [
+        -0.0,
+        -0.0,
+        0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -1e-06,
+        4.232939,
+        -0.067352
+      ],
+      "restWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeWorldPos": [
+        -1e-06,
+        4.232939,
+        -0.067352
+      ],
+      "tposeWorldRot": [
+        -0.004283,
+        -0.003721,
+        -0.707094,
+        0.707097
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 5,
+      "name": "NECK",
+      "parent": "SPINE2",
+      "localTranslation": [
+        -0.421097,
+        -0.0,
+        -0.000315
+      ],
+      "localRotation": [
+        -0.0,
+        0.060416,
+        -0.0,
+        0.998173
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -5e-06,
+        4.654005,
+        -0.072433
+      ],
+      "restWorldRot": [
+        0.038445,
+        0.039006,
+        -0.706061,
+        0.70603
+      ],
+      "tposeWorldPos": [
+        -5e-06,
+        4.654005,
+        -0.072433
+      ],
+      "tposeWorldRot": [
+        0.038445,
+        0.039006,
+        -0.706061,
+        0.70603
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        0.060416,
+        -0.0,
+        0.998173
+      ]
+    },
+    {
+      "index": 6,
+      "name": "R_ARM",
+      "parent": "NECK",
+      "localTranslation": [
+        -0.0,
+        -0.130263,
+        0.000318
+      ],
+      "localRotation": [
+        0.618227,
+        0.783643,
+        0.037665,
+        0.047745
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.130268,
+        4.65397,
+        -0.072013
+      ],
+      "restWorldRot": [
+        0.993092,
+        0.117184,
+        -0.001106,
+        0.005969
+      ],
+      "tposeWorldPos": [
+        -0.130268,
+        4.65397,
+        -0.072013
+      ],
+      "tposeWorldRot": [
+        0.993092,
+        0.117184,
+        -0.001106,
+        0.005969
+      ],
+      "tposeLocalRot": [
+        0.618227,
+        0.783643,
+        0.037665,
+        0.047745
+      ]
+    },
+    {
+      "index": 7,
+      "name": "R_ARM1",
+      "parent": "R_ARM",
+      "localTranslation": [
+        -0.376316,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        0.008492,
+        0.017304,
+        -0.57938,
+        0.81483
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.496248,
+        4.566388,
+        -0.07066
+      ],
+      "restWorldRot": [
+        0.741376,
+        0.670956,
+        0.01183,
+        -0.006238
+      ],
+      "tposeWorldPos": [
+        -0.496248,
+        4.566388,
+        -0.07066
+      ],
+      "tposeWorldRot": [
+        0.999965,
+        -0.0,
+        0.0,
+        -0.008414
+      ],
+      "tposeLocalRot": [
+        0.014325,
+        0.002092,
+        0.117171,
+        0.993006
+      ]
+    },
+    {
+      "index": 8,
+      "name": "R_ARM2",
+      "parent": "R_ARM1",
+      "localTranslation": [
+        -0.881536,
+        -0.0,
+        0.0
+      ],
+      "localRotation": [
+        0.0,
+        -0.050041,
+        0.0,
+        0.998747
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.583833,
+        3.689511,
+        -0.093503
+      ],
+      "restWorldRot": [
+        0.74104,
+        0.670428,
+        -0.025284,
+        0.027345
+      ],
+      "tposeWorldPos": [
+        -1.377784,
+        4.566388,
+        -0.07066
+      ],
+      "tposeWorldRot": [
+        0.999965,
+        0.0,
+        0.0,
+        -0.008414
+      ],
+      "tposeLocalRot": [
+        0.0,
+        0.0,
+        -0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 9,
+      "name": "R_HAND",
+      "parent": "R_ARM2",
+      "localTranslation": [
+        -0.820474,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        -0.706605,
+        -0.017647,
+        0.017661,
+        0.707168
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.665696,
+        2.875401,
+        -0.032675
+      ],
+      "restWorldRot": [
+        0.516112,
+        0.478401,
+        0.443253,
+        0.555237
+      ],
+      "tposeWorldPos": [
+        -2.198258,
+        4.566388,
+        -0.07066
+      ],
+      "tposeWorldRot": [
+        0.713088,
+        -0.017512,
+        -0.017795,
+        0.70063
+      ],
+      "tposeLocalRot": [
+        -0.706605,
+        -0.017647,
+        0.017661,
+        0.707168
+      ]
+    },
+    {
+      "index": 10,
+      "name": "R_FINGER0",
+      "parent": "R_HAND",
+      "localTranslation": [
+        -0.302072,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        -0.000395,
+        0.133423,
+        -5.3e-05,
+        0.991059
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.710801,
+        2.577547,
+        -0.010407
+      ],
+      "restWorldRot": [
+        0.452112,
+        0.548057,
+        0.508311,
+        0.48667
+      ],
+      "tposeWorldPos": [
+        -2.499953,
+        4.581465,
+        -0.070407
+      ],
+      "tposeWorldRot": [
+        0.708811,
+        0.07617,
+        0.077462,
+        0.696983
+      ],
+      "tposeLocalRot": [
+        -0.000395,
+        0.133423,
+        -5.3e-05,
+        0.991059
+      ]
+    },
+    {
+      "index": 11,
+      "name": "L_ARM",
+      "parent": "NECK",
+      "localTranslation": [
+        -0.0,
+        0.130263,
+        0.000317
+      ],
+      "localRotation": [
+        -0.618227,
+        0.783643,
+        -0.037667,
+        0.047744
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.130258,
+        4.65397,
+        -0.072221
+      ],
+      "restWorldRot": [
+        0.117179,
+        0.993092,
+        -0.006063,
+        0.000314
+      ],
+      "tposeWorldPos": [
+        0.130258,
+        4.65397,
+        -0.072221
+      ],
+      "tposeWorldRot": [
+        0.117179,
+        0.993092,
+        -0.006063,
+        0.000314
+      ],
+      "tposeLocalRot": [
+        -0.618227,
+        0.783643,
+        -0.037667,
+        0.047744
+      ]
+    },
+    {
+      "index": 12,
+      "name": "L_ARM1",
+      "parent": "L_ARM",
+      "localTranslation": [
+        -0.376316,
+        -0.0,
+        0.0
+      ],
+      "localRotation": [
+        -0.008492,
+        0.017304,
+        0.57938,
+        0.81483
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.49624,
+        4.566388,
+        -0.071452
+      ],
+      "restWorldRot": [
+        0.670961,
+        0.741367,
+        0.005703,
+        -0.012421
+      ],
+      "tposeWorldPos": [
+        0.49624,
+        4.566388,
+        -0.071452
+      ],
+      "tposeWorldRot": [
+        0.0,
+        0.99997,
+        0.007693,
+        -0.0
+      ],
+      "tposeLocalRot": [
+        -0.013702,
+        0.001216,
+        -0.117173,
+        0.993016
+      ]
+    },
+    {
+      "index": 13,
+      "name": "L_ARM2",
+      "parent": "L_ARM1",
+      "localTranslation": [
+        -0.881536,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        -0.0,
+        -0.050041,
+        -0.0,
+        0.998747
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.583789,
+        3.689512,
+        -0.094433
+      ],
+      "restWorldRot": [
+        0.670406,
+        0.74106,
+        -0.02788,
+        0.024694
+      ],
+      "tposeWorldPos": [
+        1.377776,
+        4.566388,
+        -0.071452
+      ],
+      "tposeWorldRot": [
+        0.0,
+        0.99997,
+        0.007693,
+        -0.0
+      ],
+      "tposeLocalRot": [
+        0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 14,
+      "name": "L_HAND",
+      "parent": "L_ARM2",
+      "localTranslation": [
+        -0.820474,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        0.705821,
+        -0.03766,
+        -0.03769,
+        0.706383
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.665749,
+        2.875401,
+        -0.033735
+      ],
+      "restWorldRot": [
+        0.462012,
+        0.528132,
+        -0.568927,
+        -0.428886
+      ],
+      "tposeWorldPos": [
+        2.19825,
+        4.566388,
+        -0.071452
+      ],
+      "tposeWorldRot": [
+        -0.037399,
+        0.711792,
+        -0.700367,
+        0.037949
+      ],
+      "tposeLocalRot": [
+        0.705821,
+        -0.03766,
+        -0.03769,
+        0.706383
+      ]
+    },
+    {
+      "index": 15,
+      "name": "L_FINGER0",
+      "parent": "L_HAND",
+      "localTranslation": [
+        -0.302072,
+        0.0,
+        -0.0
+      ],
+      "localRotation": [
+        0.000392,
+        0.177342,
+        7.1e-05,
+        0.984149
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.727735,
+        2.580574,
+        -0.011778
+      ],
+      "restWorldRot": [
+        0.555453,
+        0.443445,
+        -0.478213,
+        -0.515888
+      ],
+      "tposeWorldPos": [
+        2.498607,
+        4.598528,
+        -0.070957
+      ],
+      "tposeWorldRot": [
+        0.087463,
+        0.706968,
+        -0.696174,
+        -0.088819
+      ],
+      "tposeLocalRot": [
+        0.000392,
+        0.177342,
+        7.1e-05,
+        0.984149
+      ]
+    },
+    {
+      "index": 16,
+      "name": "HEAD",
+      "parent": "NECK",
+      "localTranslation": [
+        -0.398615,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        0.0,
+        0.066878,
+        -0.0,
+        0.997761
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        3e-05,
+        5.050229,
+        -0.028837
+      ],
+      "restWorldRot": [
+        0.085579,
+        0.086137,
+        -0.701909,
+        0.701841
+      ],
+      "tposeWorldPos": [
+        3e-05,
+        5.050229,
+        -0.028837
+      ],
+      "tposeWorldRot": [
+        0.085579,
+        0.086137,
+        -0.701909,
+        0.701841
+      ],
+      "tposeLocalRot": [
+        0.0,
+        0.066878,
+        -0.0,
+        0.997761
+      ]
+    },
+    {
+      "index": 17,
+      "name": "R_LEG",
+      "parent": "PELVIS",
+      "localTranslation": [
+        -0.0,
+        -0.241228,
+        -0.0
+      ],
+      "localRotation": [
+        0.01654,
+        -1e-06,
+        0.999863,
+        1e-06
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.241198,
+        3.010894,
+        -0.028308
+      ],
+      "restWorldRot": [
+        -0.014317,
+        0.01488,
+        0.706962,
+        0.70695
+      ],
+      "tposeWorldPos": [
+        -0.241198,
+        3.010894,
+        -0.028308
+      ],
+      "tposeWorldRot": [
+        -0.014317,
+        0.01488,
+        0.706962,
+        0.70695
+      ],
+      "tposeLocalRot": [
+        0.01654,
+        -1e-06,
+        0.999863,
+        1e-06
+      ]
+    },
+    {
+      "index": 18,
+      "name": "R_LEG1",
+      "parent": "R_LEG",
+      "localTranslation": [
+        -1.44737,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        -0.0,
+        -0.029836,
+        -0.0,
+        0.999555
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.24115,
+        1.564758,
+        0.031442
+      ],
+      "restWorldRot": [
+        0.006782,
+        -0.006219,
+        0.707074,
+        0.707079
+      ],
+      "tposeWorldPos": [
+        -0.24115,
+        1.564758,
+        0.031442
+      ],
+      "tposeWorldRot": [
+        0.006782,
+        -0.006219,
+        0.707074,
+        0.707079
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.029836,
+        -0.0,
+        0.999555
+      ]
+    },
+    {
+      "index": 19,
+      "name": "R_FOOT",
+      "parent": "R_LEG1",
+      "localTranslation": [
+        -1.31579,
+        0.0,
+        -0.0
+      ],
+      "localRotation": [
+        -1e-06,
+        0.008605,
+        0.0,
+        0.999963
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.24117,
+        0.24919,
+        0.00725
+      ],
+      "restWorldRot": [
+        0.000697,
+        -0.000135,
+        0.707106,
+        0.707107
+      ],
+      "tposeWorldPos": [
+        -0.24117,
+        0.24919,
+        0.00725
+      ],
+      "tposeWorldRot": [
+        0.000697,
+        -0.000135,
+        0.707106,
+        0.707107
+      ],
+      "tposeLocalRot": [
+        -1e-06,
+        0.008605,
+        0.0,
+        0.999963
+      ]
+    },
+    {
+      "index": 20,
+      "name": "R_TOE0",
+      "parent": "R_FOOT",
+      "localTranslation": [
+        -0.253839,
+        -0.0,
+        0.339987
+      ],
+      "localRotation": [
+        0.0,
+        0.707107,
+        0.0,
+        0.707107
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.2409,
+        -0.005049,
+        0.346938
+      ],
+      "restWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeWorldPos": [
+        -0.2409,
+        -0.005049,
+        0.346938
+      ],
+      "tposeWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeLocalRot": [
+        0.0,
+        0.707107,
+        0.0,
+        0.707107
+      ]
+    },
+    {
+      "index": 21,
+      "name": "R_TOE01",
+      "parent": "R_TOE0",
+      "localTranslation": [
+        -0.251088,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.2407,
+        -0.005344,
+        0.598025
+      ],
+      "restWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeWorldPos": [
+        -0.2407,
+        -0.005344,
+        0.598025
+      ],
+      "tposeWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 22,
+      "name": "R_TOE02",
+      "parent": "R_TOE01",
+      "localTranslation": [
+        -0.056929,
+        -0.0,
+        0.0
+      ],
+      "localRotation": [
+        0.0,
+        -0.0,
+        0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        -0.240655,
+        -0.005411,
+        0.654954
+      ],
+      "restWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeWorldPos": [
+        -0.240655,
+        -0.005411,
+        0.654954
+      ],
+      "tposeWorldRot": [
+        -0.499507,
+        0.499904,
+        0.500493,
+        0.500096
+      ],
+      "tposeLocalRot": [
+        0.0,
+        -0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 23,
+      "name": "L_LEG",
+      "parent": "PELVIS",
+      "localTranslation": [
+        0.0,
+        0.241228,
+        0.0
+      ],
+      "localRotation": [
+        0.013764,
+        -2e-06,
+        0.999905,
+        0.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241258,
+        3.010895,
+        -0.028693
+      ],
+      "restWorldRot": [
+        -0.01628,
+        0.016842,
+        0.70692,
+        0.706905
+      ],
+      "tposeWorldPos": [
+        0.241258,
+        3.010895,
+        -0.028693
+      ],
+      "tposeWorldRot": [
+        -0.01628,
+        0.016842,
+        0.70692,
+        0.706905
+      ],
+      "tposeLocalRot": [
+        0.013764,
+        -2e-06,
+        0.999905,
+        0.0
+      ]
+    },
+    {
+      "index": 24,
+      "name": "L_LEG1",
+      "parent": "L_LEG",
+      "localTranslation": [
+        -1.44737,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        -0.0,
+        -0.03575,
+        0.0,
+        0.999361
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241315,
+        1.565113,
+        0.039086
+      ],
+      "restWorldRot": [
+        0.009003,
+        -0.008441,
+        0.70705,
+        0.707056
+      ],
+      "tposeWorldPos": [
+        0.241315,
+        1.565113,
+        0.039086
+      ],
+      "tposeWorldRot": [
+        0.009003,
+        -0.008441,
+        0.70705,
+        0.707056
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.03575,
+        0.0,
+        0.999361
+      ]
+    },
+    {
+      "index": 25,
+      "name": "L_FOOT",
+      "parent": "L_LEG1",
+      "localTranslation": [
+        -1.31579,
+        0.0,
+        0.0
+      ],
+      "localRotation": [
+        1e-06,
+        0.011631,
+        -1e-06,
+        0.999932
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241292,
+        0.249723,
+        0.00663
+      ],
+      "restWorldRot": [
+        0.000779,
+        -0.000215,
+        0.707106,
+        0.707107
+      ],
+      "tposeWorldPos": [
+        0.241292,
+        0.249723,
+        0.00663
+      ],
+      "tposeWorldRot": [
+        0.000779,
+        -0.000215,
+        0.707106,
+        0.707107
+      ],
+      "tposeLocalRot": [
+        1e-06,
+        0.011631,
+        -1e-06,
+        0.999932
+      ]
+    },
+    {
+      "index": 26,
+      "name": "L_TOE0",
+      "parent": "L_FOOT",
+      "localTranslation": [
+        -0.253839,
+        -0.0,
+        0.339987
+      ],
+      "localRotation": [
+        -0.0,
+        0.707107,
+        -0.0,
+        0.707107
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241563,
+        -0.004594,
+        0.346259
+      ],
+      "restWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeWorldPos": [
+        0.241563,
+        -0.004594,
+        0.346259
+      ],
+      "tposeWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        0.707107,
+        -0.0,
+        0.707107
+      ]
+    },
+    {
+      "index": 27,
+      "name": "L_TOE01",
+      "parent": "L_TOE0",
+      "localTranslation": [
+        -0.251088,
+        -0.0,
+        -0.0
+      ],
+      "localRotation": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241763,
+        -0.004947,
+        0.597347
+      ],
+      "restWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeWorldPos": [
+        0.241763,
+        -0.004947,
+        0.597347
+      ],
+      "tposeWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeLocalRot": [
+        -0.0,
+        -0.0,
+        -0.0,
+        1.0
+      ]
+    },
+    {
+      "index": 28,
+      "name": "L_TOE02",
+      "parent": "L_TOE01",
+      "localTranslation": [
+        -0.056929,
+        -0.0,
+        0.0
+      ],
+      "localRotation": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ],
+      "canTranslate": false,
+      "canRotate": true,
+      "restWorldPos": [
+        0.241808,
+        -0.005027,
+        0.654276
+      ],
+      "restWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeWorldPos": [
+        0.241808,
+        -0.005027,
+        0.654276
+      ],
+      "tposeWorldRot": [
+        -0.499449,
+        0.499848,
+        0.500551,
+        0.500152
+      ],
+      "tposeLocalRot": [
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    }
+  ]
+}

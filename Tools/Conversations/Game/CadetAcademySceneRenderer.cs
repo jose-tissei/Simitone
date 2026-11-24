@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using FSO.Client;
 using FSO.Common.Rendering.Framework;
@@ -38,6 +39,12 @@ namespace Simitone.Conversations
         string boundSimKey;
         string boundUniformTag = "none";
         string lastActiveAnimName = "none";
+        string lastAnimSource = "none";
+        float lastElapsedSeconds = -1f;
+        readonly Stopwatch sceneStopwatch = Stopwatch.StartNew();
+        double lastWallSeconds = -1.0;
+        float finishExtraSeconds;
+        readonly VitaboyClipPlayer customPlayer = new VitaboyClipPlayer();
         Animation runAnim;
         Animation walkAnim;
         Animation idleAnim;
@@ -85,6 +92,7 @@ namespace Simitone.Conversations
                    " sim=" + (cadetAvatar != null) +
                    " key=" + (boundSimKey ?? "none") +
                    " uniform=" + boundUniformTag +
+                   " source=" + lastAnimSource +
                    " anim=" + lastActiveAnimName +
                    " run=" + (runAnim != null ? runAnim.Name : "none") +
                    " idle=" + (idleAnim != null ? idleAnim.Name : "none") +
@@ -110,7 +118,25 @@ namespace Simitone.Conversations
                 var kind = (game.IsBriefing || game.IsFinished)
                     ? CadetDrillStageKind.Sprint
                     : (st != null ? st.Kind : CadetDrillStageKind.Sprint);
-                float t = game.ElapsedSeconds;
+                double wallNow = sceneStopwatch.Elapsed.TotalSeconds;
+                float wallDt = lastWallSeconds >= 0.0
+                    ? (float)Math.Max(0.0, Math.Min(0.10, wallNow - lastWallSeconds))
+                    : (1f / 30f);
+                lastWallSeconds = wallNow;
+
+                float gameT = game.ElapsedSeconds;
+                if (game.IsFinished)
+                    finishExtraSeconds += wallDt;
+                else
+                    finishExtraSeconds = 0f;
+
+                float t = gameT + finishExtraSeconds;
+                float dt = (lastElapsedSeconds >= 0f && t >= lastElapsedSeconds)
+                    ? Math.Min(0.10f, t - lastElapsedSeconds)
+                    : wallDt;
+                if (dt <= 0.0001f && game.IsFinished)
+                    dt = wallDt;
+                lastElapsedSeconds = t;
                 float resP = game.ResolutionProgress;
                 bool resolving = game.IsResolvingStage;
                 var rating = st != null ? st.Rating : CadetHitRating.None;
@@ -119,6 +145,11 @@ namespace Simitone.Conversations
                 Vector3 simPos;
                 float simYaw;
                 float simPitch = 0f;
+                string customClipName = "cadet_sprint_loop";
+                float customFade = 0.16f;
+                float customSpeed = 1.0f;
+                bool? customLoop = null;
+                float? customSeekTime = null;
                 Animation activeAnim = runAnim ?? walkAnim ?? idleAnim;
                 float animSpeed = 1.15f;
                 float animTime = t;
@@ -128,11 +159,13 @@ namespace Simitone.Conversations
 
                 if (game.IsBriefing)
                 {
-                    // Pre-drill establishing shot: Cadet stands sharp at the starting line (z = -7.8)
-                    // in full Police Cadet uniform; camera orbits cleanly at distance ~9.9 units
-                    // (clear of hurdle 1 at z = +2.0) so Bob fits head-to-boots inside the wide Briefing strip.
+                    // Pre-drill establishing shot: Cadet stands sharp at attention at the starting line (z = -7.8)
+                    // in full Police Cadet uniform; camera orbits cleanly so Bob fits head-to-boots inside Briefing.
                     simPos = new Vector3(0f, 0f, -7.8f);
                     simYaw = 0.24f + (float)Math.Sin(t * 0.65f) * 0.12f;
+                    customClipName = "cadet_idle_attention";
+                    customFade = 0.18f;
+                    customSpeed = 1.0f;
                     activeAnim = idleAnim ?? walkAnim ?? runAnim;
                     animSpeed = 0.85f;
                     float orbit = (float)Math.Sin(t * 0.45f) * 0.90f;
@@ -142,9 +175,12 @@ namespace Simitone.Conversations
                 else if (game.IsFinished)
                 {
                     // Victory showcase right past the Police Academy Finish Gantry (arch at z = 10.0)
-                    // with unobstructed sunlit track in front of the Cadet (camera at z = 18.2 looking toward -Z).
+                    // with crisp Police Academy right-hand temple salute!
                     simPos = new Vector3(0f, 0f, 11.4f);
-                    simYaw = 0.18f + (float)Math.Sin(t * 0.85f) * 0.12f;
+                    simYaw = 0.18f + (float)Math.Sin(t * 0.85f) * 0.10f;
+                    customClipName = "cadet_victory_salute";
+                    customFade = 0.20f;
+                    customSpeed = 1.0f;
                     activeAnim = cheerAnim ?? idleAnim ?? walkAnim;
                     animSpeed = 0.95f;
                     float sway = (float)Math.Sin(t * 0.50f) * 0.85f;
@@ -155,12 +191,27 @@ namespace Simitone.Conversations
                 {
                     if (!resolving)
                     {
-                        // Continuous athletic sprint along the terracotta track, looping cleanly with hurdle hops
+                        // Continuous athletic sprint along the terracotta track:
+                        // cadet_sprint_loop encodes rootSpeedUnitsPerSec=10.9 -> 10.9 * 0.55 SimScale == 6.0 world u/s (zero skating!)
                         float cycle = (t * 6.0f) % 15.5f;
                         float z = -8.5f + cycle;
                         float hop = ComputeHurdleHop(z, 2.0f) + ComputeHurdleHop(z, 6.2f);
                         simPos = new Vector3(0f, hop, z);
                         simYaw = 0f;
+                        if (hop > 0.12f)
+                        {
+                            customClipName = "cadet_hurdle_hop";
+                            customFade = 0.10f;
+                            customSpeed = 1.0f;
+                            customLoop = false;
+                        }
+                        else
+                        {
+                            customClipName = "cadet_sprint_loop";
+                            customFade = 0.12f;
+                            customSpeed = 1.0f;
+                            customLoop = true;
+                        }
                         simPitch = hop > 0.25f ? 0.14f : 0.08f;
                         activeAnim = hop > 0.35f ? (jumpAnim ?? runAnim ?? walkAnim) : (runAnim ?? walkAnim ?? idleAnim);
                         animSpeed = hop > 0.35f ? 1.15f : 1.75f;
@@ -174,6 +225,27 @@ namespace Simitone.Conversations
                             : ComputeHurdleHop(z, 6.2f);
                         simPos = new Vector3(0f, hop, Math.Min(13.5f, z));
                         simYaw = 0f;
+                        if (resP > 0.72f && rating == CadetHitRating.Perfect)
+                        {
+                            customClipName = "cadet_victory_salute";
+                            customFade = 0.16f;
+                            customSpeed = 1.0f;
+                        }
+                        else if (hop > 0.12f)
+                        {
+                            customClipName = "cadet_hurdle_hop";
+                            customFade = 0.09f;
+                            customSpeed = 1.15f;
+                            customLoop = false;
+                        }
+                        else
+                        {
+                            customClipName = "cadet_sprint_loop";
+                            customFade = 0.12f;
+                            // Sync cadence proportionally to burst speed so feet never skate!
+                            customSpeed = rating == CadetHitRating.Perfect ? 1.25f : (rating == CadetHitRating.Good ? 1.05f : 0.72f);
+                            customLoop = true;
+                        }
                         activeAnim = (resP > 0.72f && rating == CadetHitRating.Perfect && cheerAnim != null)
                             ? cheerAnim
                             : (hop > 0.35f ? (jumpAnim ?? runAnim ?? walkAnim) : (runAnim ?? walkAnim ?? idleAnim));
@@ -196,6 +268,9 @@ namespace Simitone.Conversations
                         float z = -6.8f + cycle;
                         simPos = new Vector3(0f, 0f, z);
                         simYaw = 0f;
+                        customClipName = "cadet_sprint_loop";
+                        customFade = 0.14f;
+                        customSpeed = 5.2f / 6.0f; // exact stride-to-speed match!
                         simPitch = 0.08f;
                         activeAnim = runAnim ?? walkAnim ?? idleAnim;
                         animSpeed = 1.70f;
@@ -208,12 +283,18 @@ namespace Simitone.Conversations
                             float p = resP / 0.45f;
                             simPos = new Vector3(0f, (float)Math.Sin(p * Math.PI * 0.65f) * 1.35f, -1.2f + p * 2.45f);
                             simPitch = 0.25f * p;
+                            customClipName = "cadet_wall_vault";
+                            customFade = 0.08f;
+                            customLoop = false;
+                            customSeekTime = p * 0.35f;
                         }
                         else
                         {
                             float p = (resP - 0.45f) / 0.55f;
                             simPos = new Vector3(0f, Math.Max(0f, (1f - p) * 1.15f), 1.25f - p * 1.85f);
                             simPitch = -0.18f * (1f - p);
+                            customClipName = "cadet_idle_attention";
+                            customFade = 0.18f;
                         }
                         simYaw = 0f;
                         activeAnim = walkAnim ?? runAnim ?? idleAnim;
@@ -221,8 +302,8 @@ namespace Simitone.Conversations
                     }
                     else
                     {
-                        // Clean parabolic vault arc right over the 2.15-unit timber wall onto the blue landing mat!
-                        float peakH = rating == CadetHitRating.Perfect ? 2.55f : 2.25f;
+                        // Clean parabolic parkour speed-vault right over the 2.15-unit timber wall onto the blue mat!
+                        float peakH = rating == CadetHitRating.Perfect ? 2.45f : 2.20f;
                         float endZ = rating == CadetHitRating.Perfect ? 5.6f : 4.7f;
                         float z = -1.6f + resP * (endZ + 1.6f);
                         bool airborne = resP >= 0.12f && resP <= 0.84f;
@@ -230,6 +311,22 @@ namespace Simitone.Conversations
                         float y = airborne ? arc * peakH : 0f;
                         simPos = new Vector3(0f, y, z);
                         simYaw = 0f;
+
+                        if (resP > 0.86f && rating == CadetHitRating.Perfect)
+                        {
+                            customClipName = "cadet_victory_salute";
+                            customFade = 0.16f;
+                            customSpeed = 1.0f;
+                        }
+                        else
+                        {
+                            customClipName = "cadet_wall_vault";
+                            customFade = 0.08f;
+                            customLoop = false;
+                            // Sync vault hand-plant -> tucked knee clearance -> landing crouch directly to resP!
+                            customSeekTime = Math.Min(0.98f, resP * 1.05f);
+                        }
+
                         activeAnim = airborne
                             ? (jumpAnim ?? runAnim ?? walkAnim)
                             : ((resP > 0.84f && rating == CadetHitRating.Perfect && cheerAnim != null) ? cheerAnim : (runAnim ?? walkAnim));
@@ -252,19 +349,29 @@ namespace Simitone.Conversations
                     float aimOffset = (game.MarkerPosition - 0.5f) * 0.45f;
                     simYaw = resolving ? 0f : aimOffset;
 
-                    if (resolving && resP < 0.48f && shootAnim != null)
+                    if (resolving && resP < 0.50f)
                     {
-                        activeAnim = shootAnim;
+                        customClipName = "cadet_target_fire_recoil";
+                        customFade = 0.04f;
+                        customLoop = false;
+                        customSeekTime = Math.Min(0.49f, resP * 1.05f);
+                        activeAnim = shootAnim ?? idleAnim;
                         animSpeed = 1.45f;
                         animTime = resP * 1.35f;
                     }
-                    else if (resolving && resP >= 0.48f && rating == CadetHitRating.Perfect && cheerAnim != null)
+                    else if (resolving && resP >= 0.50f && rating == CadetHitRating.Perfect)
                     {
-                        activeAnim = cheerAnim;
+                        customClipName = "cadet_victory_salute";
+                        customFade = 0.18f;
+                        customSpeed = 1.0f;
+                        activeAnim = cheerAnim ?? idleAnim;
                         animSpeed = 1.0f;
                     }
                     else
                     {
+                        customClipName = "cadet_target_aim_loop";
+                        customFade = 0.14f;
+                        customSpeed = 1.0f;
                         activeAnim = idleAnim ?? walkAnim ?? runAnim;
                         animSpeed = 0.80f;
                     }
@@ -304,15 +411,35 @@ namespace Simitone.Conversations
                 // 3. Pose & animate the real 3D Vitaboy SimAvatar in the EXACT SAME 3D coordinates!
                 if (cadetAvatar != null)
                 {
-                    ResetSkeletonToBase(cadetAvatar);
-                    lastActiveAnimName = activeAnim != null ? activeAnim.Name : "none";
-                    if (activeAnim != null)
+                    bool usedCustom = false;
+                    if (!string.IsNullOrEmpty(customClipName) &&
+                        customPlayer.Play(customClipName, customFade, customSpeed, customLoop))
                     {
-                        float fps = activeAnim.FramesPerSecond > 0 ? activeAnim.FramesPerSecond : 30f;
-                        int numFrames = Math.Max(1, activeAnim.NumFrames);
-                        float exact = (Math.Max(0f, animTime) * fps * animSpeed) % numFrames;
-                        int frame = (int)exact;
-                        Animator.RenderFrame(cadetAvatar, activeAnim, frame, exact - frame, 1.0f);
+                        usedCustom = customPlayer.UpdateAndApply(
+                            cadetAvatar, dt, useSquad: true, seekTime: customSeekTime);
+                    }
+
+                    if (usedCustom)
+                    {
+                        lastAnimSource = "custom";
+                        lastActiveAnimName = customPlayer.ActiveClipName;
+                        // Athletic forward lean & vault body pitch are baked natively into PELVIS/SPINE bones —
+                        // ZERO whole-mesh simPitch tilt hack!
+                        simPitch = 0f;
+                    }
+                    else
+                    {
+                        lastAnimSource = "ts1";
+                        ResetSkeletonToBase(cadetAvatar);
+                        lastActiveAnimName = activeAnim != null ? activeAnim.Name : "none";
+                        if (activeAnim != null)
+                        {
+                            float fps = activeAnim.FramesPerSecond > 0 ? activeAnim.FramesPerSecond : 30f;
+                            int numFrames = Math.Max(1, activeAnim.NumFrames);
+                            float exact = (Math.Max(0f, animTime) * fps * animSpeed) % numFrames;
+                            int frame = (int)exact;
+                            Animator.RenderFrame(cadetAvatar, activeAnim, frame, exact - frame, 1.0f);
+                        }
                     }
 
                     cadetAvatar.Scale = Vector3.One * SimScale;
@@ -535,7 +662,7 @@ namespace Simitone.Conversations
                 // Crisp golden shot tracer + impact star flash when player locks in
                 if (showShotFlash)
                 {
-                    Vector3 muzzle = new Vector3(simPos.X + 0.22f, 1.95f, simPos.Z + 0.9f);
+                    Vector3 muzzle = new Vector3(simPos.X, 2.45f, simPos.Z + 0.85f);
                     AddUnlitBeam(muzzle, shotImpactPos, 0.06f, new Color(255, 232, 110, 235));
                     AddUnlitDiamond(shotImpactPos, 0.46f + (float)Math.Sin(elapsed * 45f) * 0.08f, new Color(255, 240, 140, 245));
                 }

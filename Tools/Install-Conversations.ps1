@@ -51,5 +51,11 @@ Copy-Item "$Tools\SpriteCards\icons\opt_aa.png", "$Tools\SpriteCards\icons\opt_l
 # (see Render/README.md). When measured it changed almost nothing visible, so the installer leaves the game's own effect file alone.
 $bankSrc = Join-Path $Tools 'Conversations\bank\bank.json'
 if (Test-Path $bankSrc) { New-Item -ItemType Directory -Force (Join-Path $App 'Content\conversations') | Out-Null; Copy-Item $bankSrc (Join-Path $App 'Content\conversations\bank.json') -Force }
+$animSrc = Join-Path $Tools 'Conversations\Assets\Animations'
+if (Test-Path $animSrc) {
+    $animDst = Join-Path $App 'CustomAnims'
+    New-Item -ItemType Directory -Force $animDst | Out-Null
+    Copy-Item (Join-Path $animSrc '*.simanim.json') $animDst -Force
+}
 Remove-Item $Tmp -Recurse -Force
 Write-Host "Installed. Originals saved in $Backup" -ForegroundColor Green

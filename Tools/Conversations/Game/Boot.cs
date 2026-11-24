@@ -222,6 +222,12 @@ namespace Simitone.Conversations
                     return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
                 }
                 case "dispatch": return CareerDispatchDriver.Command(a.Skip(1).ToArray());
+                case "anim":
+                {
+                    var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "list";
+                    if (sub == "reload") return CustomAnimLibrary.ReloadAll();
+                    return CustomAnimLibrary.ListSummary();
+                }
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
