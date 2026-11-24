@@ -16,7 +16,7 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "persona", "setrel", "motives", "focus", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname" };
 
     // called on the game thread, once per frame
     public static void Drain()
@@ -77,6 +77,49 @@ public static class GameControl
                 var flt = p.Length > 1 ? p[1] : "";
                 return "ok " + string.Join(" | ", vm.Entities.Where(e => !(e is VMAvatar) && (e.ToString() ?? "").IndexOf(flt, StringComparison.OrdinalIgnoreCase) >= 0)
                     .Take(40).Select(e => e.ObjectID + ":" + e.ToString() + " attrs[" + string.Join(",", Enumerable.Range(0, 10).Select(i => e.GetAttribute(i))) + "]"));
+            case "persona":
+                // persona <sim> nice 900 outgoing 100 playful 500 active generous neat: personality points 0-1000 (test aid for videos)
+                var pa = Find(vm, p[1]);
+                for (int i = 2; i + 1 < p.Length; i += 2)
+                {
+                    VMPersonDataVariable pv;
+                    switch (p[i].ToLowerInvariant())
+                    {
+                        case "nice": pv = VMPersonDataVariable.NicePersonality; break;
+                        case "outgoing": pv = VMPersonDataVariable.OutgoingPersonality; break;
+                        case "playful": pv = VMPersonDataVariable.PlayfulPersonality; break;
+                        case "active": pv = VMPersonDataVariable.ActivePersonality; break;
+                        case "generous": pv = VMPersonDataVariable.GenerousPersonality; break;
+                        case "neat": pv = VMPersonDataVariable.NeatPersonality; break;
+                        default: throw new Exception("trait is nice|outgoing|playful|active|generous|neat");
+                    }
+                    pa.SetPersonData(pv, short.Parse(p[i + 1]));
+                }
+                return "ok " + pa.Name + " nice=" + pa.GetPersonData(VMPersonDataVariable.NicePersonality) + " outgoing=" + pa.GetPersonData(VMPersonDataVariable.OutgoingPersonality) + " playful=" + pa.GetPersonData(VMPersonDataVariable.PlayfulPersonality) + " active=" + pa.GetPersonData(VMPersonDataVariable.ActivePersonality) + " generous=" + pa.GetPersonData(VMPersonDataVariable.GenerousPersonality) + " neat=" + pa.GetPersonData(VMPersonDataVariable.NeatPersonality) + " mood=" + pa.GetMotiveData(VMMotive.Mood) + " social=" + pa.GetMotiveData(VMMotive.Social);
+            case "focus":
+            {
+                // focus <sim> [<sim2>]: centre the camera on a Sim (or between two), for filming
+                var fa = Find(vm, p[1]); var fb = p.Length > 2 ? Find(vm, p[2]) : fa;
+                float fx = (fa.Position.TileX + fb.Position.TileX) / 2f + 0.5f, fy = (fa.Position.TileY + fb.Position.TileY) / 2f + 0.5f;
+                vm.Context.World.State.CenterTile = new Microsoft.Xna.Framework.Vector2(fx, fy);
+                return "ok center=" + fx + "," + fy;
+            }
+            case "motives":
+                // motives <sim> <value -100..100>: sets every need to that value (a bad mood for a video)
+                var ma = Find(vm, p[1]);
+                foreach (VMMotive mv in Enum.GetValues(typeof(VMMotive))) { if (mv == VMMotive.Mood) continue; try { ma.SetMotiveData(mv, short.Parse(p[2])); } catch { } }
+                return "ok " + ma.Name + " mood=" + ma.GetMotiveData(VMMotive.Mood);
+            case "setrel":
+                // setrel <from> <to> <short-term> <long-term>: one direction (test aid for videos)
+                var sf = Find(vm, p[1]); var sto = Find(vm, p[2]);
+                var snb = FSO.Content.Content.Get().Neighborhood;
+                var sn = snb.GetNeighborByID(sf.GetPersonData(VMPersonDataVariable.NeighborId));
+                var tid2 = (int)sto.GetPersonData(VMPersonDataVariable.NeighborId);
+                List<short> rv;
+                if (!sn.Relationships.TryGetValue(tid2, out rv) || rv == null) { rv = new List<short> { 0, 0, 0, 0 }; sn.Relationships[tid2] = rv; }
+                while (rv.Count < 4) rv.Add(0);
+                rv[0] = short.Parse(p[3]); rv[2] = short.Parse(p[4]);
+                return "ok " + One(sf, sto);
             case "attr":
                 // attr <objectId> <index> [value]: read or write an object attribute
                 var eo = vm.GetObjectById(short.Parse(p[1]));

@@ -176,6 +176,14 @@ namespace Simitone.Conversations
                         foreach (var n in GossipView.NewsOf(book, id, Today(vm))) lines.Add(book.NameOf(id) + ": " + n.Text + " [" + n.Detail + "]");
                     return lines.Count == 0 ? "no news yet (facts=" + book.FactCount + " recorded=" + EventsRecorded + ")" : string.Join(" | ", lines);
                 }
+                case "forget":
+                {
+                    // convo forget [percent]: one game day of fading at a much higher rate (test aid, to see doubt and forgotten details)
+                    uint ppm = (uint)((a.Length > 1 ? double.Parse(a[1]) : 40.0) * 10000);
+                    int changed = 0;
+                    foreach (var id in book.SimIds()) changed += book.Forget(id, (ulong)Environment.TickCount, Today(vm), ppm, ppm);
+                    return "faded " + changed + " details";
+                }
                 case "gossipstatus":
                     return "enabled=" + Boot.GossipEnabled + " facts=" + book.FactCount + " sims=" + book.SimIds().Count + " recorded=" + EventsRecorded + " last=[" + LastEvent + "] today=" + Today(vm);
                 default:

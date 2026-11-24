@@ -174,6 +174,17 @@ namespace Simitone.Conversations
             }
         }
 
+        // test aid: can these two Sims talk right now (both free and in the same room or close together outside)?
+        public static string Near(string aq, string bq)
+        {
+            var vm = lastVm;
+            if (vm == null || !vm.Ready) return "false";
+            var avatars = vm.Entities.OfType<VMAvatar>().ToList();
+            Func<string, VMAvatar> find = q => avatars.FirstOrDefault(a => (a.Name ?? "").IndexOf(q ?? "", StringComparison.OrdinalIgnoreCase) >= 0);
+            var a1 = find(aq); var b1 = find(bq);
+            return (a1 != null && b1 != null && IsEligibleSim(a1) && IsEligibleSim(b1) && SameRoom(vm, a1, b1)) ? "true" : "false";
+        }
+
         public static string ForceTrigger(string speakerQuery, string listenerQuery)
         {
             var vm = lastVm;

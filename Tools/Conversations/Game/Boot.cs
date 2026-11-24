@@ -239,9 +239,11 @@ namespace Simitone.Conversations
                     if (sub == "toggle") { SimMemoryMenu.Toggle(); return SimMemoryMenu.Status(); }
                     return SimMemoryMenu.Open(a.Length > 2 ? string.Join(" ", a.Skip(2)) : null);
                 }
+                case "near": return ParallelSocialDriver.Near(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
-                case "fact": case "news": case "gossipstatus": return GossipDirector.Command(a);
+                case "fact": case "news": case "forget": case "gossipstatus": return GossipDirector.Command(a);
                 case "gossip": GossipEnabled = !(a.Length > 1 && a[1] == "off"); return "gossip=" + GossipEnabled;
+                case "interaction": ParallelSocialPlanner.ForcedInteraction = a.Length > 1 && a[1] != "off" ? a[1] : null; return "forced interaction=" + (ParallelSocialPlanner.ForcedInteraction ?? "none");
                 case "last": return LastDecision;
                 case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
                 default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|trigger A B|last|log");

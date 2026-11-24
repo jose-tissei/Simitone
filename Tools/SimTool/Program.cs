@@ -51,6 +51,7 @@ static class Program
                 case "kill": Kill(); return 0;
                 case "status": return Status();
                 case "shot": return Shot(a.Length > 1 ? a[1] : "shot.png");
+                case "record": { Recorder.Record(Hwnd(), a[1], double.Parse(a[2]), a.Length > 3 ? int.Parse(a[3]) : 30); Console.WriteLine("recorded " + Path.GetFullPath(a[1])); return 0; }
                 case "click": return Real ? ClickReal(a, 1) : HookClick(a, "l");
                 case "rclick": return Real ? ClickReal(a, 2) : HookClick(a, "r");
                 case "move": return Real ? MoveReal(a) : HookMove(a);
@@ -61,7 +62,7 @@ static class Program
                 case "disable": return HookCmds(new[] { "disable" }, false);
                 case "ping": return HookCmds(new[] { "ping" }, false);
                 // game control through the hook (no clicks): see README "Game control"
-                case "sims": case "menu": case "interact": case "rel": case "dialog": case "answer": case "speed": case "global": case "time": case "objs": case "attr": case "convo": case "aa": case "render": case "gotolot": case "families": case "playhouse": case "lotinfo": case "alerts": case "dismiss": case "camera": case "lotname":
+                case "sims": case "menu": case "interact": case "rel": case "dialog": case "answer": case "speed": case "global": case "time": case "objs": case "attr": case "persona": case "setrel": case "motives": case "focus": case "convo": case "aa": case "render": case "gotolot": case "families": case "playhouse": case "lotinfo": case "alerts": case "dismiss": case "camera": case "lotname":
                     return HookQuery(string.Join(" ", a));
                 case "key": return Real ? KeyReal(a[1], a.Length > 2 ? int.Parse(a[2]) : 80) : HookKey(a[1], a.Length > 2 ? int.Parse(a[2]) : 80);
                 case "wait": Thread.Sleep((int)(double.Parse(a[1]) * 1000)); return 0;

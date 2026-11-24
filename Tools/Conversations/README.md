@@ -103,6 +103,9 @@ The design follows Rumor Village (github.com/manuelgscom/rumor-village, MIT): th
     simtool convo force 3            force the outcome (test aid), `force off` to stop
     simtool convo last | log         last decision / log tail
     simtool interact Bob Betty "Talk"
+    simtool convo interaction joke|off   force which kind of chat autonomous Sims pick (when it is possible for that pair); `convo near A B` = can they talk now; `convo forget 60` = a day of fading at 60%
+    simtool persona Bob nice 900 outgoing 100   set personality points (0-1000); no traits = read them;  `setrel A B short long`;  `motives Sim -90`;  `focus A B` (camera)
+    simtool record out.mkv 30 [fps]      record the game window to a video through ffmpeg (works in the background); use .mkv if you may stop it early
 
 ## Known limits
 - Which script variant runs depends on the installed expansions; the hook finds the outcome step by its shape and logs

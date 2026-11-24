@@ -72,6 +72,9 @@ namespace Simitone.Conversations
             return Math.Sqrt(dx * dx + dy * dy) <= MaxOutdoorTileDistance;
         }
 
+        // test aid (simtool convo interaction joke): make every autonomous chat use this interaction when it is possible
+        public static string ForcedInteraction;
+
         public static ParallelSocialPlan Plan(RawSim speaker, RawSim listener, LayaClient laya, DialogueBank bank, AiSubjectBank subjects, SocialMemory memory, Random rng, GossipBook gossip = null, int today = 0, long tick = 0)
         {
             speaker = speaker ?? new RawSim();
@@ -119,6 +122,8 @@ namespace Simitone.Conversations
 
             // 4. Blend Laya scores + SocialIntelligence heuristics + SocialMemory + misjudgment noise
             string chosenInteraction = PickBestInteraction(candidates, layaScores, speaker, listener, assessment, memory, rng);
+            var forced = ForcedInteraction;
+            if (!string.IsNullOrEmpty(forced) && candidates.Contains(forced)) chosenInteraction = forced;
 
             if (chosenInteraction == "gossip")
             {
