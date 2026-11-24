@@ -1350,7 +1350,7 @@ namespace Simitone.Conversations
                 if (uniform != null)
                 {
                     av.Avatar.Body = uniform;
-                    av.Avatar.Handgroup = uniform;
+                    av.Avatar.Handgroup = homeOfficerHands ?? uniform;
                 }
                 else if (homeOfficerBody != null)
                 {

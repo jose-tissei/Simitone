@@ -331,5 +331,91 @@ namespace Simitone.Conversations.Tests
             Assert.InRange(outT.Y, 14.99f, 15.01f);
             Assert.InRange(blender.ActiveClipTime, (5f / 30f) - 1e-4f, (5f / 30f) + 1e-4f);
         }
+
+        [Fact]
+        public void ExportedPatrolClips_AllFourLoadWithNonCrossingAnatomicalArms()
+        {
+            string[] names =
+            {
+                "patrol_sneak_loop",
+                "patrol_apprehend",
+                "patrol_write_ticket",
+                "patrol_inspect_clue"
+            };
+            string toolsDir = System.IO.Path.GetFullPath(System.IO.Path.Combine(
+                AppContext.BaseDirectory, "..", "..", "..", ".."));
+            string animDir = System.IO.Path.Combine(toolsDir, "Conversations", "Assets", "Animations");
+            string skelRefPath = System.IO.Path.Combine(toolsDir, "AnimPipeline", "adult_skel_ref.json");
+            Assert.True(System.IO.File.Exists(skelRefPath), "Expected adult_skel_ref.json: " + skelRefPath);
+
+            // Parse rest bone hierarchy (name, parent, localTranslation, localRotation)
+            var doc = System.Text.Json.JsonDocument.Parse(System.IO.File.ReadAllText(skelRefPath));
+            var bones = new System.Collections.Generic.List<(string Name, string Parent, AnimVec3 T, AnimQuat R)>();
+            foreach (var b in doc.RootElement.GetProperty("bones").EnumerateArray())
+            {
+                var lt = b.GetProperty("localTranslation");
+                var lr = b.GetProperty("localRotation");
+                bones.Add((
+                    b.GetProperty("name").GetString(),
+                    b.GetProperty("parent").GetString(),
+                    new AnimVec3(lt[0].GetSingle(), lt[1].GetSingle(), lt[2].GetSingle()),
+                    new AnimQuat(lr[0].GetSingle(), lr[1].GetSingle(), lr[2].GetSingle(), lr[3].GetSingle())
+                ));
+            }
+
+            foreach (var clipName in names)
+            {
+                string path = System.IO.Path.Combine(animDir, clipName + ".simanim.json");
+                string err;
+                var clip = CustomAnimLoader.LoadFromFile(path, out err);
+                Assert.Null(err);
+                Assert.NotNull(clip);
+                Assert.Equal(29, clip.Tracks.Count);
+
+                var byBone = new System.Collections.Generic.Dictionary<string, CustomBoneTrack>(StringComparer.OrdinalIgnoreCase);
+                foreach (var tr in clip.Tracks) byBone[tr.Bone] = tr;
+
+                for (int fi = 0; fi < clip.FrameCount; fi++)
+                {
+                    var wPos = new System.Collections.Generic.Dictionary<string, AnimVec3>();
+                    var wRot = new System.Collections.Generic.Dictionary<string, AnimQuat>();
+                    foreach (var b in bones)
+                    {
+                        CustomBoneTrack tr;
+                        byBone.TryGetValue(b.Name, out tr);
+                        AnimVec3 lt = (tr != null && tr.Translations != null && fi < tr.Translations.Length) ? tr.Translations[fi] : b.T;
+                        AnimQuat lr = (tr != null && tr.Rotations != null && fi < tr.Rotations.Length) ? tr.Rotations[fi] : b.R;
+                        if (b.Parent == "NULL")
+                        {
+                            wPos[b.Name] = lt;
+                            wRot[b.Name] = lr;
+                        }
+                        else
+                        {
+                            wPos[b.Name] = wPos[b.Parent] + wRot[b.Parent].Rotate(lt);
+                            wRot[b.Name] = (wRot[b.Parent] * lr).Normalized();
+                        }
+                    }
+
+                    // +X = Sim Left, -X = Sim Right in MonoGame RH adult.skel
+                    AssertArmAnatomical(clipName, fi, "L", +1f, wPos["L_ARM1"], wPos["L_ARM2"], wPos["L_HAND"]);
+                    AssertArmAnatomical(clipName, fi, "R", -1f, wPos["R_ARM1"], wPos["R_ARM2"], wPos["R_HAND"]);
+                }
+            }
+        }
+
+        static void AssertArmAnatomical(string clip, int frame, string side, float sign, AnimVec3 sh, AnimVec3 el, AnimVec3 hd)
+        {
+            Assert.True(sign * (el.X - sh.X) >= -0.18f,
+                $"{clip} f={frame} {side} elbow crossed inward past shoulder: sh.X={sh.X:F2}, el.X={el.X:F2}");
+            Assert.True(sign * hd.X >= -0.22f,
+                $"{clip} f={frame} {side} hand crossed opposite flank: hd.X={hd.X:F2}");
+
+            var u = (el - sh).Normalized();
+            var l = (hd - el).Normalized();
+            float dot = Math.Max(-1f, Math.Min(1f, AnimVec3.Dot(u, l)));
+            float bendDeg = (float)(Math.Acos(dot) * 180.0 / Math.PI);
+            Assert.InRange(bendDeg, 22f, 135f);
+        }
     }
 }

@@ -300,8 +300,14 @@ namespace Simitone.Conversations
                 else if (key == "point" || key == "pointing") g = SimHandGesture.Pointing;
                 else g = SimHandGesture.Idle;
 
-                if (isLeft) avatar.LeftHandGesture = g;
-                else avatar.RightHandGesture = g;
+                if (isLeft)
+                {
+                    if (avatar.LeftHandGesture != g) avatar.LeftHandGesture = g;
+                }
+                else
+                {
+                    if (avatar.RightHandGesture != g) avatar.RightHandGesture = g;
+                }
             }
             catch { }
         }
