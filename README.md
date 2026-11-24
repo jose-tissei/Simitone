@@ -161,19 +161,19 @@ Sit behind the real **SimCity PD Precinct Front Desk** built on a live Sims 1 lo
 - **Click the Walk-In Sim -> Paper Forms Clipboard Modal:** When a real neighborhood citizen walks up to the front desk, click them (via pulsing world marker or native Pie Menu) to open the **Precinct Paper Forms Clipboard** with a cream citizen intake slip and **4 physical color-coded stamped Referral Forms** (`FORM 10-A | Patrol Division`, `FORM 22-F | Fire Marshal`, `FORM 07-C | Community Aid`, `FORM 00-X | No-Action Slip`) — stamp & hand over the right form so the citizen heads straight to that department!
 - **Logic & Charisma Skill Depth:** **Logic ≥ 2** unlocks dispatch audio & visual tells (exposing pranks and confirming real threats); **Charisma** stretches call urgency timers and grants **`[C] Calm / Reassure (+6s)`** charges. Returning home writes real TS1 Simoleons, Job Performance, Logic/Charisma XP, relationship deltas, and **Sim Memory** dossier entries.
 - **7 Custom Blender Seated Desk & Walk-In Animations & 17 Procedural Precinct SFX:** `desk_idle_watch`, `desk_answer_phone`, `desk_radio_dispatch`, `desk_wave_dismiss`, `desk_seated_salute`, `desk_walkin_walk`, and `desk_walkin_plead` paired with `DispatchAudioSynth` (precinct ambience, twin-bell 911 phone ring, handset pickup, rubber paper-form stamp & rustle, front-door brass chime, footsteps, radio squelch + cruiser/fire-engine rollout sirens, calm-caller chime, hang-up click, and shift fanfare).
-- **Gameplay Video (HD with Synced Precinct Audio):** [Watch Lvl 4 — Desk Sergeant 911 Triage Demo (MP4)](docs/career-minigames/media/lvl4-desk-sergeant-triage-demo.mp4)
+- **Gameplay Videos (HD with Synced Precinct Audio — 3D & 2D Isometric):** [Watch 3D Mode Demo (MP4)](docs/career-minigames/media/lvl4-desk-sergeant-triage-demo.mp4) · [Watch 2D Isometric Mode Demo (MP4)](docs/career-minigames/media/lvl4-desk-sergeant-triage-2d-demo.mp4)
 
-| Real-Asset Precinct Front Desk & Shift Briefing | Click Desk Phone -> 911 Switchboard Modal |
+| 3D Mode — Precinct Desk, Slotted Computer & Desk Phone | 2D Isometric Mode — Precinct Desk, Computer & Phone |
 | :---: | :---: |
-| ![Desk Sergeant Briefing](docs/career-minigames/media/17-lvl4-triage-briefing.jpg) | ![Desk Sergeant 911 Phone Switchboard Modal](docs/career-minigames/media/18-lvl4-triage-phone.jpg) |
+| ![Desk Sergeant 3D Clear Desk](docs/career-minigames/media/17-lvl4-triage-briefing.jpg) | ![Desk Sergeant 2D Clear Desk](docs/career-minigames/media/22-lvl4-triage-clear-desk-2d.jpg) |
 
-| Real Walk-In Citizen & Ringing Phone Markers | Click Citizen -> Stamped Paper Forms Clipboard |
+| Click Desk Phone -> 911 Switchboard Modal | Real Walk-In Citizen at Precinct Desk |
 | :---: | :---: |
-| ![Desk Sergeant Real Walk-In Citizen](docs/career-minigames/media/19-lvl4-triage-walkin.jpg) | ![Desk Sergeant Paper Forms Clipboard Modal](docs/career-minigames/media/20-lvl4-triage-paperforms.jpg) |
+| ![Desk Sergeant 911 Phone Switchboard Modal](docs/career-minigames/media/18-lvl4-triage-phone.jpg) | ![Desk Sergeant Real Walk-In Citizen](docs/career-minigames/media/19-lvl4-triage-walkin.jpg) |
 
-| S-Rank Shift Report & Return Home Rewards |
-| :---: |
-| ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/21-lvl4-triage-scorecard.jpg) |
+| Click Citizen -> Stamped Paper Forms Clipboard | S-Rank Shift Report & Return Home Rewards |
+| :---: | :---: |
+| ![Desk Sergeant Paper Forms Clipboard Modal](docs/career-minigames/media/20-lvl4-triage-paperforms.jpg) | ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/21-lvl4-triage-scorecard.jpg) |
 
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
 > - `convo dispatch toast <SimName> [cadet|patrol|triage]` — trigger the mid-shift Radio Dispatch toast

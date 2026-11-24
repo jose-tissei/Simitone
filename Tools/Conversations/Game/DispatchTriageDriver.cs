@@ -742,7 +742,46 @@ namespace Simitone.Conversations
             {
                 return RequestReturnHome(false);
             }
+            if (c == "diag")
+            {
+                return BuildSceneDiag();
+            }
             return "err unknown triage action: " + c;
+        }
+
+        static string BuildSceneDiag()
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.Append("ok mode3d=").Append(FSOEnvironment.Enable3D);
+            var list = new List<VMEntity>(precinctProps);
+            if (sergeantAvatar != null) list.Add(sergeantAvatar);
+            if (walkInAvatar != null) list.Add(walkInAvatar);
+            for (int i = 0; i < list.Count; i++)
+            {
+                var e = list[i];
+                if (e == null || e.Dead) continue;
+                var ui = e.WorldUI;
+                var scr = GetEntityScreenPos(e, 0f);
+                sb.Append(" | ").Append(SafeObjName(e))
+                  .Append("(id=").Append(e.ObjectID)
+                  .Append(" pos=").Append(e.Position.TileX).Append(",").Append(e.Position.TileY).Append(",L").Append(e.Position.Level)
+                  .Append(" dir=").Append(e.Direction)
+                  .Append(" cont=").Append(e.Container != null ? e.Container.ObjectID.ToString() : "none")
+                  .Append(" slot=").Append(e.ContainerSlot);
+                if (ui != null)
+                {
+                    sb.Append(" uiPos=").Append(ui.Position.X.ToString("0.0", CultureInfo.InvariantCulture))
+                      .Append(",").Append(ui.Position.Y.ToString("0.0", CultureInfo.InvariantCulture))
+                      .Append(",").Append(ui.Position.Z.ToString("0.0", CultureInfo.InvariantCulture))
+                      .Append(" uiL=").Append(ui.Level)
+                      .Append(" uiCont=").Append(ui.Container != null ? "Y" : "N")
+                      .Append(" uiSlot=").Append(ui.ContainerSlot);
+                }
+                if (scr.HasValue)
+                    sb.Append(" scr=").Append((int)scr.Value.X).Append(",").Append((int)scr.Value.Y);
+                sb.Append(")");
+            }
+            return sb.ToString();
         }
 
         // ---- Real-Lot Precinct Setup (100% Real Sims 1 Game Assets!) ----
@@ -864,13 +903,13 @@ namespace Simitone.Conversations
                 // if it's a 1-tile Desk, spawn a matching second desk right beside it so BOTH Computer & Phone sit on top!
                 VMEntity mainDesk = null;
                 VMEntity phoneDesk = null;
+                VMMultitileGroup deskGrp = null;
                 if (deskGuid != 0)
                 {
                     var deskPos = new LotTilePos((short)(deskCenterX * 16), (short)(deskY * 16), 1);
-                    var deskGrp = vm.Context.CreateObjectInstance(deskGuid, deskPos, Direction.NORTH);
+                    deskGrp = vm.Context.CreateObjectInstance(deskGuid, deskPos, Direction.NORTH);
                     if (deskGrp != null && deskGrp.Objects != null && deskGrp.Objects.Count > 0)
                     {
-                        FreezeGroup(deskGrp, pauseThread: true);
                         for (int i = 0; i < deskGrp.Objects.Count; i++)
                             precinctProps.Add(deskGrp.Objects[i]);
 
@@ -898,38 +937,30 @@ namespace Simitone.Conversations
                 centerCounterEntity = phoneDesk ?? mainDesk;
                 if (mainDesk != null) spawnedLog.Add("Desk=" + SafeObjName(mainDesk));
 
-                // Place REAL TS1 Computer directly ON TOP of Sgt. Bob's Main Office Desk!
+                // Place REAL TS1 Computer directly ON TOP of Sgt. Bob's Main Office Desk (Buy-Mode surface placement!)
                 if (computerGuid != 0 && mainDesk != null)
                 {
-                    var comp = SpawnPrecinctProp(vm, computerGuid, seatX, deskY + 1, Direction.NORTH);
+                    string mode;
+                    var comp = SpawnOnSurface(vm, computerGuid, mainDesk, Direction.NORTH, out mode);
                     if (comp != null)
-                    {
-                        bool slotted = false;
-                        try { slotted = mainDesk.PlaceInSlot(comp, 0, true, vm.Context); } catch { }
-                        if (!slotted)
-                        {
-                            try { comp.SetPosition(new LotTilePos((short)(seatX * 16), (short)(deskY * 16), 1), Direction.NORTH, vm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
-                        }
-                        spawnedLog.Add("PC=" + SafeObjName(comp) + (slotted ? "(slotted)" : "(placed)"));
-                    }
+                        spawnedLog.Add("PC=" + SafeObjName(comp) + "(" + mode + ")");
                 }
 
-                // Place REAL TS1 Desk Telephone directly ON TOP of the Phone Desk surface!
+                // Place REAL TS1 Desk Telephone directly ON TOP of the Phone Desk surface (Buy-Mode surface placement!)
                 if (phoneGuid != 0)
                 {
                     VMEntity phoneSurface = phoneDesk ?? mainDesk;
-                    deskPhoneEntity = SpawnPrecinctProp(vm, phoneGuid, phoneDeskX, phoneDeskY + 1, Direction.SOUTH);
-                    if (deskPhoneEntity != null && phoneSurface != null)
+                    if (phoneSurface != null)
                     {
-                        bool slotted = false;
-                        try { slotted = phoneSurface.PlaceInSlot(deskPhoneEntity, 0, true, vm.Context); } catch { }
-                        if (!slotted)
-                        {
-                            try { deskPhoneEntity.SetPosition(new LotTilePos((short)(phoneDeskX * 16), (short)(phoneDeskY * 16), 1), Direction.SOUTH, vm.Context, VMPlaceRequestFlags.AcceptSlots); } catch { }
-                        }
-                        spawnedLog.Add("Phone=" + SafeObjName(deskPhoneEntity) + (slotted ? "(slotted)" : "(placed)"));
+                        string mode;
+                        deskPhoneEntity = SpawnOnSurface(vm, phoneGuid, phoneSurface, Direction.NORTH, out mode);
+                        if (deskPhoneEntity != null)
+                            spawnedLog.Add("Phone=" + SafeObjName(deskPhoneEntity) + "(" + mode + ")");
                     }
                 }
+
+                // Freeze desk group AFTER tabletop items have been cleanly slotted into it
+                if (deskGrp != null) FreezeGroup(deskGrp, pauseThread: true);
 
                 // Place Sgt. Bob's REAL TS1 Office Chair directly behind the Computer Desk (facing SOUTH toward the desk)!
                 if (chairGuid != 0)
@@ -949,14 +980,9 @@ namespace Simitone.Conversations
                     var sideTbl = SpawnPrecinctProp(vm, endTableGuid, roomMinX + 1, roomMinY + 3, Direction.EAST);
                     if (sideTbl != null)
                     {
-                        var lamp = SpawnPrecinctProp(vm, lampGuid, roomMinX + 2, roomMinY + 3, Direction.SOUTH);
-                        if (lamp != null)
-                        {
-                            bool slotted = false;
-                            try { slotted = sideTbl.PlaceInSlot(lamp, 0, true, vm.Context); } catch { }
-                            if (!slotted) { try { lamp.Delete(true, vm.Context); } catch { } }
-                            else spawnedLog.Add("Lamp=" + SafeObjName(lamp));
-                        }
+                        string lampMode;
+                        var lamp = SpawnOnSurface(vm, lampGuid, sideTbl, Direction.SOUTH, out lampMode);
+                        if (lamp != null) spawnedLog.Add("Lamp=" + SafeObjName(lamp) + "(" + lampMode + ")");
                     }
                 }
 
@@ -976,9 +1002,13 @@ namespace Simitone.Conversations
                 spawnedAssetsSummary = string.Join(", ", spawnedLog);
 
                 // 5. Spawn Sgt. Bob SEATED in his Office Chair behind the Escrivaninha Desk in authentic Desk Sergeant uniform!
-                var sgtTile = new LotTilePos((short)(seatX * 16), (short)(seatY * 16), 1);
-                sergeantStandTile = new Vector2(seatX + 0.50f, seatY + 0.48f);
-                sergeantFacingYaw = (float)Math.PI; // Facing SOUTH across the escrivaninha toward the computer, phone & citizens!
+                // Note: In FreeSO/Simitone, ObjectComponent at tile (tx, ty) has WorldUI center (tx - 0.5, ty - 0.5),
+                // whereas VMAvatar.VisualPosition maps directly to AvatarComponent.Position!
+                // Spawn on the adjacent open Level-1 tile (seatX - 1, seatY) so Bob gets real Level-1 indoor lighting (uiL=1),
+                // then seat VisualPosition dead-center on Chair - Office Chair (seatX - 0.50, seatY - 0.52)!
+                var sgtTile = new LotTilePos((short)((seatX - 1) * 16), (short)(seatY * 16), 1);
+                sergeantStandTile = new Vector2(seatX - 0.50f, seatY - 0.52f);
+                sergeantFacingYaw = (float)Math.PI; // Facing SOUTH across Desk Part A & Computer toward citizens!
                 sergeantAvatar = SpawnAndDressSergeant(vm, sgtTile);
                 if (sergeantAvatar != null)
                 {
@@ -990,12 +1020,10 @@ namespace Simitone.Conversations
                     SelectActiveAvatar(sergeantAvatar);
                 }
 
-                // Key walk-in choreography tiles:
-                // Citizens enter from the front walkway, walk straight up to the front of the Sergeant's escrivaninha,
-                // and after receiving their stamped Paper Form walk right toward the department corridor & exit!
-                walkInEntryTile = new Vector2(seatX + 0.5f, roomMinY + roomH + 1.2f);
-                walkInCounterTile = new Vector2(seatX + 0.5f, deskY + 1.38f);
-                walkInDeptExitTile = new Vector2(roomMinX + roomW + 0.8f, deskY + 2.5f);
+                // Key walk-in choreography tiles (in exact WorldUI space matching Desk Part A/B center at (seatX, deskY - 0.5)):
+                walkInEntryTile = new Vector2(seatX + 0.0f, roomMinY + roomH + 0.3f);
+                walkInCounterTile = new Vector2(seatX + 0.0f, deskY + 0.65f);
+                walkInDeptExitTile = new Vector2(roomMinX + roomW - 0.2f, deskY + 1.5f);
 
                 // 6. Create pure-C# DispatchTriageGame with verified textured neighborhood callers!
                 var callers = CollectVerifiedNeighborhoodCallers(content);
@@ -1007,9 +1035,8 @@ namespace Simitone.Conversations
                     seed: triageSeed,
                     startInBriefing: true);
 
-                // 7. Frame Simitone's real camera tightly on the Precinct Front Desk (works in 3D AND 2D!)
-                var camFocus = new LotTilePos((short)(deskCenterX * 16), (short)((deskY + 1) * 16), 1);
-                FocusCameraOnTile(camFocus, WorldZoom.Near, zoom3D: 2.15f);
+                // 7. Frame Simitone's real camera tightly & dead-center on the Escrivaninha Desk + Computer + Phone + Seated Sgt!
+                FocusCameraOnWorldPoint(new Vector2(seatX + 0.0f, deskY - 0.25f), WorldZoom.Near, zoom3D: 1.95f);
 
                 // 8. Activate live Precinct HUD & procedural precinct ambience!
                 phase = TriagePhase.Active;
@@ -1554,6 +1581,72 @@ namespace Simitone.Conversations
             catch { return null; }
         }
 
+        static VMEntity SpawnOnSurface(VM vm, uint guid, VMEntity surface, Direction dir, out string mode)
+        {
+            mode = "failed";
+            if (vm == null || guid == 0 || surface == null || surface.Position == LotTilePos.OUT_OF_WORLD)
+                return null;
+            try
+            {
+                var surfPos = surface.Position;
+                // Official TS1 Buy-Mode surface placement: spawn directly on the surface tile so SetPosition
+                // resolves the tabletop containment slot and initializes WorldUI, Level, Container, and 3D meshes!
+                var grp = vm.Context.CreateObjectInstance(guid, surfPos, dir);
+                if (grp == null || grp.Objects == null || grp.Objects.Count == 0) return null;
+                var lead = grp.BaseObject ?? grp.Objects[0];
+
+                if (lead.Container != null && lead.Position != LotTilePos.OUT_OF_WORLD)
+                {
+                    mode = "buy-slot" + lead.ContainerSlot;
+                }
+                else
+                {
+                    var res = lead.SetPosition(surfPos, dir, vm.Context, VMPlaceRequestFlags.AcceptSlots);
+                    if (lead.Container != null && lead.Position != LotTilePos.OUT_OF_WORLD)
+                    {
+                        mode = "accept-slot" + lead.ContainerSlot;
+                    }
+                    else
+                    {
+                        bool placed = false;
+                        try { placed = surface.PlaceInSlot(lead, 0, true, vm.Context); } catch { }
+                        if (!placed)
+                            try { placed = surface.PlaceInSlot(lead, 1, true, vm.Context); } catch { }
+                        if (placed)
+                        {
+                            try
+                            {
+                                lead.Direction = dir;
+                                if (lead.WorldUI != null && surface.WorldUI != null)
+                                {
+                                    lead.WorldUI.Level = surface.WorldUI.Level;
+                                    lead.WorldUI.Container = surface.WorldUI;
+                                    lead.WorldUI.ContainerSlot = lead.ContainerSlot;
+                                    lead.WorldUI.Direction = dir;
+                                }
+                            }
+                            catch { }
+                            mode = "manual-slot" + lead.ContainerSlot;
+                        }
+                        else
+                        {
+                            mode = "err:" + res.Status;
+                        }
+                    }
+                }
+
+                FreezeGroup(grp, pauseThread: true);
+                for (int i = 0; i < grp.Objects.Count; i++)
+                    precinctProps.Add(grp.Objects[i]);
+                return lead;
+            }
+            catch (Exception e)
+            {
+                mode = "ex:" + e.GetType().Name;
+                return null;
+            }
+        }
+
         static void BuildPrecinctArchitecture(
             VM vm,
             int minX, int minY, int w, int h,
@@ -2001,13 +2094,13 @@ namespace Simitone.Conversations
             return null;
         }
 
-        static void FocusCameraOnTile(LotTilePos tile, WorldZoom zoom2D, float zoom3D)
+        static void FocusCameraOnWorldPoint(Vector2 worldCenter, WorldZoom zoom2D, float zoom3D)
         {
             try
             {
                 var world = precinctVm?.Context?.World;
                 if (world == null || world.State == null) return;
-                world.State.CenterTile = new Vector2(tile.TileX + 0.5f, tile.TileY + 0.5f);
+                world.State.CenterTile = worldCenter;
                 world.State.ScrollAnchor = null;
                 world.State.BuildMode = 0;
                 world.State.Zoom = zoom2D;
