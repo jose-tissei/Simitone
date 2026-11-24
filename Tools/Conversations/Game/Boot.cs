@@ -148,6 +148,7 @@ namespace Simitone.Conversations
         {
             try { ParallelSocialDriver.OnTick(vm); }
             catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
+            PieOverlay.Ensure();
         }
 
         public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
@@ -252,6 +253,7 @@ namespace Simitone.Conversations
                 case "trigger": return ParallelSocialDriver.ForceTrigger(a.Length > 1 ? a[1] : null, a.Length > 2 ? a[2] : null);
                 case "fact": case "news": case "forget": case "gossipstatus": return GossipDirector.Command(a);
                 case "gossip": GossipEnabled = !(a.Length > 1 && a[1] == "off"); return "gossip=" + GossipEnabled;
+                case "pie": if (a.Length > 1) PieOverlay.Enabled = a[1] != "native"; return "pie=" + (PieOverlay.Enabled ? "new" : "native") + " state=" + PieOverlay.LastState;
                 case "theme": if (a.Length > 1) Theme = a[1]; return "theme=" + Theme;
                 case "options":
                     if (a.Length > 1 && a[1] == "close") return SimsOptionsMenu.Close();

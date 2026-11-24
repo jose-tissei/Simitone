@@ -12,7 +12,7 @@ Made with Claude Design, imported 2026-11-24.
 
 ## How it is built here
 
-The guide proposes a JSON layout read by a C# loader. We use the HTML + CSS engine from `Tools/HtmlUi` instead (see its README): pages are `Tools/HtmlUi/ui/<screen>.html` with `sims-ui.css`, colours come from the tokens as `var(--name)`, data is filled in with a small template (`Template.cs`), and the C# window only supplies data and handles `data-action` clicks. Done so far: **Sim Memory** (Dossier and News), `Tools/Conversations/Game/SimMemoryMenu.cs` + `Logic/SimMemoryPageData.cs`. Everything else in the screen map is still to do.
+The guide proposes a JSON layout read by a C# loader. We use the HTML + CSS engine from `Tools/HtmlUi` instead (see its README): pages are `Tools/HtmlUi/ui/<screen>.html` with `sims-ui.css`, colours come from the tokens as `var(--name)`, data is filled in with a small template (`Template.cs`), and the C# window only supplies data and handles `data-action` clicks. Done so far: **Sim Memory** (Dossier and News), `Tools/Conversations/Game/SimMemoryMenu.cs` + `Logic/SimMemoryPageData.cs`. Also done: speech balloons (`Game/ConvoOverlay.cs`), the Options "Sims AI" page (`ui/sims_options.html`, `Game/SimsOptionsMenu.cs`, `simtool convo options`), and the pie menu (`Game/PieOverlay.cs`: draws the design's slots over the game's own pie, which keeps handling clicks; `simtool convo pie native|new`). Still to do: Talk sheet with free text, Options button entry, Buy/Build flyout, Hood rails, HUD overlays.
 
 ## Checking a component
 

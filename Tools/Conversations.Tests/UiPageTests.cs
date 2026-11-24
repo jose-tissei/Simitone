@@ -144,6 +144,34 @@ namespace Conversations.Tests
             Assert.Contains(">Off<", html); Assert.Contains(">On<", html);
         }
 
+        [Fact]
+        public void PieStyle_IconsLabelsAndSlotWidth()
+        {
+            Assert.Equal("book", PieStyle.IconFor("Study Cooking"));
+            Assert.Equal("chat", PieStyle.IconFor("Talk..."));
+            Assert.Equal("kiss", PieStyle.IconFor("Romance/Kiss"));
+            Assert.Equal("right", PieStyle.IconFor("Go Here"));
+            Assert.Equal("hand", PieStyle.IconFor("Zzz unknown"));
+            Assert.Equal("hand", PieStyle.IconFor(""));
+            Assert.True(PieStyle.IsSubmenu("Romance...")); Assert.False(PieStyle.IsSubmenu("Hug"));
+            Assert.Equal("Romance", PieStyle.CleanLabel("Romance..."));
+            Assert.Equal("Polite", PieStyle.ShortLabel("Kiss - Polite"));
+            Assert.Equal("Back Rub", PieStyle.ShortLabel("Flirt - Back Rub"));
+            Assert.Equal("Talk", PieStyle.ShortLabel("Talk..."));
+            Assert.Equal("Go Here", PieStyle.ShortLabel("Go Here"));
+            // never narrower than the native button it hides, and a submenu marker adds room
+            Assert.Equal(108f, PieStyle.SlotWidth(10, 20, 100, false));
+            Assert.True(PieStyle.SlotWidth(80, 20, 50, true) > PieStyle.SlotWidth(80, 20, 50, false));
+        }
+
+        [Fact]
+        public void PieStyle_EveryIconNameExistsInTheDesignSheet()
+        {
+            var order = Newtonsoft.Json.Linq.JObject.Parse(File.ReadAllText(FindTokens()))["iconSheet"]["order"].Select(t => (string)t).ToList();
+            foreach (var label in new[] { "study", "kiss", "romance", "hug", "cheer", "talk", "joke", "brag", "apolog", "dance", "play", "sleep", "eat", "shower", "toilet", "clean", "read", "call", "gift", "watch", "sit", "chair", "work", "fight", "trash", "sell", "repair", "go here", "light", "computer", "turn", "cancel", "back", "nothing" })
+                Assert.Contains(PieStyle.IconFor(label), order);
+        }
+
         static string FindPage(string name)
         {
             for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)
