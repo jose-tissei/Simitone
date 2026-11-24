@@ -159,7 +159,12 @@ public static class GameControl
                 // playhouse <n>: what choosing "play" on that house in the neighbourhood does (sets the active family, loads the lot with its Sims)
                 var screen = FSO.Client.UI.Framework.UIScreen.Current;
                 var m = screen.GetType().GetMethod("PlayHouse");
-                m.Invoke(screen, new object[] { short.Parse(p[1]), null });
+                // the game's own "play" removes the neighbourhood switcher (the Create-a-Sim and Downtown/Vacation/Studio/Magic buttons) together with the
+                // neighbourhood panel; passing null left those buttons drawn over the lot, which is not what a player ever sees
+                object switcher = null;
+                var kids = typeof(FSO.Client.UI.Framework.UIContainer).GetProperty("Children", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.GetValue(screen) as System.Collections.IEnumerable;
+                if (kids != null) foreach (var k in kids) if (k.GetType().Name == "UINeighbourhoodSwitcher") { switcher = k; break; }
+                m.Invoke(screen, new object[] { short.Parse(p[1]), switcher });
                 return "ok playing house " + p[1];
             }
             case "gotolot":
