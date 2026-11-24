@@ -1,7 +1,7 @@
 # State
 
-**Last Updated:** 2026-11-24T00:40:00-03:00
-**Current Work:** Full-Screen Virtual Pocket Lot (`CadetAcademyOverlay` + `VirtualLotTransition` + Sideline Drill Instructor) — Implemented, tested (299+28), and verified in 16:9 HD video; ready for Milestone 2 Rank 3 (Patrol Officer)
+**Last Updated:** 2026-11-24T09:56:00-03:00
+**Current Work:** Full-Screen Virtual Pocket Lot (`CadetAcademyOverlay` + `VirtualLotTransition` + Sideline Drill Sergeant w/ authentic `c_police.apr`/`c_police` head + 18-cue Police Academy Procedural SFX Engine) — Implemented, tested (303+28), and verified in 16:9 HD video with synced AAC audio; ready for Milestone 2 Rank 3 (Patrol Officer)
 
 ---
 
@@ -72,6 +72,13 @@
 **Problem:** Passing `dt = 0f` whenever `customSeekTime.HasValue` prevented `CustomAnimBlender` from advancing `Weight` from `0 -> 1`, leaving the previous looping clip frozen at 100% weight across the entire vault/shot. Similarly, relying solely on `game.ElapsedSeconds` froze the Victory Salute animation once `game.IsFinished` stopped the game timer.
 **Solution:** Always tick `blender.Tick(dt)` first so crossfade weights converge smoothly, then apply `blender.SetTime(seekTime)` right before bone evaluation (`VitaboyClipPlayer.UpdateAndApply(..., seekTime)`). Use a live `Stopwatch` delta to keep post-completion Victory showcase animations running smoothly.
 **Prevents:** Frozen crossfade deadlocks and static completion screens in all upcoming 3D mini-games.
+
+### L-004: Validate Both `AvatarAppearances` AND `AvatarTextures` for Custom TS1 NPC Heads (2026-11-24)
+
+**Context:** Binding the Sideline Drill Sergeant's head in `CadetAcademySceneRenderer.TryPickInstructorHead`.
+**Problem:** Checking only `content.AvatarAppearances.Get("c_police.apr") != null` succeeded while `TS1TextureID = "policeface"` was missing from `Textures.far` (the real texture is `C_Police.bmp` → `"c_police"`), causing FSO's Vitaboy renderer to draw the entire head solid black.
+**Solution:** Always validate BOTH `content.AvatarAppearances?.Get(apr) != null` AND `content.AvatarTextures?.Get(tex + ".bmp") != null` (or `Get(tex) != null`) before returning any `Outfit`, and surface the resolved head tag in diagnostics (`instrHead=c_police.apr/c_police`).
+**Prevents:** Untextured solid-black NPC heads or bodies across upcoming career shifts (Patrol Officer beat NPCs, SWAT, Detective, etc.).
 
 ---
 

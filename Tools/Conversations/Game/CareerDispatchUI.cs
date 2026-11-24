@@ -399,6 +399,16 @@ namespace Simitone.Conversations
                     var av = ResolveTargetAvatar(arg);
                     return "ok usedToday=" + HasUsedDailyQuota(av, CurrentVM());
                 }
+                case "exportwav":
+                {
+                    if (args.Length < 2 || string.IsNullOrWhiteSpace(args[1]))
+                        return "err usage: convo dispatch exportwav <path> [leadSec] [tailSec]";
+                    float lead = 0f;
+                    float tail = 1.0f;
+                    if (args.Length > 2) float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lead);
+                    if (args.Length > 3) float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out tail);
+                    return CadetAcademyOverlay.ExportLastSessionWav(args[1], lead, tail);
+                }
                 case "close":
                 case "dismiss":
                     CareerDispatchToast.Close();
@@ -406,7 +416,7 @@ namespace Simitone.Conversations
                     CadetAcademyOverlay.Close(false);
                     return "closed";
                 default:
-                    return "usage: convo dispatch status|toast [Sim] [cadet|guard]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|close";
+                    return "usage: convo dispatch status|toast [Sim] [cadet|guard]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|exportwav <path> [leadSec] [tailSec]|close";
             }
         }
 

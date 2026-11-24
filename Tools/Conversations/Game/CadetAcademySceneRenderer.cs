@@ -44,6 +44,7 @@ namespace Simitone.Conversations
         string boundSimKey;
         string boundUniformTag = "none";
         string instructorTag = "none";
+        string instructorHeadTag = "none";
         string lastActiveAnimName = "none";
         string lastAnimSource = "none";
         float lastElapsedSeconds = -1f;
@@ -62,6 +63,11 @@ namespace Simitone.Conversations
         bool initialized;
         bool initFailed;
         bool hasFrame;
+
+        // Animation-phase state read by CadetAcademyOverlay to sync footsteps & hurdle hops
+        public bool IsCadetRunningOnGround { get; private set; }
+        public bool IsCadetHurdleHopping { get; private set; }
+        public float CadetRunSpeedRatio { get; private set; }
 
         // Reusable geometry buffer per frame (zero GC churn after warm-up)
         readonly List<VertexPositionColorNormal> litTris = new List<VertexPositionColorNormal>(8192);
@@ -99,6 +105,7 @@ namespace Simitone.Conversations
                    " res=" + targetW + "x" + targetH +
                    " sim=" + (cadetAvatar != null) +
                    " instr=" + (instructorAvatar != null) +
+                   " instrHead=" + instructorHeadTag +
                    " key=" + (boundSimKey ?? "none") +
                    " uniform=" + boundUniformTag +
                    " source=" + lastAnimSource +
@@ -445,6 +452,11 @@ namespace Simitone.Conversations
                     camera.Position = new Vector3(4.9f, 3.45f, -8.3f);
                     camera.Target = new Vector3(-0.45f, 1.62f, 5.2f);
                 }
+
+                // Publish live animation-phase cues so CadetAcademyOverlay triggers frame-accurate footsteps & hurdle hops
+                IsCadetRunningOnGround = (customClipName == "cadet_sprint_loop" && simPos.Y <= 0.10f);
+                IsCadetHurdleHopping = (customClipName == "cadet_hurdle_hop");
+                CadetRunSpeedRatio = IsCadetRunningOnGround ? Math.Max(0.5f, customSpeed) : 0f;
 
                 // 2. Build all 3D Virtual Police Academy Grounds meshes for this frame
                 litTris.Clear();
@@ -1237,11 +1249,15 @@ namespace Simitone.Conversations
 
                 var instr = new SimAvatar(baseSkel.Clone());
 
-                // 1. Pick a distinct, authentic TS1 adult head for the Drill Instructor (prefer police cap / senior officer,
-                //    then another adult Sim in the current VM, then verified TS1 adult head fallback)
-                Outfit headOutfit = TryPickInstructorHead(content, sourceSim);
+                // 1. Pick a distinct, authentic TS1 adult head for the Drill Instructor (prefer authentic TS1 Police Officer
+                //    head + cap with verified texture, then verified rugged adult male heads, then VM adult Sim)
+                string headTag;
+                Outfit headOutfit = TryPickInstructorHead(content, sourceSim, out headTag);
                 if (headOutfit != null)
+                {
                     instr.Head = headOutfit;
+                    instructorHeadTag = headTag;
+                }
 
                 // 2. Dress the Drill Instructor in an authentic Senior Law Enforcement Officer / Sergeant uniform from work.iff
                 string tag;
@@ -1266,7 +1282,10 @@ namespace Simitone.Conversations
                 }
 
                 if (instr.Head == null)
+                {
                     instr.Head = new Outfit { TS1AppearanceID = "c_pizzaguy.apr", TS1TextureID = "pizzaguyface" };
+                    instructorHeadTag = "c_pizzaguy.apr/pizzaguyface";
+                }
                 if (instr.Handgroup == null)
                     instr.Handgroup = new Outfit { LiteralHandgroup = BuildAdultHands("lgt") };
 
@@ -1274,7 +1293,7 @@ namespace Simitone.Conversations
                     avatarScene.Add(instr);
 
                 instructorAvatar = instr;
-                Boot.Log("cadet3d sideline Drill Instructor ready uniform=" + instructorTag);
+                Boot.Log("cadet3d sideline Drill Instructor ready head=" + instructorHeadTag + " uniform=" + instructorTag);
             }
             catch (Exception e)
             {
@@ -1282,23 +1301,46 @@ namespace Simitone.Conversations
             }
         }
 
-        static Outfit TryPickInstructorHead(Content content, VMAvatar sourceSim)
+        static bool HasAvatarTexture(Content content, string texId)
         {
-            // Try authentic TS1 NPC cop / officer heads first
+            if (content == null || content.AvatarTextures == null || string.IsNullOrEmpty(texId))
+                return false;
+            try
+            {
+                if (content.AvatarTextures.Get(texId + ".bmp") != null) return true;
+            }
+            catch { }
+            try
+            {
+                if (content.AvatarTextures.Get(texId) != null) return true;
+            }
+            catch { }
+            return false;
+        }
+
+        static Outfit TryPickInstructorHead(Content content, VMAvatar sourceSim, out string headTag)
+        {
+            headTag = "none";
+
+            // Try authentic TS1 NPC Police Officer head (c_police.apr + C_Police.bmp) and verified adult male heads.
+            // Always verify BOTH the appearance (.apr) AND the texture (.bmp) exist so the head can never render solid black.
             var candidates = new[]
             {
-                new[] { "c_police.apr", "policeface" },
-                new[] { "c_cop.apr", "copface" },
-                new[] { "c001ma_cop.apr", "c001malgt_cop" },
-                new[] { "c001ma_police.apr", "c001malgt_police" },
+                new[] { "c_police.apr", "c_police" },
+                new[] { "c009ma_beard.apr", "c009malgt_beard01" },
+                new[] { "c010ma_baldbeard.apr", "c010mamed_baldbeard01" },
+                new[] { "c_pizzaguy.apr", "pizzaguyface" },
             };
             for (int i = 0; i < candidates.Length; i++)
             {
                 try
                 {
                     var apr = content.AvatarAppearances?.Get(candidates[i][0]);
-                    if (apr != null)
+                    if (apr != null && HasAvatarTexture(content, candidates[i][1]))
+                    {
+                        headTag = candidates[i][0] + "/" + candidates[i][1];
                         return new Outfit { TS1AppearanceID = candidates[i][0], TS1TextureID = candidates[i][1] };
+                    }
                 }
                 catch { }
             }
@@ -1316,7 +1358,10 @@ namespace Simitone.Conversations
                             continue;
                         if (av.GetPersonData(VMPersonDataVariable.PersonsAge) < 18) continue;
                         if (av.GetPersonData(VMPersonDataVariable.Gender) == 0)
+                        {
+                            headTag = "vm:" + (av.Avatar.Head.TS1AppearanceID ?? "head");
                             return av.Avatar.Head;
+                        }
                     }
                     foreach (var ent in vm.Entities)
                     {
@@ -1324,12 +1369,16 @@ namespace Simitone.Conversations
                         if (av == null || ReferenceEquals(av, sourceSim) || av.Avatar == null || av.Avatar.Head == null)
                             continue;
                         if (av.GetPersonData(VMPersonDataVariable.PersonsAge) >= 18)
+                        {
+                            headTag = "vm:" + (av.Avatar.Head.TS1AppearanceID ?? "head");
                             return av.Avatar.Head;
+                        }
                     }
                 }
             }
             catch { }
 
+            headTag = "fallback:c_pizzaguy.apr/pizzaguyface";
             return new Outfit { TS1AppearanceID = "c_pizzaguy.apr", TS1TextureID = "pizzaguyface" };
         }
 

@@ -30,10 +30,18 @@ namespace Simitone.Conversations
         bool prevLeftDown, prevSpaceDown, prevEnterDown, prevEscDown;
         bool hoverClose, hoverLock, hoverClaim, hoverStart, hoverSkip;
         bool finishSoundPlayed;
+        bool returnChimePlayed;
+        int lastAudioStageIndex = -1;
+        float footstepAccumSec;
+        bool footstepToggle;
+        bool prevHurdleHopping;
+        bool vaultLaunchPlayed;
+        bool vaultImpactPlayed;
+        bool targetImpactPlayed;
 
         readonly CadetAcademySceneRenderer sceneRenderer = new CadetAcademySceneRenderer();
         readonly VirtualLotTransition transition = new VirtualLotTransition();
-        readonly CctvAudioEngine audio = new CctvAudioEngine();
+        readonly CadetAcademyAudioEngine audio = new CadetAcademyAudioEngine();
 
         Rectangle closeRect, timingBarHitRect, lockBtnRect, claimBtnRect, startBtnRect, skipBtnRect;
 
@@ -91,6 +99,14 @@ namespace Simitone.Conversations
                 instance.finalOutcome = null;
                 instance.rewardsApplied = false;
                 instance.finishSoundPlayed = false;
+                instance.returnChimePlayed = false;
+                instance.lastAudioStageIndex = -1;
+                instance.footstepAccumSec = 0f;
+                instance.footstepToggle = false;
+                instance.prevHurdleHopping = false;
+                instance.vaultLaunchPlayed = false;
+                instance.vaultImpactPlayed = false;
+                instance.targetImpactPlayed = false;
                 instance.transition.BeginEnter(
                     "SIMCITY POLICE ACADEMY",
                     "TRAINING GROUNDS  \u2022  VIRTUAL SHIFT LOT (HOME LOT PAUSED)");
@@ -114,7 +130,9 @@ namespace Simitone.Conversations
                 instance.Visible = true;
                 isOpen = true;
 
-                instance.audio.PlayMotionAlert();
+                instance.audio.StartSession();
+                instance.audio.StartAmbience(0.20f);
+                instance.audio.Play(CadetSfxId.ArrivalCue, 0.44f);
                 return "ok " + instance.StatusText();
             }
             catch (Exception e)
@@ -129,8 +147,19 @@ namespace Simitone.Conversations
             return instance.FinalizeClose(applyRewards);
         }
 
+        public static string ExportLastSessionWav(string outputPath, float leadSec = 0f, float tailSec = 1.0f)
+        {
+            if (instance == null) return "err cadet academy never opened";
+            return instance.audio.ExportSessionWav(outputPath, leadSec, tailSec);
+        }
+
         void RequestExit(bool applyRewards, bool immediate = false)
         {
+            if (!returnChimePlayed)
+            {
+                returnChimePlayed = true;
+                audio.Play(CadetSfxId.ReturnChime, 0.40f);
+            }
             if (immediate)
             {
                 FinalizeClose(applyRewards);
@@ -142,6 +171,8 @@ namespace Simitone.Conversations
 
         string FinalizeClose(bool applyRewards)
         {
+            audio.EndSession();
+
             string rewardSummary = "";
             if (applyRewards && game != null && game.IsFinished && !rewardsApplied)
             {
@@ -172,7 +203,7 @@ namespace Simitone.Conversations
         string StatusText()
         {
             if (game == null) return "idle";
-            string phaseTag = " phase=" + transition.Phase;
+            string phaseTag = " phase=" + transition.Phase + " sfx=" + audio.SessionEventCount;
             if (game.IsFinished)
             {
                 var o = finalOutcome ?? game.ComputeOutcome();
@@ -255,16 +286,150 @@ namespace Simitone.Conversations
         {
             if (game == null || !game.IsBriefing) return;
             if (game.BeginDrill())
-                audio.PlayAllClear();
+            {
+                lastAudioStageIndex = game.CurrentStageIndex;
+                footstepAccumSec = 0f;
+                prevHurdleHopping = false;
+                audio.Play(CadetSfxId.Whistle, 0.42f);
+            }
         }
 
         void TriggerLock()
         {
             if (game == null || game.IsBriefing || game.IsFinished || game.IsResolvingStage) return;
+            var stage = game.ActiveStage;
+            var kind = stage != null ? stage.Kind : CadetDrillStageKind.Sprint;
             var rating = game.LockIn();
-            if (rating == CadetHitRating.Perfect) audio.PlayFeedback(true);
-            else if (rating == CadetHitRating.Good) audio.PlayAllClear();
-            else if (rating == CadetHitRating.Miss) audio.PlayFeedback(false);
+            if (rating == CadetHitRating.None) return;
+
+            vaultLaunchPlayed = false;
+            vaultImpactPlayed = false;
+            targetImpactPlayed = false;
+
+            if (kind == CadetDrillStageKind.Sprint)
+            {
+                if (rating == CadetHitRating.Perfect)
+                    audio.Play(CadetSfxId.PerfectSting, 0.46f);
+                else if (rating == CadetHitRating.Good)
+                    audio.Play(CadetSfxId.GoodSting, 0.42f);
+                else
+                {
+                    audio.Play(CadetSfxId.VaultLand, 0.34f, -0.15f);
+                    audio.Play(CadetSfxId.MissBuzzer, 0.40f);
+                }
+            }
+            else if (kind == CadetDrillStageKind.TargetDrill)
+            {
+                // Immediate tactical firing-range shot crack; steel bullseye clang / graze / sand puff
+                // fires ~90ms later as the projectile strikes downrange!
+                audio.Play(CadetSfxId.RangeShot, 0.54f);
+            }
+        }
+
+        void UpdateStageAndAnimationAudio(float dt)
+        {
+            if (game == null) return;
+
+            if (!game.IsBriefing && !game.IsFinished)
+            {
+                // Stage transition Drill Sergeant whistle
+                if (game.CurrentStageIndex != lastAudioStageIndex)
+                {
+                    if (lastAudioStageIndex >= 0)
+                        audio.Play(CadetSfxId.Whistle, 0.38f, 0.03f * game.CurrentStageIndex);
+                    lastAudioStageIndex = game.CurrentStageIndex;
+                    footstepAccumSec = 0f;
+                    prevHurdleHopping = false;
+                    vaultLaunchPlayed = false;
+                    vaultImpactPlayed = false;
+                    targetImpactPlayed = false;
+                }
+
+                // Frame-synced hurdle hop whoosh on rising edge of 3D hurdle jump
+                bool hoppingNow = sceneRenderer.IsCadetHurdleHopping;
+                if (hoppingNow && !prevHurdleHopping)
+                    audio.Play(CadetSfxId.HurdleHop, 0.36f);
+                prevHurdleHopping = hoppingNow;
+
+                // Frame-synced terracotta track footsteps scaled by actual 3D run cadence
+                if (sceneRenderer.IsCadetRunningOnGround)
+                {
+                    float speedRatio = Math.Max(0.65f, sceneRenderer.CadetRunSpeedRatio);
+                    float stepInterval = 0.27f / speedRatio;
+                    footstepAccumSec += dt;
+                    if (footstepAccumSec >= stepInterval)
+                    {
+                        footstepAccumSec -= stepInterval;
+                        audio.Play(
+                            footstepToggle ? CadetSfxId.FootstepB : CadetSfxId.FootstepA,
+                            0.30f,
+                            footstepToggle ? 0.04f : -0.03f);
+                        footstepToggle = !footstepToggle;
+                    }
+                }
+                else
+                {
+                    footstepAccumSec = Math.Min(footstepAccumSec, 0.14f);
+                }
+
+                // Stage-resolution timed action impacts (Vault launch/land/clip, Target steel clang/graze/sand)
+                var st = game.ActiveStage;
+                if (game.IsResolvingStage && st != null)
+                {
+                    float resP = game.ResolutionProgress;
+                    if (st.Kind == CadetDrillStageKind.Vault)
+                    {
+                        if (!vaultLaunchPlayed && resP >= 0.08f)
+                        {
+                            vaultLaunchPlayed = true;
+                            audio.Play(CadetSfxId.VaultLaunch, 0.44f);
+                        }
+                        if (!vaultImpactPlayed)
+                        {
+                            if (st.Rating == CadetHitRating.Miss && resP >= 0.42f)
+                            {
+                                vaultImpactPlayed = true;
+                                audio.Play(CadetSfxId.WallClip, 0.48f);
+                                audio.Play(CadetSfxId.MissBuzzer, 0.40f);
+                            }
+                            else if (st.Rating != CadetHitRating.Miss && resP >= 0.80f)
+                            {
+                                vaultImpactPlayed = true;
+                                audio.Play(CadetSfxId.VaultLand, 0.46f);
+                                audio.Play(
+                                    st.Rating == CadetHitRating.Perfect ? CadetSfxId.PerfectSting : CadetSfxId.GoodSting,
+                                    0.46f);
+                            }
+                        }
+                    }
+                    else if (st.Kind == CadetDrillStageKind.TargetDrill)
+                    {
+                        if (!targetImpactPlayed && resP >= 0.07f)
+                        {
+                            targetImpactPlayed = true;
+                            if (st.Rating == CadetHitRating.Perfect)
+                            {
+                                audio.Play(CadetSfxId.SteelBullseye, 0.50f);
+                                audio.Play(CadetSfxId.PerfectSting, 0.46f);
+                            }
+                            else if (st.Rating == CadetHitRating.Good)
+                            {
+                                audio.Play(CadetSfxId.SteelGraze, 0.46f);
+                                audio.Play(CadetSfxId.GoodSting, 0.42f);
+                            }
+                            else
+                            {
+                                audio.Play(CadetSfxId.SandMiss, 0.44f);
+                                audio.Play(CadetSfxId.MissBuzzer, 0.40f);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                prevHurdleHopping = false;
+            }
         }
 
         public override void Update(UpdateState state)
@@ -283,6 +448,7 @@ namespace Simitone.Conversations
             }
 
             game.Tick(dt);
+            UpdateStageAndAnimationAudio(dt);
 
             if (game.IsFinished)
             {
@@ -290,7 +456,8 @@ namespace Simitone.Conversations
                 if (!finishSoundPlayed)
                 {
                     finishSoundPlayed = true;
-                    audio.PlayShiftComplete();
+                    bool highGrade = finalOutcome != null && (finalOutcome.Grade == "S" || finalOutcome.Grade == "A");
+                    audio.Play(highGrade ? CadetSfxId.VictoryFanfareHigh : CadetSfxId.VictoryFanfareStandard, 0.52f);
                 }
             }
 
