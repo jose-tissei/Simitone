@@ -26,22 +26,29 @@
 
 ---
 
-## Milestone 2: Multi-Rank Dispatch Registry & Law Enforcement Ranks 2–4
+## Milestone 2: Multi-Rank Dispatch Registry, Custom 3D Animations & Law Enforcement Ranks 2–4
 
-**Goal:** Generalize `CareerDispatchDriver` into a rank-dispatched framework and ship Levels 2–4 plus the first on-lot perk.
+**Goal:** Generalize `CareerDispatchDriver` into a rank-dispatched framework, upgrade 3D mini-game visuals with a custom skeletal animation pipeline, and ship Levels 2–4 plus the first on-lot perk.
 
 ### Features
 
-**Career Dispatch Framework Refactor** - PLANNED
+**Career Dispatch Framework Refactor (`DISP-04`)** - COMPLETE
 
-- Rank router mapping `(Career, PromotionLevel)` to `ICareerMiniGame` + overlay renderer
+- Rank router mapping `(Career, PromotionLevel)` to `ICareerMiniGame` + overlay renderer (`ec04deb`)
 - Shared Shift Report & Rewards card (supporting Simoleons, JobPerformance, Skill XP, Motives, and Relationship deltas)
-- Optional Career tab **"Work Assignment"** button (once per day) for players who prefer manual triggering
+- Optional Career tab **"Work Assignment"** button (once per day) — deferred to follow-up polish
 
-**Lvl 2 — Cadet: Academy Obstacle & Drill** - PLANNED
+**Lvl 2 — Cadet: Academy Obstacle & Drill (`DISP-05`)** - COMPLETE
 
+- Full 3D live-rendered Academy obstacle course (`CadetAcademyOverlay` + `CadetAcademy3DView`) with Career Uniform dressing and pre-game Briefing screen (Start / Skip) (`ec04deb`, `04923b0`)
 - 3-round timing/sweet-spot rhythm bar (`Sprint`, `Vault`, `Target Drill`)
 - Sim's **Body** skill dynamically widens the green hit zone; rewards `+Body XP` and `+Job Performance`
+
+**Custom 3D Skeletal Animation Pipeline (`custom-animations`)** - SPEC / DESIGN READY
+
+- Pure-C# `.simanim.json` v1 runtime evaluator with quaternion SLERP, seamless loop-wrap interpolation, smooth crossfades, and root-motion-matched playback (`ANIM-01`–`ANIM-09`)
+- Offline hybrid authoring pipeline: CC-BY/public-domain BVH mocap retargeter + local **Blender 4.5** `adult.skel` IK rig & exporter (`Tools/AnimPipeline/`)
+- Initial 6 custom Cadet Academy clips (`sprint`, `vault`, `aim`, `shoot`, `idle_ready`, `victory_salute`) replacing stiff 1999 TS1 animations
 
 **Lvl 3 — Patrol Officer: Beat Patrol — Spot the Violation** - PLANNED
 
@@ -106,5 +113,6 @@
 
 ## Future Considerations
 
+- **Real-Time Multi-Camera `FSO.LotView.World` CCTV (Option 2)** — upgrade Security Guard (Lvl 1) CCTV Night Watch to render 4 live `RenderTarget2D` camera angles (round-robin 1 camera/frame at ~15 FPS) from either the player's lot or a dedicated mini Precinct `SubWorldComponent`, isolating `PPXDepthEngine`/`WorldContent` static render state.
 - Expand the same 10-rank Radio Dispatch / Work Assignment format to other Sims 1 careers: **Criminal**, **Military**, **Science**, **Medicine**, **Politics**, **Business**, **Entertainment**, **Pro Athlete**, **X-Treme**, and **Life of Crime / Hacker**.
 - Optional career-specific sound stings (radio squelch, alarm chime, crowd cheer) via Simitone audio hooks.

@@ -1,11 +1,18 @@
 # State
 
-**Last Updated:** 2026-11-23T15:20:00-03:00
-**Current Work:** career-radio-dispatch - Unified Simitone UI design tokens & responsive layout pass complete
+**Last Updated:** 2026-11-23T23:36:00-03:00
+**Current Work:** custom-animations - Deep research, spec, design, and task breakdown ready for user approval
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-004: Pure-C# Custom Skeletal Animation Runtime (`.simanim.json`) + Offline Hybrid Authoring Pipeline (2026-11-23)
+
+**Decision:** Build a custom keyframe animation format (`.simanim.json` v1) targeting `adult.skel` (29 Vitaboy bones), played at runtime via a pure-C# quaternion-SLERP evaluator with smooth crossfades, seamless loop-wrap interpolation, and root-motion-synced playback (`Logic/CustomAnim*.cs` + `Game/CustomAnimPlayer.cs`) that drives `Avatar.Skeleton` + `Avatar.ReloadSkeleton()` without patching FreeSO DLLs. Author clips offline using a 3-tier hybrid toolchain: **Tier 1** CC-BY/public-domain BVH mocap retargeting (`Tools/AnimPipeline/bvh_to_simanim.py`), **Tier 2** local **Blender 4.5** `adult.skel` IK rig + direct `.simanim.json` exporter (`Tools/AnimPipeline/blender_adult_rig.py` + `export_simanim.py`), and **Tier 3** thin procedural overlays (head look-at, breathing, recoil).
+**Reason:** Vanilla 1999 TS1 animations lack modern action semantics (e.g., `a2o-running-loop` is a fire-panic arms-up run), suffer from a FreeSO `Animator.RenderFrame` loop-wrap freeze bug (`Animator.cs:111,126`), have zero crossfade blending, and mismatch root-motion vs. world velocity. `Avatar.ReloadSkeleton()` already recomputes `AbsoluteMatrix` and updates `SkelBones[]` directly, making a clean custom runtime zero-risk to FreeSO binaries.
+**Trade-off:** Requires an offline Python/Blender authoring step for new clips, and custom clips must be authored against `adult.skel`'s standing arms-down A-pose (`+Y` up, `+Z` forward, bones along local `-X`).
+**Impact:** Replaces stiff/mismatched TS1 animations in Cadet Academy 3D (`sprint`, `vault`, `aim`, `shoot`, `idle_ready`, `victory_salute`) and unlocks clean custom animations for all upcoming career mini-games (Levels 3–10) and optional on-lot `VMAvatar` playback in P3.
 
 ### AD-003: Shared Simitone Design Tokens & Pure Responsive Layout Engine (2026-11-23)
 
@@ -59,12 +66,15 @@
 | #   | Description                                                        | Date       | Commit    | Status |
 | --- | ------------------------------------------------------------------ | ---------- | --------- | ------ |
 | 001 | Radio Dispatch toast + Security Guard (Lvl 1) CCTV Night Watch PoC | 2026-11-23 | `d2b87f5` | Done   |
-| 002 | Simitone UI design tokens + responsive zero-overlap layout engine  | 2026-11-23 | `HEAD`    | Done   |
+| 002 | Simitone UI design tokens + responsive zero-overlap layout engine  | 2026-11-23 | `fc06dab` | Done   |
+| 003 | Multi-Rank Dispatch Router + Level 2 Cadet Academy 3D Obstacle Course | 2026-11-23 | `ec04deb` | Done   |
+| 004 | Cadet Academy briefing wrap, sprint arm posture & victory camera polish | 2026-11-23 | `04923b0` | Done   |
 
 ---
 
 ## Deferred Ideas
 
+- [ ] **Option 2 Real-Time Multi-Camera `FSO.LotView.World` CCTV** — upgrade Security Guard (Lvl 1) CCTV monitors from captured lot backdrops + 3D actors to 4 live `RenderTarget2D` cameras (~15 FPS round-robin) rendering actual `FSO.LotView.World` or a dedicated mini Precinct `SubWorldComponent` (requires isolating `PPXDepthEngine` / `WorldContent` shared static render targets) — Captured during: Level 1 CCTV scale review
 - [ ] Career Panel **"Work Assignment"** button (once per day) so players can also launch a shift task before/after work without waiting for the mid-shift radio call — Captured during: `career-radio-dispatch` brainstorm
 - [ ] Extend level-by-level interactive mini-games to additional Sims 1 careers (Criminal, Military, Science, Medicine, Politics, Business, Entertainment, etc.) — Captured during: `career-radio-dispatch` brainstorm
 - [ ] Add optional career-specific radio squelch / alarm audio stings — Captured during: `career-radio-dispatch` PoC
@@ -73,8 +83,8 @@
 
 ## Todos
 
-- [ ] Review Security Guard (Lvl 1) PoC feel & pacing with user before starting Milestone 2 design
-- [ ] Refactor `CareerDispatchUI.cs` into a rank-routed dispatch registry when beginning Milestone 2 (Levels 2–4)
+- [ ] Get user sign-off on `custom-animations` (`research.md`, `spec.md`, `design.md`, `tasks.md`) before executing Phase 1 (`T1`–`T6`)
+- [ ] After `custom-animations` ships, continue Milestone 2 with Level 3 Patrol Officer (**Beat Patrol**) & Level 4 Desk Sergeant (**911 Dispatch Triage**)
 
 ---
 
