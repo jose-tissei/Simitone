@@ -10,6 +10,8 @@
     <Compile Include="..\Conversations\Logic\*.cs" Link="Logic\%(Filename)%(Extension)" />
     <Compile Include="..\Conversations\Logic\Gossip\*.cs" Link="Logic\Gossip\%(Filename)%(Extension)" />
     <Compile Include="..\Render\Logic\*.cs" Link="RenderLogic\%(Filename)%(Extension)" />
+    <Compile Include="..\HtmlUi\Template.cs" Link="HtmlUi\Template.cs" />
+    <Compile Include="..\Conversations\Game\ThemeTokens.cs" Link="HtmlUi\ThemeTokens.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />

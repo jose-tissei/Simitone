@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foundations: tokens for both themes</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.sw{display:flex;flex-direction:column;gap:6px;font:600 14px/16px var(--font-ui)}
+.sw i{display:block;height:52px;border-radius:12px;border:2px solid rgba(128,128,128,.4)}
+.sw b{font-weight:700;color:var(--text)}
+.sw span{color:var(--text-2);font-variant-numeric:tabular-nums}
+.sec{font:700 14px/16px var(--font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--text-2)}
+.spec{font:500 15px/22px var(--font-ui);color:var(--text-2)}
+.spec b{color:var(--text);font-weight:700}
+</style>
+</helmet>
+<div class="sims th-night" style="width:1920px;height:1760px;padding:80px;background:#0A1418;display:flex;flex-direction:column;gap:56px">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:48px">
+<div style="display:flex;flex-direction:column;gap:12px">
+<div class="sec">Sims remaster · UI kit v1 · 01 Foundations</div>
+<div class="t-display" style="font-size:72px;line-height:76px;color:var(--accent)">Plastic, glossy, a little silly.</div>
+<div class="t-body" style="max-width:900px;color:var(--text-2)">Simitone's teal, white pills and dark docks stay. What changes: structure, sizes, state and spacing. Two themes share every token name: <b style="color:var(--text)">Night</b> (Simitone dark, default) and <b style="color:var(--text)">Sunny Lot</b> (classic daylight).</div>
+</div>
+<div style="display:flex;align-items:center;gap:20px"><span class="plumbob lg"></span><span class="btn primary">Sul sul!</span></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:20px">
+<div class="card"><div class="t-head" style="color:var(--accent)">1 · Say it twice</div><div class="spec" style="margin-top:8px">Never colour alone. Pair hue with an icon, label or pattern. Fixes the red-only Room bar and the red memory warnings.</div></div>
+<div class="card"><div class="t-head" style="color:var(--accent)">2 · 48 and 16</div><div class="spec" style="margin-top:8px">Hit targets ≥ 48 px, essential text ≥ 16 px at 1080p. All sizes multiply by UIScale (100 / 125 / 150%).</div></div>
+<div class="card"><div class="t-head" style="color:var(--accent)">3 · Group, then label</div><div class="spec" style="margin-top:8px">No more flat rows of 12 icons. Sections get headings, toggles show On/Off, destructive actions sit apart.</div></div>
+<div class="card"><div class="t-head" style="color:var(--accent)">4 · Contained dialogs</div><div class="spec" style="margin-top:8px">Dialogs are centred cards (max 1100 wide), not edge-to-edge bars. One primary action, bottom right.</div></div>
+<div class="card"><div class="t-head" style="color:var(--accent)">5 · World vs. chrome</div><div class="spec" style="margin-top:8px">Balloons, pie menu and tooltips float over the world: dark glass, theme-independent. Docks and panels follow the theme.</div></div>
+<div class="card"><div class="t-head" style="color:var(--accent)">6 · Quirk in motion</div><div class="spec" style="margin-top:8px">Gloss, plumbob, bounce easing and Simlish microcopy carry the Sims feel. Never in the layout grid.</div></div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px">
+
+<div class="sims th-night" style="padding:28px;border-radius:28px;background:#0A1418;border:2px solid #2C4857;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="t-title">Night <span class="muted" style="font:600 18px var(--font-ui)">· Simitone dark (default)</span></div><span class="chip"><span class="ic s16 i-eye"></span>.th-night</span></div>
+<div class="sec">Surfaces and lines</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#0A1418"></i><b>dock</b><span>#0A1418</span></div>
+<div class="sw"><i style="background:#102029"></i><b>panel</b><span>#102029</span></div>
+<div class="sw"><i style="background:#172C37"></i><b>card</b><span>#172C37</span></div>
+<div class="sw"><i style="background:#203A48"></i><b>raised</b><span>#203A48</span></div>
+<div class="sw"><i style="background:#07131A"></i><b>track</b><span>#07131A</span></div>
+<div class="sw"><i style="background:#2C4857"></i><b>line</b><span>#2C4857</span></div>
+<div class="sw"><i style="background:#4A6C7E"></i><b>line-strong</b><span>#4A6C7E</span></div>
+</div>
+<div class="sec">Text</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#EAF8F6"></i><b>text</b><span>#EAF8F6</span></div>
+<div class="sw"><i style="background:#A9C6CB"></i><b>text-2</b><span>#A9C6CB</span></div>
+<div class="sw"><i style="background:#6F8C93"></i><b>text-off</b><span>#6F8C93</span></div>
+<div class="sw"><i style="background:#03302A"></i><b>on-accent</b><span>#03302A</span></div>
+<div class="sw"><i style="background:#FFE23A"></i><b>focus</b><span>#FFE23A</span></div>
+<div class="sw"><i style="background:#37F29A"></i><b>plumbob</b><span>#37F29A</span></div>
+<div class="sw"><i style="background:linear-gradient(90deg,#00D98B,#0A8F86 62%,#0A5F63)"></i><b>head a/b/c</b><span>#00D98B…</span></div>
+</div>
+<div class="sec">Brand and status</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#2EF2B0"></i><b>accent</b><span>#2EF2B0</span></div>
+<div class="sw"><i style="background:#00D98B"></i><b>accent-2</b><span>#00D98B</span></div>
+<div class="sw"><i style="background:#067A63"></i><b>accent-deep</b><span>#067A63</span></div>
+<div class="sw"><i style="background:#35E27A"></i><b>good</b><span>#35E27A</span></div>
+<div class="sw"><i style="background:#FFC145"></i><b>warn</b><span>#FFC145</span></div>
+<div class="sw"><i style="background:#FF6F61"></i><b>bad</b><span>#FF6F61</span></div>
+<div class="sw"><i style="background:#5CB6FF"></i><b>info</b><span>#5CB6FF</span></div>
+</div>
+<div class="sec">Sim identity (balloons, rows)</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#FFD95A"></i><b>sim-1</b><span>#FFD95A</span></div>
+<div class="sw"><i style="background:#7CE8FF"></i><b>sim-2</b><span>#7CE8FF</span></div>
+<div class="sw"><i style="background:#FF9EC4"></i><b>sim-3</b><span>#FF9EC4</span></div>
+<div class="sw"><i style="background:#B7FF7A"></i><b>sim-4</b><span>#B7FF7A</span></div>
+<div class="sw"><i style="background:#C6A6FF"></i><b>sim-5</b><span>#C6A6FF</span></div>
+<div class="sw"><i style="background:#FFB27A"></i><b>sim-6</b><span>#FFB27A</span></div>
+<div class="sw"><i style="background:#25D9E8"></i><b>trait / skill</b><span>#25D9E8 / #8C9BFF</span></div>
+</div>
+</div>
+
+<div class="sims th-day" style="padding:28px;border-radius:28px;background:#CFF1EA;border:2px solid #A6D8D1;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;justify-content:space-between;align-items:center"><div class="t-title">Sunny Lot <span class="muted" style="font:600 18px var(--font-ui)">· classic daylight</span></div><span class="chip"><span class="ic s16 i-eye"></span>.th-day</span></div>
+<div class="sec">Surfaces and lines</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#CFF1EA"></i><b>dock</b><span>#CFF1EA</span></div>
+<div class="sw"><i style="background:#E7F9F5"></i><b>panel</b><span>#E7F9F5</span></div>
+<div class="sw"><i style="background:#FFFFFF"></i><b>card</b><span>#FFFFFF</span></div>
+<div class="sw"><i style="background:#F3FFFC"></i><b>raised</b><span>#F3FFFC</span></div>
+<div class="sw"><i style="background:#BFE3DD"></i><b>track</b><span>#BFE3DD</span></div>
+<div class="sw"><i style="background:#A6D8D1"></i><b>line</b><span>#A6D8D1</span></div>
+<div class="sw"><i style="background:#4DAAA4"></i><b>line-strong</b><span>#4DAAA4</span></div>
+</div>
+<div class="sec">Text</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#0B3640"></i><b>text</b><span>#0B3640</span></div>
+<div class="sw"><i style="background:#3D6670"></i><b>text-2</b><span>#3D6670</span></div>
+<div class="sw"><i style="background:#7A9DA2"></i><b>text-off</b><span>#7A9DA2</span></div>
+<div class="sw"><i style="background:#03302A"></i><b>on-accent</b><span>#03302A</span></div>
+<div class="sw"><i style="background:#FFE23A"></i><b>focus</b><span>#FFE23A</span></div>
+<div class="sw"><i style="background:#12C97A"></i><b>plumbob</b><span>#12C97A</span></div>
+<div class="sw"><i style="background:linear-gradient(90deg,#2BE0B0,#12A8A4 62%,#1590B0)"></i><b>head a/b/c</b><span>#2BE0B0…</span></div>
+</div>
+<div class="sec">Brand and status</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#16D9A0"></i><b>accent</b><span>#16D9A0</span></div>
+<div class="sw"><i style="background:#00B67A"></i><b>accent-2</b><span>#00B67A</span></div>
+<div class="sw"><i style="background:#066A55"></i><b>accent-deep</b><span>#066A55</span></div>
+<div class="sw"><i style="background:#22C55E"></i><b>good</b><span>#22C55E</span></div>
+<div class="sw"><i style="background:#F5A700"></i><b>warn</b><span>#F5A700</span></div>
+<div class="sw"><i style="background:#F0503F"></i><b>bad</b><span>#F0503F</span></div>
+<div class="sw"><i style="background:#2F8CE0"></i><b>info</b><span>#2F8CE0</span></div>
+</div>
+<div class="sec">Text-safe status inks (day only)</div>
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+<div class="sw"><i style="background:#0B7A3F"></i><b>good-ink</b><span>#0B7A3F</span></div>
+<div class="sw"><i style="background:#8A5A00"></i><b>warn-ink</b><span>#8A5A00</span></div>
+<div class="sw"><i style="background:#B3261E"></i><b>bad-ink</b><span>#B3261E</span></div>
+<div class="sw"><i style="background:#1B5FAE"></i><b>info-ink</b><span>#1B5FAE</span></div>
+<div class="sw"><i style="background:#12B8C8"></i><b>trait</b><span>#12B8C8</span></div>
+<div class="sw"><i style="background:#5B6CFF"></i><b>skill</b><span>#5B6CFF</span></div>
+<div class="sw"><i style="background:#58B0F2"></i><b>blue-a</b><span>#58B0F2</span></div>
+</div>
+<div class="spec" style="margin-top:4px"><b>Rule:</b> fills (<b>good, warn, bad</b>) colour bars and chips. Words on a surface use the <b>-ink</b> variant, which passes 4.5:1 on both themes.</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.25fr 1fr;gap:32px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="sec">Type · Fredoka for voice, Montserrat for information</div>
+<div style="display:grid;grid-template-columns:200px 1fr;gap:6px 24px;align-items:baseline">
+<span class="spec"><b>display</b> 40/44 · 600</span><span class="t-display">MagiCo's Magical Starter Kit</span>
+<span class="spec"><b>title</b> 28/32 · 600</span><span class="t-title">Bob's Sim Memory</span>
+<span class="spec"><b>head</b> 22/28 · 700</span><span class="t-head">Personality and profile</span>
+<span class="spec"><b>body</b> 18/26 · 500</span><span class="t-body">Recent exchanges were tense. Try a gentle, apologetic approach.</span>
+<span class="spec"><b>label</b> 16/20 · 600</span><span class="t-label">Acquaintance · 52%</span>
+<span class="spec"><b>over</b> 14/16 · 700 · +12%</span><span class="t-over">Known Sims</span>
+<span class="spec"><b>button</b> 22 · Fredoka 600</span><span style="font:600 22px var(--font-display)">Say it. Hug. Invite downtown.</span>
+</div>
+<div class="spec">Fallback if Fredoka is not bundled: Montserrat 700 with +0.01em tracking. Numerals are always tabular. Sentence case everywhere except <b>over</b>.</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px">
+<div class="sec">Space, shape, lift, motion</div>
+<div style="display:flex;gap:10px;align-items:flex-end">
+<div style="text-align:center"><div style="width:4px;height:4px;background:var(--accent)"></div><div class="spec">1·4</div></div>
+<div style="text-align:center"><div style="width:8px;height:8px;background:var(--accent)"></div><div class="spec">2·8</div></div>
+<div style="text-align:center"><div style="width:12px;height:12px;background:var(--accent)"></div><div class="spec">3·12</div></div>
+<div style="text-align:center"><div style="width:16px;height:16px;background:var(--accent)"></div><div class="spec">4·16</div></div>
+<div style="text-align:center"><div style="width:24px;height:24px;background:var(--accent)"></div><div class="spec">5·24</div></div>
+<div style="text-align:center"><div style="width:32px;height:32px;background:var(--accent)"></div><div class="spec">6·32</div></div>
+<div style="text-align:center"><div style="width:48px;height:48px;background:var(--accent)"></div><div class="spec">7·48</div></div>
+<div style="text-align:center"><div style="width:64px;height:64px;background:var(--accent)"></div><div class="spec">8·64</div></div>
+</div>
+<div style="display:flex;gap:14px;align-items:flex-end">
+<div style="text-align:center"><div style="width:64px;height:64px;border-radius:10px;border:3px solid var(--accent)"></div><div class="spec">chip 10</div></div>
+<div style="text-align:center"><div style="width:64px;height:64px;border-radius:16px;border:3px solid var(--accent)"></div><div class="spec">card 16</div></div>
+<div style="text-align:center"><div style="width:64px;height:64px;border-radius:24px;border:3px solid var(--accent)"></div><div class="spec">panel 24</div></div>
+<div style="text-align:center"><div style="width:64px;height:64px;border-radius:999px;border:3px solid var(--accent)"></div><div class="spec">pill ∞</div></div>
+<div style="text-align:center"><div style="width:64px;height:64px;border-radius:20px;border:3px solid #fff;background:radial-gradient(120% 90% at 30% 10%,#58B0F2,#1D5CA6)"></div><div class="spec">icon btn 20</div></div>
+</div>
+<div class="spec"><b>Plastic lift:</b> hard 5px offset shadow in a darker tone of the fill, then a soft 10px blur. Buttons press down 3px and squash to 96%.</div>
+<div class="spec"><b>Easing:</b> bounce <b>cubic-bezier(.34,1.56,.64,1)</b> for pops and hovers (180 ms), ease-out <b>(.2,.8,.2,1)</b> for panels sliding (320 ms). Plumbob bobs every 2.4 s. Respect reduce-motion.</div>
+<div class="spec"><b>Elevation:</b> three levels. Flat (cards), lift (panels, dialogs), float (balloons, pie, tooltips: dark glass 90%).</div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1760}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Options menu, Sunny Lot theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.grp{display:flex;flex-direction:column;gap:14px}
+.setrow{display:flex;align-items:center;gap:16px;min-height:56px}
+.setrow .tx{flex:1}
+.setrow .tx small{display:block;font:500 16px/20px var(--font-ui);color:var(--text-2)}
+.setrow .tx b{font:700 18px/22px var(--font-ui)}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-day" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#3a5a2a">
+<img alt="" aria-hidden="true" src="./assets/dbc01b4804d2162aa16b52e8843fe78f.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+
+<div class="abs" style="left:0;top:0;width:1920px;height:1080px;background:var(--scrim)"></div>
+
+<!-- OPTIONS PANEL -->
+<div class="abs dlg" style="left:400px;top:130px;width:1120px;background:var(--panel)">
+<div class="head"><span class="ic s32 i-gear"></span><span style="flex:1">Options</span><span class="ibtn sm round" aria-label="Close" style="width:44px;height:44px"><span class="ic s24 i-close"></span></span></div>
+<div style="display:grid;grid-template-columns:300px minmax(0,1fr);gap:40px;padding:28px 36px 24px">
+
+<div class="grp" style="justify-content:space-between">
+<div class="grp">
+<div class="t-over">Game</div>
+<span class="btn block primary"><span class="ic s24 i-save"></span>Save</span>
+<span class="btn block"><span class="ic s24 i-people"></span>Neighborhood</span>
+<span class="btn block"><span class="ic s24 i-rotate"></span>Reload list</span>
+</div>
+<div class="grp">
+<hr class="divider">
+<span class="btn block quiet" style="border-color:var(--bad);color:var(--bad-ink)"><span class="ic s24 i-quit"></span>Quit game</span>
+<div class="t-cap" style="text-align:center">Asks to save first.</div>
+</div>
+</div>
+
+<div class="grp" style="gap:22px">
+<div class="grp">
+<div class="t-over">View</div>
+<div style="display:flex;gap:12px">
+<div class="tile" style="width:124px"><span class="fr"><span class="ic s40 i-grid"></span></span>2D mode</div>
+<div class="tile" style="width:124px"><span class="fr"><span class="ic s40 i-cube"></span></span>3D + 2D list</div>
+<div class="tile on" style="width:124px"><span class="fr"><span class="ic s40 i-home"></span></span>3D arch + 2D objects</div>
+<div class="tile" style="width:124px"><span class="fr"><span class="ic s40 i-eye"></span></span>Full 3D</div>
+</div>
+</div>
+<hr class="divider" style="margin:0">
+<div class="grp" style="gap:6px">
+<div class="t-over">Graphics</div>
+<div class="setrow"><span class="tx"><b>Anti-aliasing</b><small>Smoother edges, costs some speed.</small></span><b class="t-label muted">Off</b><span class="switch"></span></div>
+<div class="setrow"><span class="tx"><b>Dynamic lighting</b><small>Lamps and windows light the room.</small></span><b class="t-label muted">Off</b><span class="switch"></span></div>
+</div>
+<hr class="divider" style="margin:0">
+<div class="grp" style="gap:6px">
+<div style="display:flex;align-items:center;gap:10px"><div class="t-over">Sims AI</div><span class="chip info" style="min-height:26px;font-size:14px">Mod</span></div>
+<div class="setrow"><span class="tx"><b>AI conversations</b><small>Sims chat in their own words. Turn off for classic Simlish.</small></span><b class="t-label" style="color:var(--good-ink)">On</b><span class="switch on"></span></div>
+<div class="setrow"><span class="tx"><b>Pie menu style</b><small>How actions appear around a Sim.</small></span><div class="seg"><b class="on">Simplified</b><b>Classic</b></div></div>
+</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 36px;background:var(--dock)"><span class="t-label muted" style="display:flex;align-items:center;gap:10px"><span class="key">Esc</span>Close</span><span class="t-label muted">Changes apply instantly</span></div>
+</div>
+
+<div class="ann" style="left:430px;top:86px"><span class="ic s16 i-info"></span>12 flat icons became 4 labelled groups; toggles say On/Off; Quit is isolated</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

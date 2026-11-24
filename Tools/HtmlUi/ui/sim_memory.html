@@ -1,0 +1,115 @@
+<html>
+<body>
+<div class="dlg">
+  <div class="head">
+    <span class="ic s32 i-{{headIcon}}"></span><span>{{title}}</span><span class="sub">{{subtitle}}</span>
+    <span class="spacer"></span>
+    <div class="tab dock" data-action="switch"><span class="ic s20 i-{{switchIcon}}"></span><span>{{switchLabel}}</span><!--#if showNews--><!--#else--><span class="badge alert">{{newsCount}}</span><!--/if--></div>
+    <div class="ibtn" data-action="close" aria-label="Close"><span class="ic s24 i-close"></span></div>
+  </div>
+
+  <div style="flex-direction: row; align-items: center; gap: 10px; padding: 12px 28px 0 28px;">
+    <span class="t-over" style="margin-right: 6px;">Memory of</span>
+    <!--#each speakers-->
+    <div class="tab<!--#if active--> on<!--/if-->" data-action="speaker-{{#}}"><span>{{name}}</span><span class="badge">{{count}}</span></div>
+    <!--/each-->
+  </div>
+
+  <div style="flex-direction: row; gap: 24px; padding: 12px 28px 14px 28px; flex-grow: 1;">
+    <div style="width: 340px; flex-direction: column; gap: 10px;">
+      <span class="t-over">Known Sims</span>
+      <!--#each known-->
+      <div class="row<!--#if selected--> sel<!--/if-->" data-action="pick-{{#}}">
+        <div class="avatar" style="background-color: var(--sim-{{sim}});">{{letter}}</div>
+        <div style="flex-direction: column; flex-shrink: 1;"><span>{{name}}</span><span class="sub">{{line1}}</span><span class="sub">{{line2}}</span></div>
+      </div>
+      <!--/each-->
+    </div>
+
+    <!--#if showNews-->
+    <div style="flex-grow: 1; flex-direction: column; gap: 10px; flex-shrink: 1;">
+      <div style="flex-direction: column;">
+        <span class="t-display">{{speakerName}}'s news</span>
+        <span class="t-label muted">{{newsHint}}</span>
+      </div>
+      <!--#if newsEmpty-->
+      <div class="card"><span class="t-body">Nothing yet. News is picked up when something happens in the same room (a promotion, a new skill point, new friends, a kiss, a fight, a gift) and spreads when Sims chat.</span></div>
+      <!--/if-->
+      <!--#each news-->
+      <div class="news<!--#if flagged--> flag<!--/if-->">
+        <div class="ico"><span class="ic s24 i-{{icon}}"></span></div>
+        <div style="flex-direction: column; gap: 6px; flex-shrink: 1; flex-grow: 1;">
+          <span class="hd">{{text}}</span>
+          <div class="chips">
+            <!--#each chips--><div class="chip {{cls}}"><span class="ic s16 i-{{icon}}"></span><span>{{label}}</span></div><!--/each-->
+          </div>
+        </div>
+      </div>
+      <!--/each-->
+      <!--#if newsMore--><div style="flex-direction: row; justify-content: center;"><span class="t-label muted">{{newsMore}}</span></div><!--/if-->
+    </div>
+    <!--#else-->
+    <div style="flex-grow: 1; flex-direction: column; gap: 10px; flex-shrink: 1;">
+      <!--#if card-->
+      <div style="flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 20px;">
+        <div style="flex-direction: column; flex-grow: 1; gap: 4px;">
+          <span class="t-display" style="color: var(--sim-{{card.sim}});">{{card.name}}</span>
+          <div style="flex-direction: row; align-items: center; gap: 12px;">
+            <span class="t-label">{{card.familiarity}}</span>
+            <div class="rel" style="width: 200px;"><div style="flex-grow: 50;"></div><div class="fill" style="flex-grow: {{card.relFill}};"></div><div style="flex-grow: {{card.relRest}};"></div></div>
+            <span class="t-label" style="color: var(--good-ink);">{{card.percent}}%</span>
+          </div>
+        </div>
+        <div style="flex-direction: row; gap: 12px; width: 520px;">
+          <div class="stat"><span class="n" style="color: var(--good-ink);">{{card.today}}</span><span class="l">Today</span></div>
+          <div class="stat"><span class="n">{{card.lifetime}}</span><span class="l">Lifetime</span></div>
+          <div class="stat" style="flex-grow: 2;"><span class="n" style="font-size: 22px;">{{card.great}} · {{card.ok}} · {{card.awkward}}</span><span class="l">great · ok · awkward</span></div>
+        </div>
+      </div>
+
+      <!--#if card.tense-->
+      <div class="notice"><span class="ic s28 i-alert" style="color: var(--warn-ink);"></span><span>Recent exchanges were tense. Gentle or apologetic approaches work better right now.</span></div>
+      <!--/if-->
+
+      <div style="flex-direction: row; gap: 14px;">
+        <div class="card" style="width: 49%;">
+          <span class="t-over">Personality and profile</span>
+          <div class="chips">
+            <!--#each card.traits--><div class="chip"><span>{{.}}</span></div><!--/each-->
+            <!--#if card.hasTraits--><!--#else--><span class="t-label muted">Not observed yet. Chat more to reveal.</span><!--/if-->
+          </div>
+          <div style="flex-direction: row; align-items: center; gap: 10px;">
+            <span class="t-label muted">Temperament</span>
+            <!--#if card.temperament--><div class="chip good"><span class="ic s16 i-heart"></span><span>{{card.temperament}}</span></div><!--#else--><span class="t-label muted">Still reading cues</span><!--/if-->
+          </div>
+          <!--#if card.career--><div style="flex-direction: row; align-items: center; gap: 10px;"><span class="t-label muted">Career</span><div class="chip"><span class="ic s16 i-job"></span><span>{{card.career}}</span></div></div><!--/if-->
+        </div>
+        <div class="card" style="width: 49%;">
+          <span class="t-over">Interests and skills</span>
+          <!--#if card.noInterests--><span class="t-label muted">None discovered yet</span><!--/if-->
+          <!--#if card.likes--><div class="lesson"><span class="k">Likes</span><div class="chips"><!--#each card.likes--><div class="chip good"><span class="ic s16 i-check"></span><span>{{.}}</span></div><!--/each--></div></div><!--/if-->
+          <!--#if card.dislikes--><div class="lesson"><span class="k">Dislikes</span><div class="chips"><!--#each card.dislikes--><div class="chip bad"><span class="ic s16 i-close"></span><span>{{.}}</span></div><!--/each--></div></div><!--/if-->
+          <!--#if card.skills--><div class="lesson"><span class="k">Skills</span><div class="chips"><!--#each card.skills--><div class="chip info"><span class="ic s16 i-star"></span><span>{{.}}</span></div><!--/each--></div></div><!--/if-->
+        </div>
+      </div>
+
+      <div class="card">
+        <span class="t-over">Conversation lessons</span>
+        <!--#if card.works--><div class="lesson"><span class="k">Works well</span><div class="chips"><!--#each card.works--><div class="chip good"><span class="ic s16 i-check"></span><span>{{.}}</span></div><!--/each--></div></div><!--/if-->
+        <!--#if card.avoid--><div class="lesson"><span class="k">Avoid</span><div class="chips"><!--#each card.avoid--><div class="chip bad"><span class="ic s16 i-close"></span><span>{{.}}</span></div><!--/each--></div></div><!--/if-->
+        <!--#if card.topics--><div class="lesson"><span class="k">Topics</span><div class="chips"><!--#each card.topics--><div class="chip<!--#if awkward--> warn<!--/if-->"><!--#if awkward--><span class="ic s16 i-alert"></span><!--/if--><span>{{title}} · {{outcome}}</span></div><!--/each--></div></div><!--/if-->
+      </div>
+      <!--#else-->
+      <div class="card"><span class="t-display">Nothing learned yet</span><span class="t-body">{{speakerName}} has not talked with anyone yet. Use Talk, or let Sims chat on their own in the same room. Every conversation records traits, interests, skills, temperament and what approaches work best.</span></div>
+      <!--/if-->
+    </div>
+    <!--/if-->
+  </div>
+
+  <div class="foot">
+    <div style="flex-direction: row; align-items: center; gap: 10px;"><div class="key"><span>Esc</span></div><span>or click outside to close</span></div>
+    <!--#if showNews--><span>{{newsFooter}}</span><!--/if-->
+  </div>
+</div>
+</body>
+</html>

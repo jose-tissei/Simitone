@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Talk sheet, Night theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.subj{display:flex;align-items:center;gap:16px;min-height:72px;padding:0 24px 0 18px;border-radius:999px;background:linear-gradient(var(--pill-a),var(--pill-b));color:var(--on-pill);font:600 24px/1 var(--font-display);box-shadow:0 5px 0 var(--pill-edge),0 10px 16px rgba(0,0,0,.28)}
+.subj .em{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:#0B3A57;color:#fff;flex:none}
+.subj .why{margin-left:auto;font:700 14px/1 var(--font-ui);padding:6px 10px;border-radius:10px;background:rgba(11,58,87,.12);color:#0B3A57}
+.subj.on{background:linear-gradient(#B4FFE6,var(--accent) 46%,var(--accent-2));color:var(--on-accent);box-shadow:0 5px 0 var(--accent-deep),0 10px 16px rgba(0,0,0,.28)}
+.subj.on .em{background:var(--on-accent);color:var(--accent)}
+.subj.on .why{background:rgba(3,48,42,.14);color:var(--on-accent)}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-night" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#1a1208">
+<img alt="" aria-hidden="true" src="./assets/b7eba766b8dec22c3b917c554a8bd469.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+<div class="abs" style="left:0;top:0;width:1920px;height:1080px;background:var(--scrim)"></div>
+
+<div class="abs dlg" style="left:500px;top:170px;width:920px">
+<div class="head"><span class="avatar" style="width:44px;height:44px;font-size:20px;background:var(--sim-3);border-width:3px">B</span><span>Talk with Betty</span><span style="flex:1"></span><span class="ibtn sm round" aria-label="Close" style="width:44px;height:44px"><span class="ic s24 i-close"></span></span></div>
+<div style="padding:24px 32px 8px;display:flex;flex-direction:column;gap:16px">
+<div class="t-body">What should Bob talk about?</div>
+<div class="subj on"><span class="em"><span class="ic s24 i-food"></span></span>Campfire cooking tricks<span class="why">She likes cooking</span></div>
+<div class="subj"><span class="em"><span class="ic s24 i-moon"></span></span>Night street food markets<span class="why">New topic</span></div>
+<div class="subj"><span class="em"><span class="ic s24 i-note"></span></span>Secret local concerts<span class="why">New topic</span></div>
+<div class="input" style="min-height:60px;border-radius:999px;padding:0 10px 0 24px"><span class="ph" style="flex:1">Or say something in your own words…</span><span class="ibtn mint round" style="width:44px;height:44px" aria-label="Send"><span class="ic s24 i-right"></span></span></div>
+<div style="display:flex;align-items:center;gap:14px"><span class="t-over">Tone</span><div class="seg"><b>Gentle</b><b class="on">Playful</b><b>Bold</b></div><span style="flex:1"></span><span class="chip good"><span class="ic s16 i-check"></span>Playful works well</span></div>
+</div>
+<div style="margin:12px 32px 0;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:14px;background:var(--card);border:2px solid var(--line)"><span class="ic s24 i-book" style="color:var(--accent)"></span><span class="t-label" style="flex:1">Betty likes jokes and compliments. Avoid a gentle tone for now.</span><span class="btn sm quiet" style="min-height:40px;padding:0 16px">Open memory</span></div>
+<div class="foot" style="padding:20px 32px 24px;align-items:center"><span class="t-label muted" style="display:flex;align-items:center;gap:10px;margin-right:auto"><span class="key">1</span><span class="key">2</span><span class="key">3</span>pick a topic</span><span class="btn sm quiet">Never mind</span><span class="btn primary">Say it</span></div>
+</div>
+<div class="ann" style="left:530px;top:126px"><span class="ic s16 i-info"></span>Contained card; every subject says why; free text and tone live here too</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

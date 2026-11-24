@@ -7,6 +7,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\HtmlUi\HtmlUi.csproj" />
+    <!-- token loading is shared with the game build -->
+    <Compile Include="..\Conversations\Game\ThemeTokens.cs" Link="ThemeTokens.cs" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <Reference Include="System.Drawing" />
   </ItemGroup>
 </Project>

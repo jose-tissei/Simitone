@@ -26,5 +26,10 @@ foreach ($n in $libs) {
 $cfg = "<?xml version=`"1.0`" encoding=`"utf-8`"?>`r`n<configuration>`r`n<startup><supportedRuntime version=`"v4.0`" sku=`".NETFramework,Version=v4.6.1`"/></startup>`r`n  <runtime>`r`n    <assemblyBinding xmlns=`"urn:schemas-microsoft-com:asm.v1`">`r`n$redirects    </assemblyBinding>`r`n  </runtime>`r`n</configuration>`r`n"
 [IO.File]::WriteAllText("$App\Simitone.Windows.exe.config", $cfg, (New-Object Text.UTF8Encoding($false)))
 
-Copy-Item (Join-Path $PSScriptRoot 'samples\*.html') (Join-Path $App 'Content\ui') -Force
-"deployed. In game: simtool convo htmlui memory.html   (edit Content\ui\memory.html while it is open to see it reload)"
+# pages + stylesheet from Tools/HtmlUi/ui, tokens and icon sheet from the design (docs/ui-redesign)
+$ui = Join-Path $App 'Content\ui'
+New-Item -ItemType Directory -Force $ui | Out-Null
+Copy-Item (Join-Path $PSScriptRoot 'ui\*.html'), (Join-Path $PSScriptRoot 'ui\*.css') $ui -Force
+$docs = Join-Path $PSScriptRoot '..\..\docs\ui-redesign'
+Copy-Item (Join-Path $docs 'design-tokens.json'), (Join-Path $docs 'skins\icons.png') $ui -Force
+"deployed. In game: simtool convo memory-ui open   (the Sim Memory window uses Content\ui\sim_memory.html; edit it while the window is open and it reloads)"

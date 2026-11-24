@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using FSO.Client;
 using FSO.Client.UI.Framework;
@@ -29,6 +30,12 @@ namespace Simitone.Conversations
         Rectangle panelRect, closeRect, newsRect;
         bool showNews;                // the right-hand side shows the news the selected Sim has heard instead of what they know about another Sim
 
+        // the redesigned look: Content/ui/sim_memory.html filled with data (see docs/ui-redesign). Falls back to the hand-drawn window when the page is missing.
+        HtmlSurface surface;
+        bool htmlDirty = true;
+        string htmlKey = "";
+        bool UseHtml { get { return surface != null && File.Exists(Path.Combine(Boot.GameDir, "Content", "ui", "sim_memory.html")) && surface.Error == null; } }
+
         string selectedSpeakerKey = "";
         string selectedSpeakerName = "";
         string selectedListenerKey = "";
@@ -41,7 +48,7 @@ namespace Simitone.Conversations
         public static bool IsOpen { get { return isOpen && instance != null; } }
 
         // simtool: show the news side (true) or the dossier side (false) of an open menu
-        public static string SetNews(bool on) { if (instance == null) return "closed"; instance.showNews = on; return Status(); }
+        public static string SetNews(bool on) { if (instance == null) return "closed"; instance.showNews = on; instance.htmlDirty = true; return Status(); }
 
         public static void Toggle()
         {
@@ -135,6 +142,8 @@ namespace Simitone.Conversations
             greenStyle = MakeStyle(14, new Color(126, 230, 158));
             redStyle = MakeStyle(14, new Color(250, 136, 136));
             goldStyle = MakeStyle(14, new Color(255, 220, 120));
+            surface = new HtmlSurface(this, "sim_memory.html");
+            surface.Action += OnPageAction;
         }
 
         static TextStyle MakeStyle(int size, Color color)
@@ -148,6 +157,7 @@ namespace Simitone.Conversations
 
         void RefreshData(string speakerQuery, bool resetToActiveIfEmpty)
         {
+            htmlDirty = true;
             speakers.Clear();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             string activeKey = null, activeName = null;
@@ -250,7 +260,7 @@ namespace Simitone.Conversations
             refreshTimer += 1.0 / 60.0;
             if (refreshTimer >= 0.75)
             {
-                refreshTimer = 0;
+                refreshTimer = 0; htmlDirty = true;
                 RefreshData(null, false);
             }
 
@@ -262,6 +272,16 @@ namespace Simitone.Conversations
                 return;
             }
             prevEscDown = esc;
+
+            if (UseHtml)
+            {
+                float sc = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
+                bool pressed = state.MouseState.LeftButton == ButtonState.Pressed;
+                if (pressed && !prevLeftDown && !surface.PointInFirstBox(state.MouseState.X / sc, state.MouseState.Y / sc)) { prevLeftDown = true; Close(); return; }
+                prevLeftDown = pressed;
+                surface.Update(state);
+                return;
+            }
 
             float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
             int mx = (int)(state.MouseState.X / scale);
@@ -312,6 +332,7 @@ namespace Simitone.Conversations
         public override void Draw(UISpriteBatch batch)
         {
             if (!isOpen || !Visible) return;
+            if (UseHtml) { DrawHtml(batch); if (UseHtml) return; }
             var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
             float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
             float screenW = batch.GraphicsDevice.Viewport.Width / scale;
@@ -508,6 +529,40 @@ namespace Simitone.Conversations
 
             // Footer hint
             DrawLocalString(batch, "Press Esc or click outside to close", new Vector2(px0 + pw - 245, py0 + ph - 22), mutedStyle);
+        }
+
+        List<NewsEntry> CurrentNews()
+        {
+            int speakerId = SpeakerNeighborId();
+            var vmNow = ParallelSocialDriver.CurrentVm;
+            return speakerId > 0 && vmNow != null ? GossipView.NewsOf(Boot.Gossip, speakerId, GossipDirector.Today(vmNow)) : new List<NewsEntry>();
+        }
+
+        void DrawHtml(UISpriteBatch batch)
+        {
+            if (htmlDirty)
+            {
+                htmlDirty = false;
+                var data = SimMemoryPageData.Build(snapshot, speakers, selectedSpeakerKey, selectedListenerKey, showNews, CurrentNews(), selectedSpeakerName);
+                string key = Newtonsoft.Json.JsonConvert.SerializeObject(data);
+                if (key != htmlKey) { htmlKey = key; surface.SetData(data, key); }
+            }
+            surface.Draw(batch);
+        }
+
+        void OnPageAction(string action)
+        {
+            htmlDirty = true;
+            if (action == "close") { Close(); return; }
+            if (action == "switch") { showNews = !showNews; return; }
+            int n;
+            if (action.StartsWith("speaker-") && int.TryParse(action.Substring(8), out n) && n < speakers.Count)
+            {
+                selectedSpeakerKey = speakers[n].Key; selectedSpeakerName = speakers[n].Name;
+                selectedListenerKey = ""; scrollOffset = 0; RefreshData(null, false);
+            }
+            else if (action.StartsWith("pick-") && int.TryParse(action.Substring(5), out n) && n < snapshot.KnownSims.Count)
+                selectedListenerKey = snapshot.KnownSims[n].ListenerKey;
         }
 
         // "n:48" -> 48 (the key SocialMemory uses for a Sim with a neighbour number)

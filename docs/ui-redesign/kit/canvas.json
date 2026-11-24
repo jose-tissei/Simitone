@@ -1,0 +1,114 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1920,
+      "h": 1760,
+      "title": "01 Foundations: tokens, both themes"
+    },
+    {
+      "file": "Components.dc.html",
+      "x": 2000,
+      "y": 0,
+      "w": 1920,
+      "h": 2000,
+      "title": "02 Components · Night"
+    },
+    {
+      "file": "ComponentsDay.dc.html",
+      "x": 4000,
+      "y": 0,
+      "w": 1920,
+      "h": 2000,
+      "title": "02 Components · Sunny Lot"
+    },
+    {
+      "file": "Hud.dc.html",
+      "x": 0,
+      "y": 2120,
+      "w": 1920,
+      "h": 1080,
+      "title": "03 Lot · Live: original dial + bar, UX layer"
+    },
+    {
+      "file": "Buy.dc.html",
+      "x": 2000,
+      "y": 2120,
+      "w": 1920,
+      "h": 1080,
+      "title": "04 Lot · Buy: original bar, UX layer"
+    },
+    {
+      "file": "Options.dc.html",
+      "x": 4000,
+      "y": 2120,
+      "w": 1920,
+      "h": 1080,
+      "title": "05 Options menu (Sunny Lot)"
+    },
+    {
+      "file": "Memory.dc.html",
+      "x": 0,
+      "y": 3320,
+      "w": 1920,
+      "h": 1080,
+      "title": "06 Sim Memory dossier (Night)"
+    },
+    {
+      "file": "MemoryNews.dc.html",
+      "x": 2000,
+      "y": 3320,
+      "w": 1920,
+      "h": 1080,
+      "title": "07 Sim Memory news (Sunny Lot)"
+    },
+    {
+      "file": "Conversation.dc.html",
+      "x": 4000,
+      "y": 3320,
+      "w": 1920,
+      "h": 1080,
+      "title": "08 Pie menu + balloons (Sunny Lot)"
+    },
+    {
+      "file": "TalkSheet.dc.html",
+      "x": 0,
+      "y": 4520,
+      "w": 1920,
+      "h": 1080,
+      "title": "09 Talk sheet, AI chat (Night)"
+    },
+    {
+      "file": "Hood.dc.html",
+      "x": 2000,
+      "y": 4520,
+      "w": 1920,
+      "h": 1080,
+      "title": "10 Neighborhood map (Sunny Lot)"
+    },
+    {
+      "file": "Playbook.dc.html",
+      "x": 0,
+      "y": 5720,
+      "w": 1920,
+      "h": 2640,
+      "title": "11 Playbook: new screens and menus"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "t1",
+      "x": 0,
+      "y": -280,
+      "w": 240,
+      "maxW": 5920,
+      "text": "Sims remaster UI kit",
+      "kind": "title1"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

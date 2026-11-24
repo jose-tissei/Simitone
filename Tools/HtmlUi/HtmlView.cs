@@ -21,7 +21,9 @@ namespace Simitone.HtmlUi
         public List<string> Lines;     // wrapped text
         public Rgba Background, Color, BorderColor;
         public float BorderWidth, Radius, FontSize = 16, LineHeight;
-        public bool Bold;
+        public bool Bold, Upper, HasGradient, GradHorizontal;
+        public Rgba GradA, GradB;
+        public int Icon = -1;          // cell of the icon sheet, -1 when this is not an icon
         public float X, Y, W, H;       // absolute, in view space
     }
 
@@ -35,8 +37,16 @@ namespace Simitone.HtmlUi
         Box hovered;
         float viewW, viewH;
 
-        public static HtmlView FromHtml(string html, IPainter painter)
+        // var(--name) is replaced textually so the CSS engine never has to know about custom properties
+        static string ApplyTokens(string html, IDictionary<string, string> tokens)
         {
+            return System.Text.RegularExpressions.Regex.Replace(html, @"var\(\s*--([\w-]+)\s*(?:,[^)]*)?\)", m =>
+            { string v; return tokens.TryGetValue(m.Groups[1].Value, out v) ? v : m.Value; });
+        }
+
+        public static HtmlView FromHtml(string html, IPainter painter, IDictionary<string, string> tokens = null)
+        {
+            if (tokens != null) html = ApplyTokens(html, tokens);
             var v = new HtmlView { measurer = painter };
             // hover state cannot be asked of a static document, so the rule is rewritten to a class that we toggle ourselves
             html = "<style>html { font-size: 16px; }</style>" + html.Replace(":hover", ".is-hover");
@@ -94,6 +104,7 @@ namespace Simitone.HtmlUi
             var el = n as IElement;
             if (el == null) return b;
             b.Element = el; b.Tag = el.LocalName; b.Id = el.Id; b.Action = el.GetAttribute("data-action");
+            foreach (var cls in el.ClassList) if (cls.StartsWith("i-")) b.Icon = Icons.Find(cls.Substring(2));
             var cs = styles.ComputeDeclarations(el);
             b.Yoga = YGNodeAPI.YGNodeNew();
             ApplyStyle(b, cs, parent);
@@ -105,8 +116,10 @@ namespace Simitone.HtmlUi
                 {
                     var s = System.Text.RegularExpressions.Regex.Replace(t.Data, "\\s+", " ").Trim();
                     if (s.Length == 0) continue;
+                    if (b.Upper) s = s.ToUpperInvariant();
                     var tb = new Box { Parent = b, Text = s, Tag = "#text", Color = b.Color, FontSize = b.FontSize, Bold = b.Bold, LineHeight = b.LineHeight, Element = el };
                     tb.Yoga = YGNodeAPI.YGNodeNew();
+                    YGNodeStyleAPI.YGNodeStyleSetFlexShrink(tb.Yoga, 1);
                     var capture = tb;
                     YGNodeAPI.YGNodeSetMeasureFunc(tb.Yoga, (node, aw, wm, ah, hm) => MeasureRun(capture, aw, wm));
                     b.Children.Add(tb);
@@ -170,8 +183,11 @@ namespace Simitone.HtmlUi
                 for (int i = 0; i < b.Lines.Count; i++) p.DrawText(b.Lines[i], b.X, b.Y + i * lineH, b.FontSize, b.Bold, b.Color);
                 return;
             }
-            if (b.Background.Visible) p.FillRect(b.X, b.Y, b.W, b.H, b.Background, b.Radius);
-            if (b.BorderWidth > 0 && b.BorderColor.Visible) p.StrokeRect(b.X, b.Y, b.W, b.H, b.BorderColor, b.BorderWidth, b.Radius);
+            bool border = b.BorderWidth > 0 && b.BorderColor.Visible;
+            if (b.HasGradient) p.FillGradient(b.X, b.Y, b.W, b.H, b.GradA, b.GradB, b.GradHorizontal, b.Radius);
+            else if (b.Background.Visible) p.FillRect(b.X, b.Y, b.W, b.H, b.Background, b.Radius);
+            if (border) p.StrokeRect(b.X, b.Y, b.W, b.H, b.BorderColor, b.BorderWidth, b.Radius);
+            if (b.Icon >= 0) p.DrawIcon(b.Icon, b.X, b.Y, Math.Min(b.W, b.H), b.Color);
             foreach (var c in b.Children) PaintBox(p, c);
         }
 
@@ -179,7 +195,7 @@ namespace Simitone.HtmlUi
         static void ApplyStyle(Box b, ICssStyleDeclaration cs, Box parent)
         {
             var n = b.Yoga;
-            YGNodeStyleAPI.YGNodeStyleSetFlexShrink(n, 1);
+            YGNodeStyleAPI.YGNodeStyleSetFlexShrink(n, 0);   // containers keep their content size; text runs shrink (set below) so they wrap
             var fd = cs.GetPropertyValue("flex-direction");
             YGNodeStyleAPI.YGNodeStyleSetFlexDirection(n, fd == "column" ? YGFlexDirection.Column
                 : fd == "column-reverse" ? YGFlexDirection.ColumnReverse
@@ -217,6 +233,31 @@ namespace Simitone.HtmlUi
             var fw = cs.GetPropertyValue("font-weight"); int wv; if (fw.Length == 0 && parent != null) fw = parent.Bold ? "bold" : "";
             b.Bold = fw == "bold" || fw == "bolder" || (int.TryParse(fw, out wv) && wv >= 600);
             float lh = parent != null ? parent.LineHeight : 0; Dim(cs.GetPropertyValue("line-height"), (v, pct) => lh = v); b.LineHeight = lh;
+            var tt = cs.GetPropertyValue("text-transform"); b.Upper = tt.Length > 0 ? tt == "uppercase" : (parent != null && parent.Upper);
+            var bg = cs.GetPropertyValue("background-image"); if (bg.Length == 0) bg = cs.GetPropertyValue("background");
+            if (bg.StartsWith("linear-gradient")) ParseGradient(b, bg);
+        }
+
+        // linear-gradient(<angle>?, stop, stop, ...): first and last colour; 90deg or "to right" runs left to right, anything else top to bottom
+        static void ParseGradient(Box b, string css)
+        {
+            string inner = css.Substring(css.IndexOf('(') + 1).TrimEnd(')');
+            var parts = new List<string>(); int depth = 0; var cur = new System.Text.StringBuilder();
+            foreach (char ch in inner)
+            {
+                if (ch == '(') depth++; else if (ch == ')') depth--;
+                if (ch == ',' && depth == 0) { parts.Add(cur.ToString().Trim()); cur.Clear(); } else cur.Append(ch);
+            }
+            parts.Add(cur.ToString().Trim());
+            bool horizontal = false;
+            if (parts[0].EndsWith("deg") || parts[0].StartsWith("to "))
+            {
+                horizontal = parts[0] == "90deg" || parts[0] == "270deg" || parts[0] == "to right" || parts[0] == "to left";
+                parts.RemoveAt(0);
+            }
+            if (parts.Count < 2) return;
+            Func<string, Rgba> col = p => { int sp = p.LastIndexOf(' '); if (sp > 0 && p.EndsWith("%")) p = p.Substring(0, sp); return Color(p, new Rgba(0, 0, 0, 0)); };
+            b.GradA = col(parts[0]); b.GradB = col(parts[parts.Count - 1]); b.GradHorizontal = horizontal; b.HasGradient = true;
         }
 
         static void Dim(string s, Action<float, bool> set)

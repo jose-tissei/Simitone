@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Playbook: how to build a new screen or menu</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.sec{font:700 14px/16px var(--font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+.p{font:500 17px/26px var(--font-ui);color:var(--text-2)}
+.p b{color:var(--text);font-weight:700}
+.step{display:flex;gap:16px;align-items:flex-start;margin-bottom:16px}
+.step .n{width:40px;height:40px;flex:none;border-radius:50%;display:grid;place-items:center;background:linear-gradient(var(--accent),var(--accent-2));color:var(--on-accent);font:700 20px/1 var(--font-display);box-shadow:0 3px 0 var(--accent-deep)}
+.step .tx{font:500 17px/25px var(--font-ui);color:var(--text-2)}
+.step .tx b{color:var(--text);font-weight:700;display:block;font-size:18px}
+table{border-collapse:separate;border-spacing:0 8px;width:100%}
+td,th{text-align:left;padding:10px 14px;font:500 16px/22px var(--font-ui);color:var(--text-2);vertical-align:top;background:var(--card)}
+th{background:transparent;font:700 13px/16px var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);padding:0 14px}
+td:first-child{border-radius:12px 0 0 12px;color:var(--text);font-weight:700}
+td:last-child{border-radius:0 12px 12px 0}
+pre{margin:0;padding:18px 20px;border-radius:16px;background:var(--track);border:2px solid var(--line);font:500 14px/21px ui-monospace,Menlo,Consolas,monospace;color:var(--text);white-space:pre;overflow:hidden}
+.z{position:absolute;display:flex;align-items:center;justify-content:center;text-align:center;font:700 13px/16px var(--font-ui);color:var(--on-accent);border-radius:8px}
+</style>
+</helmet>
+<div class="sims th-night" style="width:1920px;height:2640px;padding:72px 80px;background:var(--dock);display:flex;flex-direction:column;gap:48px">
+
+<div style="display:flex;justify-content:space-between;align-items:flex-end">
+<div><div class="sec">11 Playbook</div><div class="t-display" style="font-size:56px;line-height:60px">How to build a new screen or menu</div></div>
+<div class="p" style="max-width:640px">Give this page to your AI agent along with <b>design-tokens.json</b> and <b>UI-GUIDE.md</b>. Every new screen starts from the recipe, passes the checklist, and ships in both themes.</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1.1fr 1fr;gap:56px">
+
+<div>
+<div class="sec">Screen anatomy · 1920 × 1080 at UIScale 1.0</div>
+<div style="position:relative;width:960px;height:540px;border-radius:12px;background:#122A33;border:2px solid var(--line-strong);overflow:hidden">
+<div class="abs" style="left:16px;top:16px;right:16px;bottom:16px;border:2px dashed var(--line-strong);border-radius:6px"></div>
+<div class="abs" style="left:0;top:0;width:960px;height:540px;display:grid;place-items:center;font:600 18px var(--font-ui);color:var(--text-off);letter-spacing:.2em">THE WORLD · KEEP IT VISIBLE</div>
+<div class="z" style="left:6px;top:6px;width:235px;height:56px;background:var(--sim-2)">Lot card<br>470 × 112</div>
+<div class="z" style="left:280px;top:14px;width:400px;height:40px;background:var(--sim-4)">Notification slot · toasts · 800 wide</div>
+<div class="z" style="left:760px;top:6px;width:194px;height:40px;background:var(--sim-6)">Map rails (map only) 240</div>
+<div class="z" style="left:200px;top:96px;width:560px;height:330px;background:transparent;border:2px dashed var(--accent);color:var(--accent)">Modal area · centred<br>S 640 · M 960 · L 1360 wide<br>max height 800</div>
+<div class="z" style="left:300px;top:352px;width:360px;height:30px;background:var(--sim-1)">Key hints strip (placement, rotate)</div>
+<div class="z" style="left:0;top:390px;width:180px;height:150px;background:var(--accent-2);border-radius:0 16px 0 0">Original dial (kept)<br>310 × 295</div>
+<div class="z" style="left:180px;top:452px;width:780px;height:88px;background:var(--accent);border-radius:0">Original bar (kept) · 145 tall<br>tab tile + needs</div>
+</div>
+<div class="p" style="margin-top:14px;max-width:960px"><b>Safe margin 32.</b> Nothing interactive closer to the screen edge. <b>Z-order</b> bottom to top: world, balloons, lot card and cluster, dock, toast, scrim, modal, tooltip, pie. Only <b>one modal</b> at a time; a second request replaces or queues, never stacks.</div>
+</div>
+
+<div>
+<div class="sec">Which container for what</div>
+<table>
+<tr><th>Use</th><th>For</th><th>Rules</th></tr>
+<tr><td>Dock tab</td><td>Always-near info about the active Sim</td><td>Max 7 tabs, labelled, badge for unread.</td></tr>
+<tr><td>Modal panel</td><td>Browse, read, manage (Memory, Options)</td><td>Head band, one scroll area, Esc closes.</td></tr>
+<tr><td>Dialog</td><td>A decision or a one-off message</td><td>≤ 2 buttons, primary bottom right, ≤ 60 words.</td></tr>
+<tr><td>Sheet</td><td>Quick choice tied to a Sim (Talk)</td><td>Centred card, keys 1–9 pick, never full width.</td></tr>
+<tr><td>Toast</td><td>Something happened, optional action</td><td>Top centre, 6 s, hover pauses, max 2 stacked.</td></tr>
+<tr><td>Pie menu</td><td>Verbs on a Sim or object</td><td>≤ 8 slots, icon + label, submenu marked “…”.</td></tr>
+<tr><td>Balloon</td><td>Speech and thoughts in the world</td><td>Dark glass, theme independent, ≥ 20 px text.</td></tr>
+<tr><td>Tooltip</td><td>Exact values and “why disabled”</td><td>Appears after 300 ms, never holds the only copy of a fact.</td></tr>
+</table>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:56px">
+<div>
+<div class="sec">The 12-step recipe</div>
+<div class="step"><span class="n">1</span><div class="tx"><b>Name the job</b>One sentence: “The player opens this to ___.” If you need “and”, make two screens.</div></div>
+<div class="step"><span class="n">2</span><div class="tx"><b>Pick the container</b>Use the table. Prefer dock tab or toast over a new modal.</div></div>
+<div class="step"><span class="n">3</span><div class="tx"><b>Pick the size</b>Modal S 640, M 960, L 1360. Height follows content to a max of 800, then scroll.</div></div>
+<div class="step"><span class="n">4</span><div class="tx"><b>Lay out on 8 px</b>Padding 28–36, gaps from the spacing scale (4, 8, 12, 16, 24, 32, 48). Left list 340, content flex.</div></div>
+<div class="step"><span class="n">5</span><div class="tx"><b>Head band first</b>Icon, title (Fredoka 28), optional subtitle chip, close. Close is always top right and Esc.</div></div>
+<div class="step"><span class="n">6</span><div class="tx"><b>One primary action</b>Mint pill, bottom right. Secondary is white pill, destructive is coral and confirms.</div></div>
+<div class="step"><span class="n">7</span><div class="tx"><b>Components only</b>Compose from the kit (button, tab, chip, row, need, meter). A new component needs all its states drawn.</div></div>
+<div class="step"><span class="n">8</span><div class="tx"><b>Say it twice</b>Every status has colour <b style="display:inline">+</b> icon or label or pattern.</div></div>
+<div class="step"><span class="n">9</span><div class="tx"><b>Write in Sims voice</b>Short, warm, a bit silly. Verb on buttons (“Say it”, “Invite”), never “OK” unless informing.</div></div>
+<div class="step"><span class="n">10</span><div class="tx"><b>Add the quirk</b>One touch only: gloss, plumbob, bounce, or a Simlish empty state.</div></div>
+<div class="step"><span class="n">11</span><div class="tx"><b>Draw the states</b>Default, hover, pressed, focus, disabled, empty, loading, error, long text, 150% scale.</div></div>
+<div class="step"><span class="n">12</span><div class="tx"><b>Ship both themes</b>Review in Night and Sunny Lot, then export layout JSON and skins.</div></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:36px">
+<div>
+<div class="sec">Checklist before merge</div>
+<div class="card" style="display:flex;flex-direction:column;gap:10px">
+<div class="p"><b>✓ Targets</b> ≥ 48 × 48, 8 px apart.</div>
+<div class="p"><b>✓ Text</b> essential ≥ 16 px, body 18, titles Fredoka. Nothing truncates mid-word.</div>
+<div class="p"><b>✓ Contrast</b> 4.5:1 text, 3:1 icons and focus ring, in both themes.</div>
+<div class="p"><b>✓ Colour-blind safe</b> no meaning by red/green alone.</div>
+<div class="p"><b>✓ Input</b> mouse, keyboard (Tab order, Enter, Esc) and focus ring on everything.</div>
+<div class="p"><b>✓ Scale</b> still fits at 125% and 150%; ultrawide centres, 16:10 keeps safe margins.</div>
+<div class="p"><b>✓ Motion</b> every animation has a reduce-motion path.</div>
+<div class="p"><b>✓ Mod items</b> flagged with the “Mod” chip in Options so players know what is native.</div>
+</div>
+</div>
+<div>
+<div class="sec">Voice and Simlish</div>
+<div class="card" style="display:flex;flex-direction:column;gap:8px">
+<div class="p"><b>Do:</b> “Betty wants to chat about night street food.” “Nothing here yet. Go meet a neighbor!”</div>
+<div class="p"><b>Don't:</b> “Error 0x41.” “Operation completed successfully.”</div>
+<div class="p"><b>Empty states:</b> a sleeping plumbob and one friendly line, plus the one action that fixes it.</div>
+<div class="p"><b>Placeholders:</b> italic Simlish is allowed in demos (“Sul sul!”) but never as the only label.</div>
+</div>
+</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:32px">
+<div><div class="sec">Layout spec the loader reads</div>
+<pre>{
+  "screen": "sim_memory",
+  "theme": "inherit",
+  "root": {
+    "type": "panel", "skin": "panel_l",
+    "size": [1360, 800], "anchor": "center"
+  },
+  "children": [
+    { "type": "head", "icon": "book",
+      "text": "$mem.title",
+      "actions": ["news", "close"] },
+    { "type": "tabs", "bind": "subjects" },
+    { "type": "split", "cols": [340, "*"],
+      "gap": 24,
+      "children": ["list_known", "dossier"] }
+  ]
+}</pre></div>
+<div><div class="sec">Engine side (C#, thin)</div>
+<pre>public static class Ui
+{
+  public static Theme T = Themes.Night;
+  public static float Scale = 1f;   // 1 / 1.25 / 1.5
+  public static int Px(int v)
+    =&gt; (int)Math.Round(v * Scale);
+}
+
+// draw a button from a 9-slice skin
+NineSlice.Draw(sb, Skin.BtnPill,
+  rect, state, tint: Ui.T.PillA);
+
+// text: Fredoka for titles, Montserrat else
+Font.Draw(sb, Ui.T.Text, "Betty", pos,
+  Type.Title);</pre></div>
+<div><div class="sec">9-slice skins to export (1x / 1.5x / 2x)</div>
+<pre>panel_s / m / l      inset 28
+card                 inset 20
+head_band            inset 12 (tile X)
+btn_pill  default | primary | danger |
+          quiet   x  normal|hover|press|
+          disabled   inset 28 / 28
+ibtn      blue | mint  inset 24
+tile_frame           inset 26
+chip      neutral|good|warn|bad|info  inset 12
+input                inset 18
+switch    track on|off + knob
+seg / tab            inset 22
+track + fill (tile)  inset 9
+balloon + tail       inset 18
+pie_item  normal|on  inset 24
+toast / tooltip      inset 16
+icons.png sheet      8 x 8 @ 48 px</pre></div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":2640}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
