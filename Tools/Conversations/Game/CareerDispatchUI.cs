@@ -25,7 +25,7 @@ namespace Simitone.Conversations
         static int tickCounter;
 
         public static bool ToastVisible { get { return CareerDispatchToast.IsOpen; } }
-        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive; } }
+        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive || DispatchTriageOverlay.IsOpen; } }
 
         public static void OnTick(VM vm)
         {
@@ -144,16 +144,23 @@ namespace Simitone.Conversations
 
             switch (rank.Kind)
             {
+                case CareerMiniGameKind.DispatchTriage:
+                    SecurityWatchOverlay.Close(false);
+                    CadetAcademyOverlay.Close(false);
+                    return DispatchTriageOverlay.Open(av, logicLevelOverride: null, charismaLevelOverride: null, seed: seed);
                 case CareerMiniGameKind.BeatPatrol:
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     return BeatPatrolDriver.BeginPatrol(av, lotIdOverride: null, seed: seed);
                 case CareerMiniGameKind.CadetAcademy:
                     SecurityWatchOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     return CadetAcademyOverlay.Open(av, bodyLevelOverride, seed);
                 case CareerMiniGameKind.SecurityWatch:
                 default:
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     return SecurityWatchOverlay.Open(av, seed, SecurityWatchGame.DefaultTotalRounds, 3.6f, quietNight);
             }
         }
@@ -288,7 +295,8 @@ namespace Simitone.Conversations
                 case "status":
                 {
                     string activeDetail = "";
-                    if (BeatPatrolDriver.IsActive) activeDetail = " [patrol: " + BeatPatrolDriver.StatusSummary() + "]";
+                    if (DispatchTriageOverlay.IsOpen) activeDetail = " [" + DispatchTriageOverlay.StatusSummary() + "]";
+                    else if (BeatPatrolDriver.IsActive) activeDetail = " [patrol: " + BeatPatrolDriver.StatusSummary() + "]";
                     else if (CadetAcademyOverlay.IsOpen) activeDetail = " [" + CadetAcademyOverlay.StatusSummary() + "]";
                     else if (SecurityWatchOverlay.IsOpen) activeDetail = " [" + SecurityWatchOverlay.Status() + "]";
                     return "toast=" + ToastVisible + " game=" + GameOpen + activeDetail;
@@ -297,7 +305,13 @@ namespace Simitone.Conversations
                 {
                     LawEnforcementRankDescriptor rank = null;
                     string simQuery = arg;
-                    if (args.Length > 1 && args[args.Length - 1].Equals("patrol", StringComparison.OrdinalIgnoreCase))
+                    if (args.Length > 1 && (args[args.Length - 1].Equals("triage", StringComparison.OrdinalIgnoreCase) ||
+                                            args[args.Length - 1].Equals("desk", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        rank = CareerDispatchRegistry.GetByLevel(3);
+                        simQuery = args.Length > 2 ? string.Join(" ", args.Skip(1).Take(args.Length - 2)) : null;
+                    }
+                    else if (args.Length > 1 && args[args.Length - 1].Equals("patrol", StringComparison.OrdinalIgnoreCase))
                     {
                         rank = CareerDispatchRegistry.GetByLevel(2);
                         simQuery = args.Length > 2 ? string.Join(" ", args.Skip(1).Take(args.Length - 2)) : null;
@@ -317,11 +331,46 @@ namespace Simitone.Conversations
                         rank = ResolveRankForAvatar(av, out _, out _, out _) ?? CareerDispatchRegistry.GetByLevel(0);
                     return CareerDispatchToast.Show(av, rank, rank.RankTitle, false);
                 }
+                case "triage":
+                case "desk":
+                {
+                    CareerDispatchToast.Close();
+                    SecurityWatchOverlay.Close(false);
+                    CadetAcademyOverlay.Close(false);
+                    int? logicLvl = 4;
+                    int? charismaLvl = 4;
+                    int? seedVal = 42;
+                    string simQuery = null;
+                    if (args.Length > 1)
+                    {
+                        if (int.TryParse(args[1].Trim(), out var parsedLogic))
+                        {
+                            logicLvl = parsedLogic;
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedCha))
+                                charismaLvl = parsedCha;
+                            if (args.Length > 3 && int.TryParse(args[3].Trim(), out var parsedSeed))
+                                seedVal = parsedSeed;
+                        }
+                        else
+                        {
+                            simQuery = args[1].Trim();
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedLogic2))
+                                logicLvl = parsedLogic2;
+                            if (args.Length > 3 && int.TryParse(args[3].Trim(), out var parsedCha2))
+                                charismaLvl = parsedCha2;
+                            if (args.Length > 4 && int.TryParse(args[4].Trim(), out var parsedSeed2))
+                                seedVal = parsedSeed2;
+                        }
+                    }
+                    var av = ResolveTargetAvatar(simQuery);
+                    return DispatchTriageOverlay.Open(av, logicLvl, charismaLvl, seedVal);
+                }
                 case "patrol":
                 {
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     int? lotId = null;
                     int? seedVal = 42;
                     string simQuery = null;
@@ -349,6 +398,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     int? bodyLvl = null;
                     int? seedVal = 42;
                     string simQuery = null;
@@ -377,6 +427,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     int seedVal = 42;
                     int rounds = SecurityWatchGame.DefaultTotalRounds;
                     float scanPause = 3.6f;
@@ -405,6 +456,7 @@ namespace Simitone.Conversations
                 {
                     CareerDispatchToast.Close();
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     var av = ResolveTargetAvatar(arg);
                     return SecurityWatchOverlay.Open(av, null, 0, 0f, true);
                 }
@@ -418,6 +470,8 @@ namespace Simitone.Conversations
                 }
                 case "action":
                 {
+                    if (DispatchTriageOverlay.IsOpen)
+                        return DispatchTriageOverlay.HandleTestAction(args.Length > 1 ? string.Join(" ", args.Skip(1)) : "");
                     if (BeatPatrolDriver.IsActive)
                         return BeatPatrolDriver.HandleScriptedAction(args.Length > 1 ? args[1] : "", args.Length > 2 ? args[2] : "");
                     if (CadetAcademyOverlay.IsOpen)
@@ -426,6 +480,7 @@ namespace Simitone.Conversations
                 }
                 case "finish":
                 {
+                    if (DispatchTriageOverlay.IsOpen) return DispatchTriageOverlay.HandleTestAction("claim");
                     if (BeatPatrolDriver.IsActive) return BeatPatrolDriver.HandleScriptedAction("end");
                     if (CadetAcademyOverlay.IsOpen) return CadetAcademyOverlay.FinishToSummary();
                     return SecurityWatchOverlay.FinishToSummary();
@@ -448,8 +503,13 @@ namespace Simitone.Conversations
                     float tail = 1.0f;
                     if (args.Length > 2) float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lead);
                     if (args.Length > 3) float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out tail);
+                    if (DispatchTriageOverlay.IsOpen)
+                        return DispatchTriageOverlay.ExportLastSessionWav(args[1], lead, tail);
                     if (BeatPatrolDriver.IsActive || BeatPatrolDriver.Audio.SessionEventCount > 0)
                         return BeatPatrolDriver.ExportLastSessionWav(args[1], lead, tail);
+                    string triageRes = DispatchTriageOverlay.ExportLastSessionWav(args[1], lead, tail);
+                    if (triageRes.StartsWith("ok ", StringComparison.Ordinal))
+                        return triageRes;
                     return CadetAcademyOverlay.ExportLastSessionWav(args[1], lead, tail);
                 }
                 case "close":
@@ -457,10 +517,11 @@ namespace Simitone.Conversations
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
+                    DispatchTriageOverlay.Close(false);
                     if (BeatPatrolDriver.IsActive) BeatPatrolDriver.RequestReturnHome(false);
                     return "closed";
                 default:
-                    return "usage: convo dispatch status|toast [Sim] [patrol|cadet|guard]|patrol [Sim|lotId] [lotId] [seed]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|exportwav <path> [leadSec] [tailSec]|close";
+                    return "usage: convo dispatch status|toast [Sim] [triage|patrol|cadet|guard]|triage [Sim] [logic] [cha] [seed]|patrol [Sim|lotId] [lotId] [seed]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|exportwav <path> [leadSec] [tailSec]|close";
             }
         }
 

@@ -76,8 +76,8 @@ Built into the same `Tools/Conversations` mod, **Interactive Career Mini-Games**
 | **1** | **Security Guard** | **CCTV Night Watch** | 4-camera night-vision CRT desk monitor (5 rounds): spot 3D threats (`Burglar`, `Vandal`, `Prowler`) vs. false alarms (`Raccoon`, `Stray Cat`, `Pizza Delivery`), manage `Stay Awake` alertness (`Energy` + 3 `Sip Coffee` charges), eerie procedural booth hum & alarms. | **Playable** |
 | **2** | **Cadet** | **Academy Obstacle & Drill** | Full-screen 3D **Virtual Pocket Lot** (*SimCity Police Academy*): 3 timing stages (**Sprint Dash → Wall Vault → Target Drill**), **Body** skill widens the green hit zone, custom 3D animations, authentic TS1 career uniforms, Sideline Drill Sergeant, and 18 procedural Police Academy SFX + outdoor ambience. | **Playable** |
 | **3** | **Patrol Officer** | **Real-Lot Live Beat Patrol** | Patrols real Sims 1 **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential (`House01–10`)** lots with a parked TS1 **Police Squad Car** at the street curb: survey the live lot, use native Simitone **Pie Menus** on suspects & hazards, **Sneak Up & Apprehend** the prowling TS1 Burglar with custom Blender stealth animations, issue friendly warnings/tickets to real townies (saving real relationship & Sim Memory deltas), and return seamlessly to your saved home lot. | **Playable** |
-| **4** | **Desk Sergeant** | **911 Dispatch Triage** | Multi-call incoming emergency queue (`Cat in Tree`, `Burglar Alarm`, `Kitchen Fire`, `Prank Call`); route to **Patrol / Fire / Ignore** before queue overflow. | **Next Up (Planned)** |
-| **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | 3-turn undercover conversation powered by **Laya + Charisma**; pick Gentle / Playful / Bold cover lines to keep Suspicion low until confession and record intel in **Sim Memory**. | Planned |
+| **4** | **Desk Sergeant** | **911 Dispatch Triage** | Full-screen 3D **Virtual Pocket Lot** (*SimCity PD Precinct Front Desk*): juggle flashing **911 phone lines** AND **live 3D walk-in neighborhood townies** walking up to the front counter with 12 handcrafted TS1 cases across **Patrol (2 units)**, **Fire Dept (1 unit)**, **Community Aid (2 units)**, and **Dismiss/Prank**, **Logic ≥ 2** dispatch clues, **Charisma** `Calm Caller (+6s)`, outdoor cruiser/fire-engine rollouts, 6 custom Blender desk animations, and 16 procedural precinct SFX. | **Playable** |
+| **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | 3-turn undercover conversation powered by **Laya + Charisma**; pick Gentle / Playful / Bold cover lines to keep Suspicion low until confession and record intel in **Sim Memory**. | **Next Up (Planned)** |
 | **6** | **Detective** | **Crime Scene Deduction** | Evidence board with 3 clues (`Footprint`, `Motive`, `Alibi`) and 3 real neighborhood Sims as suspects; **Logic** flags contradictions; unlocks on-lot **Question Sim**. | Planned |
 | **7** | **Lieutenant** | **Precinct Squad Briefing** | Assign 3 rookie officers (*Fast*, *Observant*, *Charming*) to 3 city incidents (`Foot Chase`, `Stakeout`, `Community Mediation`). | Planned |
 | **8** | **SWAT Team Leader** | **Tactical Breach Plan** | 4×4 room grid with doors, suspects, and hostages; sequence 3 entry moves (`Flashbang`, `Shield`, `Quiet Entry`) for zero collateral damage. | Planned |
@@ -151,11 +151,31 @@ Patrol **actual Sims 1 lots** across **Downtown (`House21–30`)**, **Old Town (
 | :---: |
 | ![Beat Patrol S-Rank Scorecard](docs/career-minigames/media/14-lvl3-patrol-scorecard.jpg) |
 
+---
+
+### Law Enforcement Lvl 4 — Desk Sergeant: *911 Dispatch Triage*
+
+Step behind the oak front counter of the **SimCity PD Precinct Lobby** (full-screen 3D Virtual Pocket Lot, home lot safely paused) wearing your Sim's authentic TS1 **Desk Sergeant** uniform. Juggle a live 6-case shift combining flashing multi-line **911 emergency phone calls** and **live 3D walk-in neighborhood townies** who physically stride through the precinct glass door, plead across the counter with floating speech bubbles, and depart once dispatched:
+
+- **Handcrafted Sims 1 Case Triage & Unit Cooldowns:** Route 12 handcrafted TS1 scenarios across **`[1] Patrol`** (`2` units — burglars, break-ins, prowlers), **`[2] Fire Dept`** (`1` unit — stove blazes, backyard grills, electrical sparks), **`[3] Community Aid`** (`2` units — El Bandito raccoons, lost pets, noise disputes), and **`[4] Dismiss / Hang Up`** (instant — pizza pranks & bogus calls). Watch outdoor 3D **Police Cruisers** and **Fire Engines** roll out past the precinct windows when dispatched!
+- **Logic & Charisma Skill Depth:** **Logic ≥ 2** unlocks dispatch audio & visual tells (exposing pranks and confirming real threats); **Charisma** stretches call urgency timers and grants **`[C] Calm Caller (+6s)`** charges. Assisting neighbors writes real TS1 relationship deltas & **Sim Memory** dossier entries alongside Simoleons, Job Performance, and Logic/Charisma XP.
+- **6 Custom Blender Desk Animations & 16 Procedural Precinct SFX:** `desk_idle_watch`, `desk_answer_phone`, `desk_radio_dispatch`, `desk_wave_dismiss`, `desk_walkin_walk`, and `desk_walkin_plead` paired with `DispatchAudioSynth` (precinct ambience, twin-bell 911 phone ring, handset pickup, front-door brass chime, marble footsteps, radio squelch + cruiser/fire-engine rollout sirens, calm-caller chime, hang-up click, and shift fanfare).
+- **Gameplay Video (HD with Synced Precinct Audio):** [Watch Lvl 4 — Desk Sergeant 911 Triage Demo (MP4)](docs/career-minigames/media/lvl4-desk-sergeant-triage-demo.mp4)
+
+| 3D Precinct Front Desk & Shift Briefing | Incoming 911 Phone Call & Handset Pickup |
+| :---: | :---: |
+| ![Desk Sergeant Briefing](docs/career-minigames/media/17-lvl4-triage-briefing.jpg) | ![Desk Sergeant 911 Phone Dispatch](docs/career-minigames/media/18-lvl4-triage-phone.jpg) |
+
+| Live 3D Walk-In Neighbor at Front Counter | S-Rank Shift Report & Victory Salute |
+| :---: | :---: |
+| ![Desk Sergeant Live 3D Walk-In](docs/career-minigames/media/19-lvl4-triage-walkin.jpg) | ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/20-lvl4-triage-scorecard.jpg) |
+
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
-> - `convo dispatch toast <SimName> [cadet|patrol]` — trigger the mid-shift Radio Dispatch toast
+> - `convo dispatch toast <SimName> [cadet|patrol|triage]` — trigger the mid-shift Radio Dispatch toast
 > - `convo dispatch start` — jump straight into **Lvl 1 Security Guard (CCTV Night Watch)**
 > - `convo dispatch cadet <SimName> <BodyLvl>` — jump straight into **Lvl 2 Cadet (Academy Obstacle & Drill)**
 > - `convo dispatch patrol <SimName> [lotId] [seed]` — jump straight into **Lvl 3 Patrol Officer (Real-Lot Live Beat Patrol)**
+> - `convo dispatch triage <SimName> [logicLvl] [charismaLvl] [seed]` — jump straight into **Lvl 4 Desk Sergeant (911 Dispatch Triage)**
 
 # Why is it called Simitone?
 

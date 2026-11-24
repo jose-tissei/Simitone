@@ -93,12 +93,12 @@ namespace Simitone.Conversations
                 PromotionLevel = 3,
                 RankTitle = "Desk Sergeant",
                 MiniGameTitle = "911 Dispatch Triage",
-                DispatchTeaser = "Route incoming emergency calls before the queue overflows.",
+                DispatchTeaser = "3D precinct front desk — route 911 phone lines & live walk-in citizens before the queue overflows.",
                 AssignmentButtonText = "WORK ASSIGNMENT: 911 TRIAGE",
                 DefaultShiftStartHour = 9,
                 DefaultShiftEndHour = 15,
                 Kind = CareerMiniGameKind.DispatchTriage,
-                IsImplemented = false,
+                IsImplemented = true,
             },
             new LawEnforcementRankDescriptor
             {
