@@ -9,6 +9,7 @@
     <MonoGameDll Condition="'$(MonoGameDll)'==''">$(AppDir)\Monogame\Windows\MonoGame.Framework.dll</MonoGameDll>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="..\HtmlUi\HtmlUi.csproj" />
     <Reference Include="MonoGame.Framework"><HintPath>$(MonoGameDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.SimAntics"><HintPath>$(AppDir)\FSO.SimAntics.dll</HintPath><Private>false</Private></Reference>
     <Reference Include="FSO.LotView"><HintPath>$(AppDir)\FSO.LotView.dll</HintPath><Private>false</Private></Reference>

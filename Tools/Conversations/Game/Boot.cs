@@ -226,6 +226,7 @@ namespace Simitone.Conversations
                 case "menu": SetFullMenu(a.Length > 1 && a[1] == "full", false); return "menu=" + (FullMenu ? "full" : "simplified");
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " " + ParallelSocialDriver.Diagnostics() + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
+                case "htmlui": return a.Length > 1 && a[1] == "close" ? HtmlPanel.Close() : a.Length > 1 && a[1] == "status" ? HtmlPanel.Status() : HtmlPanel.Open(a.Length > 1 ? a[1] : "memory.html");
                 case "memory-ui":
                 {
                     var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "open";
@@ -245,7 +246,7 @@ namespace Simitone.Conversations
                 case "gossip": GossipEnabled = !(a.Length > 1 && a[1] == "off"); return "gossip=" + GossipEnabled;
                 case "interaction": ParallelSocialPlanner.ForcedInteraction = a.Length > 1 && a[1] != "off" ? a[1] : null; return "forced interaction=" + (ParallelSocialPlanner.ForcedInteraction ?? "none");
                 case "last": return LastDecision;
-                case "log": try { return string.Join(" | ", File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log")).Reverse().Take(8).Reverse()); } catch { return "(no log)"; }
+                case "log": try { return string.Join(" | ", Enumerable.Reverse(Enumerable.Reverse(File.ReadAllLines(Path.Combine(GameDir, "Content", "conversations.log"))).Take(8))); } catch { return "(no log)"; }
                 default: throw new Exception("convo status|on|off|force N|tone N|auto on|off|menu full|simple|parallel|memory|memory-ui [open|close|tab|switcher|select|status]|trigger A B|last|log");
             }
         }

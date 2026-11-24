@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+    <AssemblyName>HtmlUi</AssemblyName>
+    <RootNamespace>Simitone.HtmlUi</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <NoWarn>$(NoWarn);CS1591;CS8632</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Yoga\obj\**" />
+    <PackageReference Include="System.Memory" Version="4.5.5" /><PackageReference Include="System.ValueTuple" Version="4.5.0" /><PackageReference Include="AngleSharp" Version="1.11.0" /><PackageReference Include="AngleSharp.Css" Version="1.6.0" />
+  </ItemGroup>
+</Project>
