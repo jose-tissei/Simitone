@@ -172,6 +172,28 @@ namespace Conversations.Tests
                 Assert.Contains(PieStyle.IconFor(label), order);
         }
 
+        [Fact]
+        public void PieStyle_LayoutIsTwoEvenColumnsWithNoOverlap()
+        {
+            float[] cx, cy; float bx, by;
+            foreach (var n in new[] { 1, 2, 3, 6, 8, 10 })
+                foreach (var back in new[] { false, true })
+                {
+                    PieStyle.Layout(n, back, 150, 36, 54, 10, out cx, out cy, out bx, out by);
+                    for (int i = 0; i < n; i++)
+                    {
+                        Assert.Equal(i < (n + 1) / 2 ? 129f : -129f, cx[i]);
+                        for (int j = i + 1; j < n; j++)
+                            Assert.True(cx[i] != cx[j] || Math.Abs(cy[i] - cy[j]) >= 46f);
+                        if (back && cx[i] != 0) Assert.True(Math.Abs(cy[i] - by) >= 46f);
+                    }
+                }
+            PieStyle.Layout(6, false, 150, 36, 54, 10, out cx, out cy, out bx, out by);
+            Assert.Equal(cy[0], cy[5]); Assert.Equal(cy[2], cy[3]);       // clockwise: right column down, left column up, rows line up
+            PieStyle.Layout(3, false, 150, 36, 54, 10, out cx, out cy, out bx, out by);
+            Assert.Equal(0f, cy[2] + 0f * 0 - (cy[0] + cy[1]) / 2);       // the single left slot sits between the two right rows
+        }
+
         static string FindPage(string name)
         {
             for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)

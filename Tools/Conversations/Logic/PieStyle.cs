@@ -50,6 +50,28 @@ namespace Simitone.Conversations
             return i > 0 && i + 3 < s.Length ? s.Substring(i + 3).Trim() : s;
         }
 
+        // Harmonious layout: every slot the same size, in two even columns either side of the Sim's head (hub = half the gap between
+        // them). Entries run clockwise like the native pie: down the right column, then up the left one; an odd count leaves the left column
+        // half a row lower so the block stays balanced. A back button (submenus) gets its own centred row on top. Returns slot centres
+        // relative to the pie origin; the block is centred vertically on it.
+        public static void Layout(int n, bool hasBack, float slotW, float slotH, float hub, float gutter, out float[] cx, out float[] cy, out float backX, out float backY)
+        {
+            cx = new float[n]; cy = new float[n];
+            int right = (n + 1) / 2, left = n - right, rows = Math.Max(1, right);
+            float pitch = slotH + gutter;
+            float first = hasBack ? 1 : 0;                       // row index of the first column row
+            float total = rows + first;
+            float colX = hub + slotW / 2;
+            for (int i = 0; i < n; i++)
+            {
+                float row;
+                if (i < right) { row = i; cx[i] = colX; }
+                else { int j = i - right; row = left - 1 - j + (rows - left) / 2f; cx[i] = -colX; }
+                cy[i] = (row + first - (total - 1) / 2f) * pitch;
+            }
+            backX = 0; backY = (0 - (total - 1) / 2f) * pitch;
+        }
+
         // slot width: icon, gaps and text, never narrower than the native button it covers (so the native one is fully hidden)
         public static float SlotWidth(float textWidth, float iconSize, float nativeWidth, bool submenu)
         {

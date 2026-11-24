@@ -86,6 +86,10 @@ namespace Simitone.Conversations
                 bool hasParent = Prop(current, "Parent") != null;
 
                 painter.BeginDraw(batch);
+                if (buttons.Count == 0) { LastState = "new slots=0"; return; }
+                var first = buttons[0] as UIButton;
+                if (first == null) { LastState = "native (unexpected button)"; return; }
+                if (!ReferenceEquals(first, laidOut) || buttons.Count != laidCount) { Arrange(buttons, hasParent); laidOut = first; laidCount = buttons.Count; }
                 int drawn = 0;
                 for (int i = 0; i < buttons.Count; i++)
                 {
@@ -102,14 +106,42 @@ namespace Simitone.Conversations
 
         static string Str(object o, string name) { var v = Prop(o, name); return v == null ? "" : v.ToString(); }
 
+        object laidOut; int laidCount;
+        const float SlotH = 36, Gutter = 10, Hub = 54;
+
+        // Moves the native buttons into the harmonious layout (PieStyle.Layout) and gives them one common width, so the click areas are the slots we draw.
+        void Arrange(IList buttons, bool hasParent)
+        {
+            int n = buttons.Count - (hasParent ? 1 : 0);
+            float w = 0;
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                var b = buttons[i] as UIButton; if (b == null) continue;
+                bool back = hasParent && i == buttons.Count - 1;
+                float tw, th; painter.MeasureText(back ? PieStyle.CleanLabel(b.Caption) : PieStyle.ShortLabel(b.Caption), TextSize, false, out tw, out th);
+                w = Math.Max(w, PieStyle.SlotWidth(tw, IconSize, 0, !back && PieStyle.IsSubmenu(b.Caption)));
+            }
+            w = (float)Math.Ceiling(Math.Max(w, 120));
+            float[] cx, cy; float bx, by;
+            PieStyle.Layout(n, hasParent, w, SlotH, Hub, Gutter, out cx, out cy, out bx, out by);
+            for (int i = 0; i < buttons.Count; i++)
+            {
+                var b = buttons[i] as UIButton; if (b == null) continue;
+                b.Width = w;
+                bool back = hasParent && i == buttons.Count - 1;
+                float x = back ? bx : cx[i], y = back ? by : cy[i];
+                b.X = x - w / 2; b.Y = y - b.Size.Y / 2;
+            }
+        }
+
         void DrawSlot(float nx, float ny, float nw, float nh, string caption, bool back)
         {
             bool sub = !back && PieStyle.IsSubmenu(caption);
             string full = PieStyle.CleanLabel(caption);
             string label = back ? full : PieStyle.ShortLabel(caption);
             float tw, th; painter.MeasureText(label, TextSize, false, out tw, out th);
-            float w = PieStyle.SlotWidth(tw, IconSize, nw, sub), h = Math.Max(30, nh);   // as tall as the native button: stacked slots (more than 8 entries) then do not cover each other
-            float x = nx + nw / 2 - w / 2, y = ny + nh / 2 - h / 2;
+            float w = nw, h = SlotH;
+            float x = nx, y = ny + nh / 2 - h / 2;
             bool hover = mouseX >= nx && mouseX <= nx + nw && mouseY >= ny && mouseY <= ny + nh;
 
             var a = Token(hover ? "info" : "pie-a", new Rgba(38, 88, 200)); var bcol = Token("pie-b", new Rgba(18, 58, 143));
