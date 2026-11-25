@@ -269,6 +269,43 @@ namespace Simitone.Conversations
             w = m.X; h = m.Y;
         }
 
+        int iconCell, iconW; Color[] iconPixels;
+        readonly Dictionary<int, Texture2D> iconSheets = new Dictionary<int, Texture2D>();
+
+        // the 8 x 8 icon sheet reduced so that each cell is sz x sz pixels (area average of premultiplied pixels = smooth, no jaggies)
+        Texture2D IconSheetAt(int sz)
+        {
+            Texture2D t;
+            if (iconSheets.TryGetValue(sz, out t)) return t;
+            if (sz == iconCell) { iconSheets[sz] = icons; return icons; }
+            int W = 8 * sz;
+            var dst = new Color[W * W];
+            float k = (float)iconCell / sz;
+            for (int cy = 0; cy < 8; cy++)
+                for (int cx = 0; cx < 8; cx++)
+                    for (int py = 0; py < sz; py++)
+                        for (int pxl = 0; pxl < sz; pxl++)
+                        {
+                            float x0 = pxl * k, x1 = x0 + k, y0 = py * k, y1 = y0 + k;
+                            float r = 0, g = 0, b = 0, a = 0, wsum = 0;
+                            for (int sy = (int)y0; sy < Math.Min(iconCell, (int)Math.Ceiling(y1)); sy++)
+                            {
+                                float wy = Math.Min(sy + 1, y1) - Math.Max(sy, y0);
+                                for (int sx = (int)x0; sx < Math.Min(iconCell, (int)Math.Ceiling(x1)); sx++)
+                                {
+                                    float w = wy * (Math.Min(sx + 1, x1) - Math.Max(sx, x0));
+                                    var c = iconPixels[(cy * iconCell + sy) * iconW + cx * iconCell + sx];
+                                    r += c.R * w; g += c.G * w; b += c.B * w; a += c.A * w; wsum += w;
+                                }
+                            }
+                            if (wsum > 0) dst[(cy * sz + py) * W + cx * sz + pxl] = new Color((byte)(r / wsum + 0.5f), (byte)(g / wsum + 0.5f), (byte)(b / wsum + 0.5f), (byte)(a / wsum + 0.5f));
+                        }
+            t = new Texture2D(batch.GraphicsDevice, W, W);
+            t.SetData(dst);
+            iconSheets[sz] = t;
+            return t;
+        }
+
         public void DrawIcon(int cell, float x, float y, float size, Rgba color)
         {
             if (icons == null)
@@ -278,17 +315,20 @@ namespace Simitone.Conversations
                     using (var fs = File.OpenRead(Path.Combine(UiDir, "icons.png"))) icons = Texture2D.FromStream(batch.GraphicsDevice, fs);
                     var px4 = new Color[icons.Width * icons.Height];
                     icons.GetData(px4);
+                    iconCell = icons.Width / 8; iconW = icons.Width;
                     for (int i = 0; i < px4.Length; i++) px4[i] = Color.FromNonPremultiplied(px4[i].R, px4[i].G, px4[i].B, px4[i].A);
-                    icons.SetData(px4);
+                    icons.SetData(px4); iconPixels = px4;
                 }
                 catch { icons = px; }
             }
             if (icons == px) return;
-            int cellPx = icons.Width / 8;
-            var src = new Rectangle((cell % 8) * cellPx, (cell / 8) * cellPx, cellPx, cellPx);
-            var scale = new Vector2(size / cellPx, size / cellPx);
-            if (!rotating) { owner.DrawLocalTexture(batch, icons, src, new Vector2(x, y), scale, C(color)); return; }
-            owner.DrawLocalTexture(batch, icons, src, Turn(x + size / 2, y + size / 2), scale, C(color), rotRad, new Vector2(cellPx / 2f, cellPx / 2f));
+            // the sheet's cells are much larger than the icon on screen, and the sampler would just pick single pixels (jagged):
+            // average the source pixels down to the size actually drawn, once per size
+            int sz = Math.Max(4, (int)Math.Round(size));
+            var sheet = IconSheetAt(sz);
+            var src = new Rectangle((cell % 8) * sz, (cell / 8) * sz, sz, sz);
+            if (!rotating) { owner.DrawLocalTexture(batch, sheet, src, new Vector2(x + (size - sz) / 2, y + (size - sz) / 2), Vector2.One, C(color)); return; }
+            owner.DrawLocalTexture(batch, sheet, src, Turn(x + size / 2, y + size / 2), Vector2.One, C(color), rotRad, new Vector2(sz / 2f, sz / 2f));
         }
     }
 }
