@@ -117,12 +117,12 @@ namespace Simitone.Conversations
                 PromotionLevel = 5,
                 RankTitle = "Detective",
                 MiniGameTitle = "Crime Scene Deduction",
-                DispatchTeaser = "Compare clues and accuse the true neighborhood culprit.",
+                DispatchTeaser = "Real-lot manor crime scene — inspect 3 clues, question 3 neighborhood suspects, flag Logic contradictions & accuse the culprit!",
                 AssignmentButtonText = "WORK ASSIGNMENT: CASE FILE",
                 DefaultShiftStartHour = 9,
                 DefaultShiftEndHour = 15,
                 Kind = CareerMiniGameKind.CrimeSceneDeduction,
-                IsImplemented = false,
+                IsImplemented = true,
             },
             new LawEnforcementRankDescriptor
             {

@@ -152,7 +152,9 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("triage tick error: " + e.GetType().Name + ": " + e.Message); }
             try { UndercoverStingDriver.OnTick(vm); }
             catch (Exception e) { Log("sting tick error: " + e.GetType().Name + ": " + e.Message); }
-            if (!BeatPatrolDriver.IsActive && !DispatchTriageDriver.IsActive && !UndercoverStingDriver.IsActive)
+            try { CrimeSceneDeductionDriver.OnTick(vm); }
+            catch (Exception e) { Log("detective tick error: " + e.GetType().Name + ": " + e.Message); }
+            if (!BeatPatrolDriver.IsActive && !DispatchTriageDriver.IsActive && !UndercoverStingDriver.IsActive && !CrimeSceneDeductionDriver.IsActive)
             {
                 try { ParallelSocialDriver.OnTick(vm); }
                 catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
@@ -175,6 +177,8 @@ namespace Simitone.Conversations
                 if (BeatPatrolDriver.TryHandleInteraction(cmd, vm, caller)) return true;
                 if (DispatchTriageDriver.TryHandleInteraction(cmd, vm, caller)) return true;
                 if (UndercoverStingDriver.TryHandleInteraction(cmd, vm, caller)) return true;
+                if (CrimeSceneDeductionDriver.TryHandleInteraction(cmd, vm, caller)) return true;
+                if (CrimeSceneDeductionDriver.TryHandleOnLotQuestionSim(cmd, vm, caller)) return true;
                 return false;
             }
             catch (Exception e) { Log("interaction hook error: " + e.GetType().Name + ": " + e.Message); return false; }

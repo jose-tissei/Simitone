@@ -25,7 +25,7 @@ namespace Simitone.Conversations
         static int tickCounter;
 
         public static bool ToastVisible { get { return CareerDispatchToast.IsOpen; } }
-        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive || DispatchTriageDriver.IsActive || DispatchTriageOverlay.IsOpen || UndercoverStingDriver.IsActive || UndercoverStingOverlay.IsOpen; } }
+        public static bool GameOpen { get { return SecurityWatchOverlay.IsOpen || CadetAcademyOverlay.IsOpen || BeatPatrolDriver.IsActive || DispatchTriageDriver.IsActive || DispatchTriageOverlay.IsOpen || UndercoverStingDriver.IsActive || UndercoverStingOverlay.IsOpen || CrimeSceneDeductionDriver.IsActive || CrimeSceneDeductionOverlay.IsOpen; } }
 
         public static void OnTick(VM vm)
         {
@@ -144,10 +144,17 @@ namespace Simitone.Conversations
 
             switch (rank.Kind)
             {
+                case CareerMiniGameKind.CrimeSceneDeduction:
+                    SecurityWatchOverlay.Close(false);
+                    CadetAcademyOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
+                    if (UndercoverStingDriver.IsActive) UndercoverStingDriver.RequestReturnHome(false);
+                    return CrimeSceneDeductionDriver.BeginCase(av, logicOverride: null, charismaOverride: null, seedOverride: seed);
                 case CareerMiniGameKind.UndercoverSting:
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
                     if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
+                    if (CrimeSceneDeductionDriver.IsActive) CrimeSceneDeductionDriver.RequestReturnHome(false);
                     return UndercoverStingDriver.BeginSting(av, charismaOverride: null, logicOverride: null, seedOverride: seed);
                 case CareerMiniGameKind.DispatchTriage:
                     SecurityWatchOverlay.Close(false);
@@ -304,7 +311,8 @@ namespace Simitone.Conversations
                 case "status":
                 {
                     string activeDetail = "";
-                    if (UndercoverStingDriver.IsActive) activeDetail = " [sting: " + UndercoverStingDriver.StatusSummary() + "]";
+                    if (CrimeSceneDeductionDriver.IsActive) activeDetail = " [detective: " + CrimeSceneDeductionDriver.StatusSummary() + "]";
+                    else if (UndercoverStingDriver.IsActive) activeDetail = " [sting: " + UndercoverStingDriver.StatusSummary() + "]";
                     else if (DispatchTriageDriver.IsActive) activeDetail = " [triage: " + DispatchTriageDriver.StatusSummary() + "]";
                     else if (BeatPatrolDriver.IsActive) activeDetail = " [patrol: " + BeatPatrolDriver.StatusSummary() + "]";
                     else if (CadetAcademyOverlay.IsOpen) activeDetail = " [" + CadetAcademyOverlay.StatusSummary() + "]";
@@ -315,7 +323,13 @@ namespace Simitone.Conversations
                 {
                     LawEnforcementRankDescriptor rank = null;
                     string simQuery = arg;
-                    if (args.Length > 1 && (args[args.Length - 1].Equals("sting", StringComparison.OrdinalIgnoreCase) ||
+                    if (args.Length > 1 && (args[args.Length - 1].Equals("detective", StringComparison.OrdinalIgnoreCase) ||
+                                            args[args.Length - 1].Equals("case", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        rank = CareerDispatchRegistry.GetByLevel(5);
+                        simQuery = args.Length > 2 ? string.Join(" ", args.Skip(1).Take(args.Length - 2)) : null;
+                    }
+                    else if (args.Length > 1 && (args[args.Length - 1].Equals("sting", StringComparison.OrdinalIgnoreCase) ||
                                             args[args.Length - 1].Equals("vice", StringComparison.OrdinalIgnoreCase)))
                     {
                         rank = CareerDispatchRegistry.GetByLevel(4);
@@ -346,6 +360,42 @@ namespace Simitone.Conversations
                     if (rank == null)
                         rank = ResolveRankForAvatar(av, out _, out _, out _) ?? CareerDispatchRegistry.GetByLevel(0);
                     return CareerDispatchToast.Show(av, rank, rank.RankTitle, false);
+                }
+                case "detective":
+                case "case":
+                {
+                    CareerDispatchToast.Close();
+                    SecurityWatchOverlay.Close(false);
+                    CadetAcademyOverlay.Close(false);
+                    if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
+                    if (UndercoverStingDriver.IsActive) UndercoverStingDriver.RequestReturnHome(false);
+                    int? logicLvl = 5;
+                    int? charismaLvl = 4;
+                    int? seedVal = 42;
+                    string simQuery = null;
+                    if (args.Length > 1)
+                    {
+                        if (int.TryParse(args[1].Trim(), out var parsedLogic))
+                        {
+                            logicLvl = parsedLogic;
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedCha))
+                                charismaLvl = parsedCha;
+                            if (args.Length > 3 && int.TryParse(args[3].Trim(), out var parsedSeed))
+                                seedVal = parsedSeed;
+                        }
+                        else
+                        {
+                            simQuery = args[1].Trim();
+                            if (args.Length > 2 && int.TryParse(args[2].Trim(), out var parsedLogic2))
+                                logicLvl = parsedLogic2;
+                            if (args.Length > 3 && int.TryParse(args[3].Trim(), out var parsedCha2))
+                                charismaLvl = parsedCha2;
+                            if (args.Length > 4 && int.TryParse(args[4].Trim(), out var parsedSeed2))
+                                seedVal = parsedSeed2;
+                        }
+                    }
+                    var av = ResolveTargetAvatar(simQuery);
+                    return CrimeSceneDeductionDriver.BeginCase(av, logicLvl, charismaLvl, seedVal);
                 }
                 case "sting":
                 case "vice":
@@ -522,6 +572,8 @@ namespace Simitone.Conversations
                 }
                 case "action":
                 {
+                    if (CrimeSceneDeductionDriver.IsActive)
+                        return CrimeSceneDeductionDriver.HandleTestAction(args.Length > 1 ? string.Join(" ", args.Skip(1)) : "");
                     if (UndercoverStingDriver.IsActive)
                         return UndercoverStingDriver.HandleTestAction(args.Length > 1 ? string.Join(" ", args.Skip(1)) : "");
                     if (DispatchTriageDriver.IsActive)
@@ -534,6 +586,7 @@ namespace Simitone.Conversations
                 }
                 case "finish":
                 {
+                    if (CrimeSceneDeductionDriver.IsActive) return CrimeSceneDeductionDriver.HandleTestAction("claim");
                     if (UndercoverStingDriver.IsActive) return UndercoverStingDriver.HandleTestAction("claim");
                     if (DispatchTriageDriver.IsActive) return DispatchTriageDriver.HandleTestAction("claim");
                     if (BeatPatrolDriver.IsActive) return BeatPatrolDriver.HandleScriptedAction("end");
@@ -558,12 +611,16 @@ namespace Simitone.Conversations
                     float tail = 1.0f;
                     if (args.Length > 2) float.TryParse(args[2], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out lead);
                     if (args.Length > 3) float.TryParse(args[3], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out tail);
+                    if (CrimeSceneDeductionDriver.IsActive)
+                        return CrimeSceneDeductionDriver.ExportLastSessionWav(args[1]);
                     if (UndercoverStingDriver.IsActive)
                         return UndercoverStingDriver.ExportLastSessionWav(args[1], lead, tail);
                     if (DispatchTriageDriver.IsActive)
                         return DispatchTriageDriver.ExportLastSessionWav(args[1], lead, tail);
                     if (BeatPatrolDriver.IsActive)
                         return BeatPatrolDriver.ExportLastSessionWav(args[1], lead, tail);
+                    if (CrimeSceneDeductionDriver.Audio.RecordedCueCount > 0)
+                        return CrimeSceneDeductionDriver.ExportLastSessionWav(args[1]);
                     if (UndercoverStingDriver.Audio.RecordedCueCount > 0)
                         return UndercoverStingDriver.ExportLastSessionWav(args[1], lead, tail);
                     if (DispatchTriageDriver.Audio.RecordedCueCount > 0)
@@ -577,12 +634,13 @@ namespace Simitone.Conversations
                     CareerDispatchToast.Close();
                     SecurityWatchOverlay.Close(false);
                     CadetAcademyOverlay.Close(false);
+                    if (CrimeSceneDeductionDriver.IsActive) CrimeSceneDeductionDriver.RequestReturnHome(false);
                     if (UndercoverStingDriver.IsActive) UndercoverStingDriver.RequestReturnHome(false);
                     if (DispatchTriageDriver.IsActive) DispatchTriageDriver.RequestReturnHome(false);
                     if (BeatPatrolDriver.IsActive) BeatPatrolDriver.RequestReturnHome(false);
                     return "closed";
                 default:
-                    return "usage: convo dispatch status|toast [Sim] [sting|triage|patrol|cadet|guard]|sting [Sim] [cha] [logic] [seed]|triage [Sim] [logic] [cha] [seed]|patrol [Sim|lotId] [lotId] [seed]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|exportwav <path> [leadSec] [tailSec]|close";
+                    return "usage: convo dispatch status|toast [Sim] [detective|sting|triage|patrol|cadet|guard]|detective [Sim] [logic] [cha] [seed]|sting [Sim] [cha] [logic] [seed]|triage [Sim] [logic] [cha] [seed]|patrol [Sim|lotId] [lotId] [seed]|start [seed] [rounds] [scanSec]|cadet [Sim|bodyLvl] [bodyLvl] [seed]|quiet [Sim]|answer|action <cmd>|finish|quota [clear]|exportwav <path> [leadSec] [tailSec]|close";
             }
         }
 

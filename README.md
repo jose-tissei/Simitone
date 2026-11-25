@@ -78,8 +78,8 @@ Built into the same `Tools/Conversations` mod, **Interactive Career Mini-Games**
 | **3** | **Patrol Officer** | **Real-Lot Live Beat Patrol** | Patrols real Sims 1 **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential (`House01–10`)** lots with a parked TS1 **Police Squad Car** at the street curb: survey the live lot, use native Simitone **Pie Menus** on suspects & hazards, **Sneak Up & Apprehend** the prowling TS1 Burglar with custom Blender stealth animations, issue friendly warnings/tickets to real townies (saving real relationship & Sim Memory deltas), and return seamlessly to your saved home lot. | **Playable** |
 | **4** | **Desk Sergeant** | **911 Dispatch Triage** | Real-lot **SimCity PD Precinct Front Desk** (works in **3D & 2D**): Sgt. sits in a real TS1 **Office Chair** behind a 2-tile **Executive Office Desk (*escrivaninha*)** with slotted **Computer** & **Desk Phone**. Click the ringing **Desk Phone** -> **911 Switchboard Modal** with Dept buttons, or click real textured **Walk-In Townies** -> **Stamped Paper Forms Clipboard** across 12 handcrafted cases, **Logic >= 2** clues, **Charisma** `Calm Caller (+6s)`, 7 custom seated/walk-in Blender animations, and 17 procedural precinct SFX. | **Playable** |
 | **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | Real-lot **SimCity Underground Speakeasy Lounge** (works in **3D & 2D**): plainclothes Officer sits across a real TS1 **VIP Table** (with slotted **Desk Lamp**) from a real textured neighborhood Suspect while a textured Informant tends the **Saloon Wet Bar** beside a **Retro Jukebox**, **Art Lamps**, and **Police Backup Cruiser** outside. 3-turn **Laya + Charisma / Logic** wiretap dialogue (`Gentle` / `Playful` / `Bold`), **`Check Wire (-18% Suspicion)`**, **`FLASH BADGE & BUST`** climax, 6 custom Blender noir animations, and 12 procedural jazz-noir SFX. | **Playable** |
-| **6** | **Detective** | **Crime Scene Deduction** | Evidence board with 3 clues (`Footprint`, `Motive`, `Alibi`) and 3 real neighborhood Sims as suspects; **Logic** flags contradictions; unlocks on-lot **Question Sim**. | **Next Up (Planned)** |
-| **7** | **Lieutenant** | **Precinct Squad Briefing** | Assign 3 rookie officers (*Fast*, *Observant*, *Charming*) to 3 city incidents (`Foot Chase`, `Stakeout`, `Community Mediation`). | Planned |
+| **6** | **Detective** | **Crime Scene Deduction** | Real-lot **Manor Parlor Crime Scene** (works in **3D & 2D**): 3 interactive TS1 forensic stations (**Footprint** sculpture plinth, **Motive** executive desk + slotted lamp, **Alibi** grandfather clock), 3 real textured neighborhood Sims as suspects, lower-band **Case Evidence Board**, **Logic ≥ 2** auto-contradiction flags, **Logic ≥ 5** Forensics Lab Cross-Check, dramatic accusation climax, 7 custom Blender detective animations, 12 noir-forensics SFX, and permanent on-lot **`Question Sim`** Pie Menu unlock. | **Playable** |
+| **7** | **Lieutenant** | **Precinct Squad Briefing** | Assign 3 rookie officers (*Fast*, *Observant*, *Charming*) to 3 city incidents (`Foot Chase`, `Stakeout`, `Community Mediation`). | **Next Up (Planned)** |
 | **8** | **SWAT Team Leader** | **Tactical Breach Plan** | 4×4 room grid with doors, suspects, and hostages; sequence 3 entry moves (`Flashbang`, `Shield`, `Quiet Entry`) for zero collateral damage. | Planned |
 | **9** | **Police Chief** | **City Hall Press Conference & Budget** | Allocate precinct budget across Patrols, Forensics, and Outreach, then answer Laya-judged press questions to boost City Approval. | Planned |
 | **10** | **Captain Hero** | **City Crisis Rescue** | Multi-emergency SimCity map (`Runaway Trolley`, `Llama Heist`, `Giant Robot`) with rapid **Strength / Wit / Inspiration** rescues; unlocks on-lot **Heroic Pose**. | Planned |
@@ -199,13 +199,38 @@ Go undercover in plainclothes inside a **SimCity Underground Speakeasy Lounge** 
 | :---: | :---: |
 | ![Vice Squad Badge Bust Climax](docs/career-minigames/media/27-lvl5-sting-badge-bust.jpg) | ![Vice Squad S-Rank Scorecard](docs/career-minigames/media/28-lvl5-sting-scorecard.jpg) |
 
+---
+
+### Law Enforcement Lvl 6 — Detective: *Crime Scene Deduction*
+
+Investigate a **Manor Parlor Crime Scene** built on a live Sims 1 lot from **100% real TS1 game assets** — cutaway parlor walls & wood flooring, three interactive forensic stations (**Footprint** = *Bust of Athena* display plinth, **Motive** = *Power Desk* with a slotted *Gloominator Desk Lamp*, **Alibi** = *Grandfather Clock*), *SwivelMaster Office Chair*, *D.I.Y. Bookshelf*, *"Cupidity" Art Lamps*, *Bird of Paradise* plants, and a parked **Police Squad Car** outside (works seamlessly in **both 3D and 2D Isometric mode**, with your home lot safely preserved):
+
+- **3 Interactive Forensic Stations & 3 Real Textured Neighborhood Suspects:** Click each crime scene station (or pick it from native Simitone Pie Menus) to walk across the parlor, crouch/inspect with custom Blender detective animations, flash your crime-scene camera, and log **Footprint**, **Motive**, and **Alibi** findings. Then question each of the 3 real neighborhood suspects waiting in the parlor.
+- **Lower-Band Case Evidence Board + Logic Skill Depth:** Press **`[E]`** (or click **`[E] CASE BOARD`**) to open the side-by-side **Case Evidence Board** below the unobstructed parlor. **Logic ≥ 2** automatically flags suspect contradictions in red (`[!] Shoes`, `[!] Motive`, `[!] Alibi`), while **Logic ≥ 5** unlocks a one-shot **`[F] Forensics Lab Cross-Check`** that conclusively clears 1 innocent suspect.
+- **Dramatic Accusation Climax & Permanent On-Lot Unlock (`Question Sim`):** Accuse the culprit from the Case Board or Pie Menu to trigger the synchronized **`detective_point_accuse` + `detective_culprit_caught`** confrontation, overhead speech balloons, and S/A/B/C Detective Case Report Scorecard. Returning home writes real Simoleons, Job Performance, Logic/Charisma XP, relationship deltas, and **Sim Memory** entries — and Detective+ Law Enforcement Sims (`PromotionLevel ≥ 5`) permanently unlock the on-lot **`Question Sim`** Pie Menu interaction to uncover neighbor traits, careers, and interests!
+- **7 Custom Blender Detective Animations & 12 Procedural Noir-Forensics SFX:** `detective_idle_think`, `detective_inspect_ground`, `detective_take_notes`, `detective_question`, `detective_suspect_nervous`, `detective_point_accuse`, and `detective_culprit_caught` paired with `DetectiveAudioSynth` (rainy parlor noir ambience, footsteps, camera flash, clue chimes, contradiction buzzer, forensics teletype, accusation brass hit, handcuffs, and victory fanfare).
+- **Gameplay Videos (HD with Synced Noir-Forensics Audio — 3D & 2D Isometric):** [Watch 3D Mode Demo (MP4)](docs/career-minigames/media/lvl6-detective-crime-scene-demo.mp4) · [Watch 2D Isometric Mode Demo (MP4)](docs/career-minigames/media/lvl6-detective-crime-scene-2d-demo.mp4)
+
+| 3D Mode — Manor Parlor Crime Scene & 3 Suspects | 2D Isometric Mode — Manor Parlor & Clue Stations |
+| :---: | :---: |
+| ![Detective 3D Clear Parlor](docs/career-minigames/media/29-lvl6-detective-3d-parlor.jpg) | ![Detective 2D Clear Parlor](docs/career-minigames/media/30-lvl6-detective-2d-parlor.jpg) |
+
+| Inspecting Footprint Clue (`detective_inspect_ground`) | Lower-Band Case Evidence Board (`Logic ≥ 2` Flags + Forensics Lab) |
+| :---: | :---: |
+| ![Detective Inspecting Footprint Clue](docs/career-minigames/media/31-lvl6-detective-inspect-clue.jpg) | ![Detective Case Evidence Board](docs/career-minigames/media/32-lvl6-detective-evidence-board.jpg) |
+
+| Dramatic Accusation Climax (`detective_point_accuse` + `culprit_caught`) | S-Rank Case Report & `Question Sim` Unlock |
+| :---: | :---: |
+| ![Detective Accusation Climax](docs/career-minigames/media/33-lvl6-detective-accuse-climax.jpg) | ![Detective S-Rank Scorecard](docs/career-minigames/media/34-lvl6-detective-scorecard.jpg) |
+
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
-> - `convo dispatch toast <SimName> [cadet|patrol|triage|sting]` — trigger the mid-shift Radio Dispatch toast
+> - `convo dispatch toast <SimName> [cadet|patrol|triage|sting|detective]` — trigger the mid-shift Radio Dispatch toast
 > - `convo dispatch start` — jump straight into **Lvl 1 Security Guard (CCTV Night Watch)**
 > - `convo dispatch cadet <SimName> <BodyLvl>` — jump straight into **Lvl 2 Cadet (Academy Obstacle & Drill)**
 > - `convo dispatch patrol <SimName> [lotId] [seed]` — jump straight into **Lvl 3 Patrol Officer (Real-Lot Live Beat Patrol)**
 > - `convo dispatch triage <SimName> [logicLvl] [charismaLvl] [seed]` — jump straight into **Lvl 4 Desk Sergeant (911 Dispatch Triage)**
 > - `convo dispatch sting <SimName> [charismaLvl] [logicLvl] [seed]` — jump straight into **Lvl 5 Vice Squad (Undercover Sting)**
+> - `convo dispatch detective <SimName> [logicLvl] [charismaLvl] [seed]` — jump straight into **Lvl 6 Detective (Crime Scene Deduction)**
 
 # Why is it called Simitone?
 

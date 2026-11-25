@@ -29,8 +29,18 @@ namespace Simitone.Conversations
                     var stingMenu = UndercoverStingDriver.TryBuildPieMenu(target, vm, caller);
                     if (stingMenu != null) return stingMenu;
                 }
+                if (Boot.Enabled && CrimeSceneDeductionDriver.IsActiveOn(vm))
+                {
+                    var detMenu = CrimeSceneDeductionDriver.TryBuildPieMenu(target, vm, caller);
+                    if (detMenu != null) return detMenu;
+                }
 
-                if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu) return raw;
+                if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu)
+                {
+                    if (Boot.Enabled && raw != null)
+                        CrimeSceneDeductionDriver.TryAppendOnLotQuestionPie(raw, target, vm, caller);
+                    return raw;
+                }
                 var targetAv = target as VMAvatar;
                 var callerAv = caller as VMAvatar;
                 if (targetAv == null || callerAv == null) return raw;
@@ -45,9 +55,12 @@ namespace Simitone.Conversations
 
                 // fast path: passthrough (same count and identical names in order)
                 if (filtered.Count == raw.Count && Enumerable.Range(0, raw.Count).All(idx => filtered[idx].OriginalIndex == idx && filtered[idx].DisplayName == names[idx]))
+                {
+                    CrimeSceneDeductionDriver.TryAppendOnLotQuestionPie(raw, target, vm, caller);
                     return raw;
+                }
 
-                var output = new List<VMPieMenuInteraction>(filtered.Count);
+                var output = new List<VMPieMenuInteraction>(filtered.Count + 1);
                 foreach (var entry in filtered)
                 {
                     var src = raw[entry.OriginalIndex];
@@ -63,6 +76,7 @@ namespace Simitone.Conversations
                         MotiveAdChanges = src.MotiveAdChanges,
                     });
                 }
+                CrimeSceneDeductionDriver.TryAppendOnLotQuestionPie(output, target, vm, caller);
                 return output;
             }
             catch (Exception e)
