@@ -173,25 +173,25 @@ namespace Conversations.Tests
         }
 
         [Fact]
-        public void PieStyle_LayoutIsTwoEvenColumnsWithNoOverlap()
+        public void PieStyle_OrbitIsEvenAroundTheHeadAndNeverOverlaps()
         {
-            float[] cx, cy; float bx, by;
-            foreach (var n in new[] { 1, 2, 3, 6, 8, 10 })
+            float[] cx, cy;
+            foreach (var n in new[] { 1, 2, 3, 6, 8, 11 })
                 foreach (var back in new[] { false, true })
                 {
-                    PieStyle.Layout(n, back, 150, 36, 54, 10, out cx, out cy, out bx, out by);
+                    var w = Enumerable.Range(0, n).Select(i => 110f + 14 * (i % 4)).ToArray();
+                    PieStyle.Orbit(w, 40, back, 150, 235, 128, 8, out cx, out cy);
                     for (int i = 0; i < n; i++)
                     {
-                        Assert.Equal(i < (n + 1) / 2 ? 129f : -129f, cx[i]);
+                        if (back) Assert.True(Math.Abs(cx[i]) >= (w[i] + 150) / 2 + 8 || Math.Abs(cy[i]) >= 40 + 8);
                         for (int j = i + 1; j < n; j++)
-                            Assert.True(cx[i] != cx[j] || Math.Abs(cy[i] - cy[j]) >= 46f);
-                        if (back && cx[i] != 0) Assert.True(Math.Abs(cy[i] - by) >= 46f);
+                            Assert.True(Math.Abs(cx[i] - cx[j]) >= (w[i] + w[j]) / 2 + 8 || Math.Abs(cy[i] - cy[j]) >= 48);
                     }
                 }
-            PieStyle.Layout(6, false, 150, 36, 54, 10, out cx, out cy, out bx, out by);
-            Assert.Equal(cy[0], cy[5]); Assert.Equal(cy[2], cy[3]);       // clockwise: right column down, left column up, rows line up
-            PieStyle.Layout(3, false, 150, 36, 54, 10, out cx, out cy, out bx, out by);
-            Assert.Equal(0f, cy[2] + 0f * 0 - (cy[0] + cy[1]) / 2);       // the single left slot sits between the two right rows
+            PieStyle.Orbit(new float[] { 120, 120, 120, 120, 120, 120 }, 48, false, 0, 235, 128, 8, out cx, out cy);
+            Assert.Equal(0f, cx[0], 3); Assert.Equal(-128f, cy[0], 3);   // first slot straight above the head
+            Assert.Equal(0f, cx[3], 3); Assert.Equal(128f, cy[3], 3);    // fourth straight below
+            Assert.Equal(-cx[1], cx[5], 3); Assert.Equal(cy[1], cy[5], 3);   // left and right mirror each other
         }
 
         static string FindPage(string name)

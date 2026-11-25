@@ -90,6 +90,7 @@ namespace Simitone.Conversations
                 var first = buttons[0] as UIButton;
                 if (first == null) { LastState = "native (unexpected button)"; return; }
                 if (!ReferenceEquals(first, laidOut) || buttons.Count != laidCount) { Arrange(buttons, hasParent); laidOut = first; laidCount = buttons.Count; }
+                DrawOrbit(pie.X, pie.Y, hasParent);
                 int drawn = 0;
                 for (int i = 0; i < buttons.Count; i++)
                 {
@@ -107,31 +108,53 @@ namespace Simitone.Conversations
         static string Str(object o, string name) { var v = Prop(o, name); return v == null ? "" : v.ToString(); }
 
         object laidOut; int laidCount;
-        const float SlotH = 36, Gutter = 10, Hub = 54;
+        const float SlotH = 44;
+        float ringRy = 128;
 
-        // Moves the native buttons into the harmonious layout (PieStyle.Layout) and gives them one common width, so the click areas are the slots we draw.
+        // Moves the native buttons onto the design's orbit around the head (PieStyle.Orbit) and sizes each to its label, so the click areas are the slots we draw.
         void Arrange(IList buttons, bool hasParent)
         {
             int n = buttons.Count - (hasParent ? 1 : 0);
-            float w = 0;
+            var widths = new float[n]; float backW = 0; int k = 0;
             for (int i = 0; i < buttons.Count; i++)
             {
                 var b = buttons[i] as UIButton; if (b == null) continue;
                 bool back = hasParent && i == buttons.Count - 1;
                 float tw, th; painter.MeasureText(back ? PieStyle.CleanLabel(b.Caption) : PieStyle.ShortLabel(b.Caption), TextSize, false, out tw, out th);
-                w = Math.Max(w, PieStyle.SlotWidth(tw, IconSize, 0, !back && PieStyle.IsSubmenu(b.Caption)));
+                float w = (float)Math.Ceiling(Math.Max(PieStyle.SlotWidth(tw, IconSize, 0, !back && PieStyle.IsSubmenu(b.Caption)), 96));
+                b.Width = w;
+                if (back) backW = w; else widths[k++] = w;
             }
-            w = (float)Math.Ceiling(Math.Max(w, 120));
-            float[] cx, cy; float bx, by;
-            PieStyle.Layout(n, hasParent, w, SlotH, Hub, Gutter, out cx, out cy, out bx, out by);
+            float[] cx, cy;
+            PieStyle.Orbit(widths, SlotH, hasParent, backW, 235, 128, 10, out cx, out cy);
+            ringRy = n > 0 ? -cy[0] : 128;
+            k = 0;
             for (int i = 0; i < buttons.Count; i++)
             {
                 var b = buttons[i] as UIButton; if (b == null) continue;
-                b.Width = w;
                 bool back = hasParent && i == buttons.Count - 1;
-                float x = back ? bx : cx[i], y = back ? by : cy[i];
-                b.X = x - w / 2; b.Y = y - b.Size.Y / 2;
+                float x = back ? 0 : cx[k], y = back ? 0 : cy[k];
+                if (!back) k++;
+                b.X = x - b.Width / 2; b.Y = y - b.Size.Y / 2;
             }
+        }
+
+        // the design's dashed ellipse through the slots and the accent ring round the Sim in the middle (the engine only paints
+        // axis-aligned rectangles, so the dashes are small squares placed along the curve and the ring is a rounded outline)
+        void DrawOrbit(float ox, float oy, bool hasBack)
+        {
+            float ry = ringRy, rx = ry * 235f / 128f;
+            var dash = new Rgba(255, 255, 255, 140);
+            double len = 0, prevX = rx, prevY = 0, on = 10, off = 8, phase = 0; bool drawing = true;
+            for (int i = 1; i <= 360; i++)
+            {
+                double a = i * Math.PI / 180, x = Math.Cos(a) * rx, y = Math.Sin(a) * ry;
+                len = Math.Sqrt((x - prevX) * (x - prevX) + (y - prevY) * (y - prevY)); prevX = x; prevY = y;
+                phase += len;
+                if (phase > (drawing ? on : off)) { phase = 0; drawing = !drawing; }
+                if (drawing) painter.FillRect(ox + (float)x - 1.5f, oy + (float)y - 1.5f, 3, 3, dash, 1);
+            }
+            if (!hasBack) painter.StrokeRect(ox - 40, oy - 40, 80, 80, Token("accent", new Rgba(46, 242, 176)), 4, 40);
         }
 
         void DrawSlot(float nx, float ny, float nw, float nh, string caption, bool back)
@@ -140,18 +163,22 @@ namespace Simitone.Conversations
             string full = PieStyle.CleanLabel(caption);
             string label = back ? full : PieStyle.ShortLabel(caption);
             float tw, th; painter.MeasureText(label, TextSize, false, out tw, out th);
-            float w = nw, h = SlotH;
-            float x = nx, y = ny + nh / 2 - h / 2;
             bool hover = mouseX >= nx && mouseX <= nx + nw && mouseY >= ny && mouseY <= ny + nh;
+            float grow = hover ? 1.08f : 1f;                      // the design's "on" slot is scaled up 8%
+            float w = nw * grow, h = SlotH * grow;
+            float x = nx + nw / 2 - w / 2, y = ny + nh / 2 - h / 2;
 
-            var a = Token(hover ? "info" : "pie-a", new Rgba(38, 88, 200)); var bcol = Token("pie-b", new Rgba(18, 58, 143));
-            var edge = Token("pie-edge", new Rgba(10, 37, 97)); var rim = Token("pie-rim", new Rgba(255, 255, 255));
-            painter.FillRect(x - 1, y - 1, w + 2, h + 2, hover ? rim : edge, h / 2 + 1);   // edge ring (white when hovered, so it is not colour alone: it also grows)
+            var white = Token("pie-rim", new Rgba(255, 255, 255));
+            var a = Token("pie-a", new Rgba(38, 88, 200)); var bcol = Token("pie-b", new Rgba(18, 58, 143));
+            var edge = Token("pie-edge", new Rgba(10, 37, 97));
+            var ink = white;
+            if (hover) { a = new Rgba(180, 255, 230); bcol = Token("accent-2", new Rgba(0, 217, 139)); edge = bcol; ink = Token("on-accent", new Rgba(3, 48, 42)); }   // mint "on" slot with dark text
+            painter.FillRect(x - 1, y - 1, w + 2, h + 2, edge, h / 2 + 1);
             painter.FillGradient(x, y, w, h, a, bcol, false, h / 2);
-            float cx = x + 12;
-            painter.DrawIcon(Icons.Find(back ? "left" : PieStyle.IconFor(full)), cx, y + (h - IconSize) / 2, IconSize, rim);
-            painter.DrawText(label, cx + IconSize + 8, y + (h - th) / 2, TextSize, false, rim);
-            if (sub) painter.DrawIcon(Icons.Find("right"), x + w - 12 - 14, y + (h - 14) / 2, 14, rim);   // "..." marks a submenu
+            float cx = x + 14 * grow;
+            painter.DrawIcon(Icons.Find(back ? "left" : PieStyle.IconFor(full)), cx, y + (h - IconSize) / 2, IconSize, ink);
+            painter.DrawText(label, cx + IconSize + 10, y + (h - th) / 2, TextSize, false, ink);
+            if (sub) painter.DrawIcon(Icons.Find("right"), x + w - 14 - 14, y + (h - 14) / 2, 14, ink);   // "..." marks a submenu
         }
 
         Rgba Token(string name, Rgba fallback)

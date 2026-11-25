@@ -50,26 +50,34 @@ namespace Simitone.Conversations
             return i > 0 && i + 3 < s.Length ? s.Substring(i + 3).Trim() : s;
         }
 
-        // Harmonious layout: every slot the same size, in two even columns either side of the Sim's head (hub = half the gap between
-        // them). Entries run clockwise like the native pie: down the right column, then up the left one; an odd count leaves the left column
-        // half a row lower so the block stays balanced. A back button (submenus) gets its own centred row on top. Returns slot centres
-        // relative to the pie origin; the block is centred vertically on it.
-        public static void Layout(int n, bool hasBack, float slotW, float slotH, float hub, float gutter, out float[] cx, out float[] cy, out float backX, out float backY)
+        // The design's orbit: slots sit evenly spaced (by angle, clockwise from the top like the native pie) on an ellipse around the Sim's head,
+        // 6 to 8 of them on rx 235 / ry 128. When they would touch (long labels, more than 8 entries) the ellipse grows until every slot
+        // has `margin` px of air; the back button of a submenu sits in the middle and is kept clear as well. Returns slot centres.
+        public static void Orbit(float[] widths, float slotH, bool hasBack, float backW, float rx, float ry, float margin, out float[] cx, out float[] cy)
         {
+            int n = widths.Length;
             cx = new float[n]; cy = new float[n];
-            int right = (n + 1) / 2, left = n - right, rows = Math.Max(1, right);
-            float pitch = slotH + gutter;
-            float first = hasBack ? 1 : 0;                       // row index of the first column row
-            float total = rows + first;
-            float colX = hub + slotW / 2;
-            for (int i = 0; i < n; i++)
+            for (float k = 1f; k < 4f; k += 0.04f)
             {
-                float row;
-                if (i < right) { row = i; cx[i] = colX; }
-                else { int j = i - right; row = left - 1 - j + (rows - left) / 2f; cx[i] = -colX; }
-                cy[i] = (row + first - (total - 1) / 2f) * pitch;
+                for (int i = 0; i < n; i++)
+                {
+                    double a = 2 * Math.PI * i / n;
+                    cx[i] = (float)(Math.Sin(a) * rx * k); cy[i] = (float)(-Math.Cos(a) * ry * k);
+                }
+                bool clear = true;
+                for (int i = 0; i < n && clear; i++)
+                {
+                    if (hasBack && Overlap(cx[i], cy[i], widths[i], 0, 0, backW, slotH, slotH, margin)) clear = false;
+                    for (int j = i + 1; j < n && clear; j++)
+                        if (Overlap(cx[i], cy[i], widths[i], cx[j], cy[j], widths[j], slotH, slotH, margin)) clear = false;
+                }
+                if (clear) return;
             }
-            backX = 0; backY = (0 - (total - 1) / 2f) * pitch;
+        }
+
+        static bool Overlap(float x1, float y1, float w1, float x2, float y2, float w2, float h1, float h2, float margin)
+        {
+            return Math.Abs(x1 - x2) < (w1 + w2) / 2 + margin && Math.Abs(y1 - y2) < (h1 + h2) / 2 + margin;
         }
 
         // slot width: icon, gaps and text, never narrower than the native button it covers (so the native one is fully hidden)
