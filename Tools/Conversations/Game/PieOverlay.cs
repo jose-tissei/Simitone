@@ -80,6 +80,7 @@ namespace Simitone.Conversations
                     buttonsField = pie.GetType().GetField("m_PieButtons");
                     currentField = pie.GetType().GetField("m_CurrentItem");
                 }
+                if (!ReferenceEquals(pie, smoothedPie)) { smoothedPie = pie; SmoothHead(pie); }
                 var buttons = buttonsField == null ? null : buttonsField.GetValue(pie) as IList;
                 var current = currentField == null ? null : currentField.GetValue(pie);
                 if (buttons == null || current == null) { LastState = "native (unexpected pie)"; return; }
@@ -109,6 +110,25 @@ namespace Simitone.Conversations
                 LastState = "new slots=" + drawn;
             }
             catch (Exception e) { LastState = "error " + e.Message; }
+        }
+
+        object smoothedPie;
+
+        // The Sim's head in the middle is a small 3D render that the game only anti-aliases when its AntiAlias setting is on, so its
+        // outline is stair-stepped. Turn 8x multisampling on for that one render target (same code path the setting would use).
+        static void SmoothHead(object pie)
+        {
+            try
+            {
+                const BindingFlags all = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+                var scene = pie.GetType().GetField("HeadScene", all).GetValue(pie);
+                var ms = scene.GetType().GetField("Multisample", all);
+                if (ms == null || (int)ms.GetValue(scene) >= 8) return;
+                ms.SetValue(scene, 8);
+                var target = scene.GetType().GetField("Target", all).GetValue(scene) as Microsoft.Xna.Framework.Graphics.RenderTarget2D;
+                scene.GetType().GetMethod("SetSize", all).Invoke(scene, new object[] { new Microsoft.Xna.Framework.Point(target.Width, target.Height) });
+            }
+            catch (Exception e) { Boot.Log("pie head smoothing failed: " + e.Message); }
         }
 
         static string Str(object o, string name) { var v = Prop(o, name); return v == null ? "" : v.ToString(); }
