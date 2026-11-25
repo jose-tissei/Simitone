@@ -145,6 +145,12 @@ public static class SpriteCards
 
     public static UISubpanel ResolveSubpanel(UISubpanel existing, UIMainPanel main, int category)
     {
+        // the Options button: the AI library's own Options page opens as a window; the game's icon strip stays underneath as the fallback
+        if (existing != null && main != null && main.Mode == UIMainPanelMode.OPTIONS && ConvoLoader.Installed)
+        {
+            ConvoLoader.OpenOptions();
+            return existing;
+        }
         if (existing != null || main == null || main.Mode != UIMainPanelMode.LIVE || category != 5 || !ConvoLoader.Installed)
             return existing;
         int prevCat = main.Switcher != null && main.Switcher.ActiveCategory != 5 ? main.Switcher.ActiveCategory : 0;
@@ -212,7 +218,6 @@ public static class SpriteCards
         if (id == 6) return "Anti-aliasing: " + RenderLoader.Label;
         if (id == 7) return "Dynamic lighting: " + RenderLoader.LightLabel;
         if (id == 8) return PieLabel;
-        if (id == 9) return "All options";
         return id >= 0 && id < Modes.Length ? Modes[id].Label : "Reload list";
     }
 

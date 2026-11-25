@@ -194,7 +194,7 @@ namespace Simitone.Conversations
 
         public static void OpenOptionsPage()
         {
-            try { SimsOptionsMenu.Open(); }
+            try { if (!SimsOptionsMenu.IsOpen) SimsOptionsMenu.Open(); }
             catch (Exception e) { Log("open options failed: " + e.Message); }
         }
 
