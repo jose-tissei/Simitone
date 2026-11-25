@@ -61,3 +61,25 @@ relationship between two readings; wait until `sims` shows the Sims idle and com
   while the game was in the background (button highlighted, foreground window unchanged).
   Not yet verified: hook click/drag/key on a screen that is safe to change, `--real` keys.
 - `AppDir` in `Program.cs` points at the local Simitone install; edit it for your machine.
+
+
+## Fast loop (no fixed sleeps)
+
+```
+pwsh Tools\Dev-Iterate.ps1 -House 5 -Speed 3     # reinstall only if sources changed (~12 s), then boot (~11 s)
+simtool state                                    # one line of JSON: screen, time, speed, what blocks the VM, camera, every Sim (pos, away, queue, action, priority, social/mood/energy/hunger)
+simtool look out.png                             # state + the log lines since the last mark + a screenshot, then moves the mark
+simtool logmark                                  # remember where the mod's log is now
+simtool log [regex]                              # lines since the mark (optionally only matching); moves the mark
+simtool logwait 30 "decision: talk"              # block until a new log line matches (exit 1 on timeout, says what it waited for)
+simtool until 30 "regex" <command...>            # poll any hook query every 250 ms until its reply matches, e.g. until 60 "sims=[1-9]" lotinfo
+simtool boot 5 3                                 # launch, wait for the neighbourhood, start the house (retrying), wait for Sims, autodialog on, speed
+simtool autodialog on 3 | off                    # answer every game dialog (help hints, event pop-ups) and keep speed 3
+simtool interact A B Talk [auto]                 # `auto` queues it like a Sim's own free will instead of a player click
+```
+
+Gotchas learned the hard way:
+- A dialog the simulation waits on (`blockedBy` in `state`) freezes the whole VM, the mod's chat driver included. `dismiss` now answers it as well as closing the box; `autodialog on` does it continuously.
+- `autodialog on` also answers the mod's Talk topic window at once. To test that window use `autodialog off`, or read the log: `talk step: A -> B window=True|False`.
+- A Sim at work is `away` (position -32768): the camera follows the played Sim, so the lot looks black. Pick a house whose Sims are home (house 5 works; house 7's Bob is at work at night).
+- Interacting through the hook builds a pie menu, which the mod reads as "the player pointed at this pair"; `interact ... auto` clears that again.

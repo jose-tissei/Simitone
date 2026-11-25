@@ -62,9 +62,15 @@ static class Program
                 case "disable": return HookCmds(new[] { "disable" }, false);
                 case "ping": return HookCmds(new[] { "ping" }, false);
                 // game control through the hook (no clicks): see README "Game control"
-                case "sims": case "menu": case "interact": case "rel": case "dialog": case "answer": case "speed": case "global": case "time": case "objs": case "attr": case "persona": case "setrel": case "motives": case "focus": case "convo": case "aa": case "render": case "gotolot": case "families": case "playhouse": case "lotinfo": case "alerts": case "dismiss": case "camera": case "lotname":
+                case "sims": case "menu": case "interact": case "rel": case "dialog": case "answer": case "speed": case "global": case "time": case "objs": case "attr": case "persona": case "setrel": case "motives": case "focus": case "convo": case "aa": case "render": case "gotolot": case "families": case "playhouse": case "lotinfo": case "alerts": case "dismiss": case "camera": case "lotname": case "state": case "autodialog":
                     return HookQuery(string.Join(" ", a));
                 case "key": return Real ? KeyReal(a[1], a.Length > 2 ? int.Parse(a[2]) : 80) : HookKey(a[1], a.Length > 2 ? int.Parse(a[2]) : 80);
+                case "until": return Until(a.Skip(1).ToArray());
+                case "boot": return Boot(a.Skip(1).ToArray());
+                case "look": return Look(a.Skip(1).ToArray());
+                case "logmark": LogMark(); Console.WriteLine("log marked at line " + LogLines().Length); return 0;
+                case "log": return LogShow(a.Skip(1).ToArray());
+                case "logwait": return LogWait(a.Skip(1).ToArray());
                 case "wait": Thread.Sleep((int)(double.Parse(a[1]) * 1000)); return 0;
                 default: return Usage();
             }
@@ -74,6 +80,7 @@ static class Program
 
     static int Usage()
     {
+        Console.WriteLine("simtool boot <house> [speed] | until <sec> <regex> <command> | look [out.png] | logmark | log [regex] | logwait <sec> <regex> | state | autodialog on [speed]|off");
         Console.WriteLine("simtool launch [--3d] | kill | status | shot [out.png] | click X Y | rclick X Y | move X Y | drag X1 Y1 X2 Y2 | ctrlclick X Y | wheel N | key NAME [holdMs] | wait SECONDS | ping | disable");
         Console.WriteLine("input goes through the in-game hook (works in the background); add --real to use focus-based real input instead");
         Console.WriteLine("X,Y are client pixels of the Simitone window. key: enter,esc,space,tab,left,right,up,down,f1-f12,a-z,0-9");
@@ -183,6 +190,110 @@ static class Program
         }
         if (disableAfter) { w.WriteLine("disable"); r.ReadLine(); }
         return 0;
+    }
+
+    // one command, no printing: (ok, reply without the "ok"), or (false, the error) when the game or hook is not there yet
+    static (bool ok, string text) Query(string cmd)
+    {
+        try
+        {
+            using var c = OpenPipe();
+            var w = new StreamWriter(c, new System.Text.UTF8Encoding(false), 1024, true) { AutoFlush = true };
+            var r = new StreamReader(c, System.Text.Encoding.UTF8, false, 1024, true);
+            w.WriteLine(cmd);
+            var reply = r.ReadLine() ?? "err no reply";
+            return reply.StartsWith("ok") ? (true, reply.Length > 3 ? reply[3..] : "") : (false, reply);
+        }
+        catch (Exception e) { return (false, "err " + e.Message); }
+    }
+
+    // until <timeoutSec> <regex> <hook command...>: ask every 250 ms until the reply matches; prints the matching reply, or what it last said on timeout (exit 1)
+    static int Until(string[] a)
+    {
+        if (a.Length < 3) { Console.Error.WriteLine("until <timeoutSec> <regex> <command...>"); return 2; }
+        double timeout = double.Parse(a[0]); var rx = new System.Text.RegularExpressions.Regex(a[1]); var cmd = string.Join(" ", a.Skip(2));
+        var sw = Stopwatch.StartNew(); string last = "";
+        while (sw.Elapsed.TotalSeconds < timeout)
+        {
+            var (ok, text) = Query(cmd); last = text;
+            if (ok && rx.IsMatch(text)) { Console.WriteLine(text + "   [" + sw.Elapsed.TotalSeconds.ToString("0.0") + " s]"); return 0; }
+            Thread.Sleep(250);
+        }
+        Console.Error.WriteLine("timed out after " + timeout + " s waiting for /" + a[1] + "/ from [" + cmd + "]; last reply: " + last);
+        return 1;
+    }
+
+    // boot <house> [speed]: relaunch the game and get to a running lot, waiting on what the game reports instead of fixed sleeps. Prints the state.
+    static int Boot(string[] a)
+    {
+        if (a.Length < 1) { Console.Error.WriteLine("boot <house number> [speed 1-3]"); return 2; }
+        int speed = a.Length > 1 ? int.Parse(a[1]) : 1;
+        var sw = Stopwatch.StartNew();
+        if (Launch(new[] { "--3d" }) != 0) return 1;
+        LogMark();
+        if (Until(new[] { "120", "^[0-9 ]*$", "families" }) != 0) return 1;                      // the neighbourhood is up
+        // the neighbourhood screen answers a little before it can start a lot: retry until the game accepts it
+        string why = ""; bool started = false;
+        for (int i = 0; i < 240 && !started; i++) { var r = Query("playhouse " + a[0]); started = r.ok; why = r.text; if (!started) Thread.Sleep(500); }
+        if (!started) { Console.Error.WriteLine("could not start house " + a[0] + ": " + why); return 1; }
+        if (Until(new[] { "120", "sims=[1-9]", "lotinfo" }) != 0) return 1;                       // the lot is loaded with Sims
+        Query("autodialog on " + speed);                                                          // answers help/event dialogs, keeps the speed
+        Query("speed " + speed);
+        Until(new[] { "20", "\"blockedBy\":null", "state" });
+        Console.WriteLine("ready in " + sw.Elapsed.TotalSeconds.ToString("0") + " s");
+        Console.WriteLine(Query("state").text);
+        return 0;
+    }
+
+    // look [out.png]: a screenshot, the game state and the log lines written since the last mark, in one go
+    static int Look(string[] a)
+    {
+        var png = a.Length > 0 ? a[0] : "look.png";
+        Console.WriteLine("state: " + Query("state").text);
+        var lines = LogSince();
+        Console.WriteLine("log (" + lines.Length + " new lines since the mark):");
+        foreach (var l in lines.TakeLast(25)) Console.WriteLine("  " + (l.Length > 260 ? l[..260] + "..." : l));
+        LogMark();
+        return Shot(png);
+    }
+
+    // ---- the mod's log: marks, new lines, waiting for a line
+    static string LogPath => Path.Combine(AppDir, "Content", "conversations.log");
+    static string MarkPath => Path.Combine(Path.GetTempPath(), "simtool.logmark");
+    static string[] LogLines()
+    {
+        try
+        {
+            using var f = new FileStream(LogPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            using var r = new StreamReader(f);
+            return r.ReadToEnd().Split('\n').Select(x => x.TrimEnd('\r')).Where(x => x.Length > 0).ToArray();
+        }
+        catch { return new string[0]; }
+    }
+    static void LogMark() { File.WriteAllText(MarkPath, LogLines().Length.ToString()); }
+    static int MarkLine() { try { return int.Parse(File.ReadAllText(MarkPath)); } catch { return 0; } }
+    static string[] LogSince() { var all = LogLines(); int m = MarkLine(); return m > all.Length ? all : all.Skip(m).ToArray(); }
+
+    // log [regex]: the lines since the mark (only those matching, when given); the mark moves to the end
+    static int LogShow(string[] a)
+    {
+        var lines = LogSince();
+        if (a.Length > 0) { var rx = new System.Text.RegularExpressions.Regex(a[0]); lines = lines.Where(l => rx.IsMatch(l)).ToArray(); }
+        foreach (var l in lines) Console.WriteLine(l);
+        LogMark(); return 0;
+    }
+
+    // logwait <timeoutSec> <regex>: until a new line (since the mark) matches
+    static int LogWait(string[] a)
+    {
+        double timeout = double.Parse(a[0]); var rx = new System.Text.RegularExpressions.Regex(a[1]); var sw = Stopwatch.StartNew();
+        while (sw.Elapsed.TotalSeconds < timeout)
+        {
+            var hit = LogSince().FirstOrDefault(l => rx.IsMatch(l));
+            if (hit != null) { Console.WriteLine(hit + "   [" + sw.Elapsed.TotalSeconds.ToString("0.0") + " s]"); return 0; }
+            Thread.Sleep(250);
+        }
+        Console.Error.WriteLine("timed out after " + timeout + " s waiting for a log line matching /" + a[1] + "/"); return 1;
     }
 
     // one command, reply printed (without the leading "ok"); an "err" reply fails with exit code 1
