@@ -97,7 +97,8 @@ namespace Simitone.Conversations
                     var b = buttons[i] as UIButton;
                     if (b == null) continue;
                     bool back = hasParent && i == buttons.Count - 1;
-                    DrawSlot(pie.X + b.X, pie.Y + b.Y, b.Width, b.Size.Y, b.Caption, back);
+                    string cap; if (!captions.TryGetValue(b, out cap)) cap = b.Caption;
+                    DrawSlot(pie.X + b.X, pie.Y + b.Y, b.Width, b.Size.Y, cap, back);
                     drawn++;
                 }
                 LastState = "new slots=" + drawn;
@@ -108,6 +109,7 @@ namespace Simitone.Conversations
         static string Str(object o, string name) { var v = Prop(o, name); return v == null ? "" : v.ToString(); }
 
         object laidOut; int laidCount;
+        readonly Dictionary<object, string> captions = new Dictionary<object, string>();   // the native captions, which we blank so long ones do not poke out past our slots
         const float SlotH = 48;
         float ringRy = 128;
 
@@ -120,9 +122,12 @@ namespace Simitone.Conversations
             {
                 var b = buttons[i] as UIButton; if (b == null) continue;
                 bool back = hasParent && i == buttons.Count - 1;
-                float tw, th; painter.MeasureText(back ? PieStyle.CleanLabel(b.Caption) : PieStyle.ShortLabel(b.Caption), TextSize, false, out tw, out th);
-                float w = (float)Math.Ceiling(Math.Max(PieStyle.SlotWidth(tw, IconSize, 0, !back && PieStyle.IsSubmenu(b.Caption)), 96));
+                string cap = b.Caption;
+                captions[b] = cap;
+                float tw, th; painter.MeasureText(back ? PieStyle.CleanLabel(cap) : PieStyle.ShortLabel(cap), TextSize, false, out tw, out th);
+                float w = (float)Math.Ceiling(Math.Max(PieStyle.SlotWidth(tw, IconSize, 0, !back && PieStyle.IsSubmenu(cap)), 96));
                 b.Width = w;
+                b.Caption = "";
                 if (back) backW = w; else widths[k++] = w;
             }
             float[] cx, cy;

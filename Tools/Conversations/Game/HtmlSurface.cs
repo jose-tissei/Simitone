@@ -137,19 +137,52 @@ namespace Simitone.Conversations
             owner.DrawLocalTexture(batch, px, null, Turn(x, y), new Vector2(w + 1.6f, h + 1.6f), c, rotRad);   // a little larger: the engine snaps each piece to whole pixels, which would leave hairline gaps
         }
 
-        // rounded rectangle as a centre block plus one strip per corner row; colorAt(t) gives the colour at relative height t (0 top .. 1 bottom)
-        void Rounded(float x, float y, float w, float h, float r, Func<float, Color> colorAt)
+        // Anti-aliased corners: for a radius r a small texture (2r x r) holds the top-left and top-right corner coverage, computed once per radius.
+        // Rows of it are drawn tinted, so a gradient can still change colour row by row and the edge is smooth instead of stair-stepped.
+        readonly Dictionary<int, Texture2D> cornerTex = new Dictionary<int, Texture2D>();
+        Texture2D Corners(int r)
         {
-            r = Math.Min(r, Math.Min(w, h) / 2);
-            if (r < 1.5f) { Rect(x, y, w, h, colorAt(0.5f)); return; }
-            int step = r > 12 ? 2 : 1;
-            for (float i = 0; i < r; i += step)
+            Texture2D t;
+            if (cornerTex.TryGetValue(r, out t)) return t;
+            t = new Texture2D(batch.GraphicsDevice, 2 * r, r);
+            var data = new Color[2 * r * r];
+            for (int py = 0; py < r; py++)
+                for (int px2 = 0; px2 < 2 * r; px2++)
+                {
+                    float dx = r - (px2 + 0.5f), dy = r - (py + 0.5f);   // vector to the corner circle's centre (left half; the right half is mirrored below)
+                    float d = r - (float)Math.Sqrt(dx * dx + dy * dy);   // distance inside the circle edge, in pixels
+                    byte a = (byte)(255 * Math.Max(0, Math.Min(1, d + 0.5f)));
+                    data[py * 2 * r + px2] = new Color(a, a, a, a);     // premultiplied white
+                }
+            // right half mirrors the left one: pixel (r + k) takes coverage of left pixel (r - 1 - k)
+            for (int py = 0; py < r; py++)
+                for (int k = 0; k < r; k++) data[py * 2 * r + r + k] = data[py * 2 * r + (r - 1 - k)];
+            t.SetData(data);
+            cornerTex[r] = t;
+            return t;
+        }
+
+        void Piece(Texture2D tex, int sx, int sy, int sw, float dx, float dy, Color c)
+        {
+            var src = new Rectangle(sx, sy, sw, 1);
+            if (!rotating) owner.DrawLocalTexture(batch, tex, src, new Vector2(dx, dy), Vector2.One, c);
+            else owner.DrawLocalTexture(batch, tex, src, Turn(dx, dy), new Vector2(1.02f, 1.6f), c, rotRad);
+        }
+
+        // rounded rectangle: smooth corner rows at the top and bottom, a centre block between; colorAt(t) gives the colour at relative height t (0 top .. 1 bottom)
+        void Rounded(float x, float y, float w, float h, float radius, Func<float, Color> colorAt)
+        {
+            if (!rotating) { x = (float)Math.Round(x); y = (float)Math.Round(y); w = (float)Math.Round(w); h = (float)Math.Round(h); }
+            int r = (int)Math.Round(Math.Min(radius, Math.Min(w, h) / 2));
+            if (r < 2) { Rect(x, y, w, h, colorAt(0.5f)); return; }
+            var tex = Corners(r);
+            for (int i = 0; i < r; i++)
             {
-                float dy = r - (i + step * 0.5f);
-                float inset = r - (float)Math.Sqrt(Math.Max(0, r * r - dy * dy));
-                float rowH = Math.Min(step, r - i);
-                Rect(x + inset, y + i, w - 2 * inset, rowH, colorAt((i + rowH / 2) / h));
-                Rect(x + inset, y + h - i - rowH, w - 2 * inset, rowH, colorAt(1 - (i + rowH / 2) / h));
+                var ct = colorAt((i + 0.5f) / h); var cb = colorAt(1 - (i + 0.5f) / h);
+                Piece(tex, 0, i, r, x, y + i, ct); Piece(tex, r, i, r, x + w - r, y + i, ct);
+                Rect(x + r, y + i, w - 2 * r, 1, ct);
+                Piece(tex, 0, i, r, x, y + h - 1 - i, cb); Piece(tex, r, i, r, x + w - r, y + h - 1 - i, cb);
+                Rect(x + r, y + h - 1 - i, w - 2 * r, 1, cb);
             }
             // the middle part, banded when it is a gradient
             float midY = y + r, midH = h - 2 * r;
