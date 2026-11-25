@@ -117,7 +117,25 @@ namespace Simitone.Conversations
         // ---- IPainter ----
         // the game blends with premultiplied alpha
         static Color C(Rgba c) { return Color.FromNonPremultiplied(c.R, c.G, c.B, c.A); }
-        void Rect(float x, float y, float w, float h, Color c) { if (w > 0 && h > 0) owner.DrawLocalTexture(batch, px, null, new Vector2(x, y), new Vector2(w, h), c); }
+        // Optional rotation of everything drawn until ClearRotation (the engine's sprite batch rotates textures): every piece is moved
+        // round the pivot and drawn turned by the same angle, so a rounded slot turns as one shape. Text is placed glyph by glyph along
+        // the turned baseline (glyphs themselves stay upright, which is exact enough for the few degrees the design asks for).
+        float rotCos = 1, rotSin = 0, rotX, rotY, rotRad;
+        bool rotating;
+        public void SetRotation(float pivotX, float pivotY, float radians) { rotating = Math.Abs(radians) > 1e-4f; rotX = pivotX; rotY = pivotY; rotRad = radians; rotCos = (float)Math.Cos(radians); rotSin = (float)Math.Sin(radians); }
+        public void ClearRotation() { rotating = false; }
+        Vector2 Turn(float x, float y)
+        {
+            float dx = x - rotX, dy = y - rotY;
+            return new Vector2(rotX + dx * rotCos - dy * rotSin, rotY + dx * rotSin + dy * rotCos);
+        }
+
+        void Rect(float x, float y, float w, float h, Color c)
+        {
+            if (w <= 0 || h <= 0) return;
+            if (!rotating) { owner.DrawLocalTexture(batch, px, null, new Vector2(x, y), new Vector2(w, h), c); return; }
+            owner.DrawLocalTexture(batch, px, null, Turn(x, y), new Vector2(w + 1.6f, h + 1.6f), c, rotRad);   // a little larger: the engine snaps each piece to whole pixels, which would leave hairline gaps
+        }
 
         // rounded rectangle as a centre block plus one strip per corner row; colorAt(t) gives the colour at relative height t (0 top .. 1 bottom)
         void Rounded(float x, float y, float w, float h, float r, Func<float, Color> colorAt)
@@ -202,7 +220,14 @@ namespace Simitone.Conversations
 
         public void DrawText(string text, float x, float y, float size, bool bold, Rgba color)
         {
-            owner.DrawLocalString(batch, text, new Vector2(x, y), Style(size, color));
+            var st = Style(size, color);
+            if (!rotating) { owner.DrawLocalString(batch, text, new Vector2(x, y), st); return; }
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == ' ') continue;
+                float before = i == 0 ? 0 : st.MeasureString(text.Substring(0, i)).X;
+                owner.DrawLocalString(batch, text[i].ToString(), Turn(x + before, y), st);
+            }
         }
 
         public void MeasureText(string text, float size, bool bold, out float w, out float h)
@@ -227,7 +252,10 @@ namespace Simitone.Conversations
             }
             if (icons == px) return;
             int cellPx = icons.Width / 8;
-            owner.DrawLocalTexture(batch, icons, new Rectangle((cell % 8) * cellPx, (cell / 8) * cellPx, cellPx, cellPx), new Vector2(x, y), new Vector2(size / cellPx, size / cellPx), C(color));
+            var src = new Rectangle((cell % 8) * cellPx, (cell / 8) * cellPx, cellPx, cellPx);
+            var scale = new Vector2(size / cellPx, size / cellPx);
+            if (!rotating) { owner.DrawLocalTexture(batch, icons, src, new Vector2(x, y), scale, C(color)); return; }
+            owner.DrawLocalTexture(batch, icons, src, Turn(x + size / 2, y + size / 2), scale, C(color), rotRad, new Vector2(cellPx / 2f, cellPx / 2f));
         }
     }
 }

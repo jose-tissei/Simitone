@@ -139,8 +139,7 @@ namespace Simitone.Conversations
             }
         }
 
-        // the design's dashed ellipse through the slots and the accent ring round the Sim in the middle (the engine only paints
-        // axis-aligned rectangles, so the dashes are small squares placed along the curve and the ring is a rounded outline)
+        // the design's dashed ellipse through the slots and the accent ring round the Sim in the middle (dashes are small squares placed along the curve)
         void DrawOrbit(float ox, float oy, bool hasBack)
         {
             float ry = ringRy, rx = ry * 235f / 128f;
@@ -154,7 +153,6 @@ namespace Simitone.Conversations
                 if (phase > (drawing ? on : off)) { phase = 0; drawing = !drawing; }
                 if (drawing) painter.FillRect(ox + (float)x - 1.5f, oy + (float)y - 1.5f, 3, 3, dash, 1);
             }
-            if (!hasBack) painter.StrokeRect(ox - 40, oy - 40, 80, 80, Token("accent", new Rgba(46, 242, 176)), 4, 40);
         }
 
         void DrawSlot(float nx, float ny, float nw, float nh, string caption, bool back)
@@ -173,12 +171,14 @@ namespace Simitone.Conversations
             var edge = Token("pie-edge", new Rgba(10, 37, 97));
             var ink = white;
             if (hover) { a = new Rgba(180, 255, 230); bcol = Token("accent-2", new Rgba(0, 217, 139)); edge = bcol; ink = Token("on-accent", new Rgba(3, 48, 42)); }   // mint "on" slot with dark text
+            if (hover) painter.SetRotation(x + w / 2, y + h / 2, -1.5f * (float)Math.PI / 180f);   // the design tilts the "on" slot by -1.5 degrees
             painter.FillRect(x - 1, y - 1, w + 2, h + 2, edge, h / 2 + 1);
             painter.FillGradient(x, y, w, h, a, bcol, false, h / 2);
             float cx = x + 14 * grow;
             painter.DrawIcon(Icons.Find(back ? "left" : PieStyle.IconFor(full)), cx, y + (h - IconSize) / 2, IconSize, ink);
             painter.DrawText(label, cx + IconSize + 10, y + (h - th) / 2, TextSize, false, ink);
             if (sub) painter.DrawIcon(Icons.Find("right"), x + w - 14 - 14, y + (h - 14) / 2, 14, ink);   // "..." marks a submenu
+            painter.ClearRotation();
         }
 
         Rgba Token(string name, Rgba fallback)
