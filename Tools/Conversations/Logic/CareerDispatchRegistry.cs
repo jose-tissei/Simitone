@@ -105,12 +105,12 @@ namespace Simitone.Conversations
                 PromotionLevel = 4,
                 RankTitle = "Vice Squad",
                 MiniGameTitle = "Undercover Sting",
-                DispatchTeaser = "Keep your cover intact and draw out a confession.",
+                DispatchTeaser = "Real-lot speakeasy sting — work the wire across the lounge table, draw a confession, and flash your badge!",
                 AssignmentButtonText = "WORK ASSIGNMENT: STING OP",
                 DefaultShiftStartHour = 22,
                 DefaultShiftEndHour = 4,
                 Kind = CareerMiniGameKind.UndercoverSting,
-                IsImplemented = false,
+                IsImplemented = true,
             },
             new LawEnforcementRankDescriptor
             {

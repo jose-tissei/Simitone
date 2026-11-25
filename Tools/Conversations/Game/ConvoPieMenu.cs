@@ -24,6 +24,11 @@ namespace Simitone.Conversations
                     var triageMenu = DispatchTriageDriver.TryBuildPieMenu(target, vm, caller);
                     if (triageMenu != null) return triageMenu;
                 }
+                if (Boot.Enabled && UndercoverStingDriver.IsActiveOn(vm))
+                {
+                    var stingMenu = UndercoverStingDriver.TryBuildPieMenu(target, vm, caller);
+                    if (stingMenu != null) return stingMenu;
+                }
 
                 if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu) return raw;
                 var targetAv = target as VMAvatar;

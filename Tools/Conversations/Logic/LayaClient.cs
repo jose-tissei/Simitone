@@ -210,5 +210,13 @@ namespace Simitone.Conversations
                 "romantic|flirting or romantic", "playful|joking or teasing",
             }, out answered);
         }
+
+        public string ClassifyCustom(string text, string question, IEnumerable<string> criteria)
+        {
+            if (string.IsNullOrWhiteSpace(text) || string.IsNullOrWhiteSpace(question) || criteria == null)
+                return null;
+            bool answered;
+            return Ask(text, question, criteria, out answered);
+        }
     }
 }

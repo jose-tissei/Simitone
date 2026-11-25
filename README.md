@@ -77,8 +77,8 @@ Built into the same `Tools/Conversations` mod, **Interactive Career Mini-Games**
 | **2** | **Cadet** | **Academy Obstacle & Drill** | Full-screen 3D **Virtual Pocket Lot** (*SimCity Police Academy*): 3 timing stages (**Sprint Dash → Wall Vault → Target Drill**), **Body** skill widens the green hit zone, custom 3D animations, authentic TS1 career uniforms, Sideline Drill Sergeant, and 18 procedural Police Academy SFX + outdoor ambience. | **Playable** |
 | **3** | **Patrol Officer** | **Real-Lot Live Beat Patrol** | Patrols real Sims 1 **Downtown (`House21–30`)**, **Old Town (`House50–78`)**, and **Neighbor Residential (`House01–10`)** lots with a parked TS1 **Police Squad Car** at the street curb: survey the live lot, use native Simitone **Pie Menus** on suspects & hazards, **Sneak Up & Apprehend** the prowling TS1 Burglar with custom Blender stealth animations, issue friendly warnings/tickets to real townies (saving real relationship & Sim Memory deltas), and return seamlessly to your saved home lot. | **Playable** |
 | **4** | **Desk Sergeant** | **911 Dispatch Triage** | Real-lot **SimCity PD Precinct Front Desk** (works in **3D & 2D**): Sgt. sits in a real TS1 **Office Chair** behind a 2-tile **Executive Office Desk (*escrivaninha*)** with slotted **Computer** & **Desk Phone**. Click the ringing **Desk Phone** -> **911 Switchboard Modal** with Dept buttons, or click real textured **Walk-In Townies** -> **Stamped Paper Forms Clipboard** across 12 handcrafted cases, **Logic >= 2** clues, **Charisma** `Calm Caller (+6s)`, 7 custom seated/walk-in Blender animations, and 17 procedural precinct SFX. | **Playable** |
-| **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | 3-turn undercover conversation powered by **Laya + Charisma**; pick Gentle / Playful / Bold cover lines to keep Suspicion low until confession and record intel in **Sim Memory**. | **Next Up (Planned)** |
-| **6** | **Detective** | **Crime Scene Deduction** | Evidence board with 3 clues (`Footprint`, `Motive`, `Alibi`) and 3 real neighborhood Sims as suspects; **Logic** flags contradictions; unlocks on-lot **Question Sim**. | Planned |
+| **5** | **Vice Squad** | **Undercover Sting (Laya Social)** | Real-lot **SimCity Underground Speakeasy Lounge** (works in **3D & 2D**): plainclothes Officer sits across a real TS1 **VIP Table** (with slotted **Desk Lamp**) from a real textured neighborhood Suspect while a textured Informant tends the **Saloon Wet Bar** beside a **Retro Jukebox**, **Art Lamps**, and **Police Backup Cruiser** outside. 3-turn **Laya + Charisma / Logic** wiretap dialogue (`Gentle` / `Playful` / `Bold`), **`Check Wire (-18% Suspicion)`**, **`FLASH BADGE & BUST`** climax, 6 custom Blender noir animations, and 12 procedural jazz-noir SFX. | **Playable** |
+| **6** | **Detective** | **Crime Scene Deduction** | Evidence board with 3 clues (`Footprint`, `Motive`, `Alibi`) and 3 real neighborhood Sims as suspects; **Logic** flags contradictions; unlocks on-lot **Question Sim**. | **Next Up (Planned)** |
 | **7** | **Lieutenant** | **Precinct Squad Briefing** | Assign 3 rookie officers (*Fast*, *Observant*, *Charming*) to 3 city incidents (`Foot Chase`, `Stakeout`, `Community Mediation`). | Planned |
 | **8** | **SWAT Team Leader** | **Tactical Breach Plan** | 4×4 room grid with doors, suspects, and hostages; sequence 3 entry moves (`Flashbang`, `Shield`, `Quiet Entry`) for zero collateral damage. | Planned |
 | **9** | **Police Chief** | **City Hall Press Conference & Budget** | Allocate precinct budget across Patrols, Forensics, and Outreach, then answer Laya-judged press questions to boost City Approval. | Planned |
@@ -175,12 +175,37 @@ Sit behind the real **SimCity PD Precinct Front Desk** built on a live Sims 1 lo
 | :---: | :---: |
 | ![Desk Sergeant Paper Forms Clipboard Modal](docs/career-minigames/media/20-lvl4-triage-paperforms.jpg) | ![Desk Sergeant S-Rank Scorecard](docs/career-minigames/media/21-lvl4-triage-scorecard.jpg) |
 
+---
+
+### Law Enforcement Lvl 5 — Vice Squad: *Undercover Sting*
+
+Go undercover in plainclothes inside a **SimCity Underground Speakeasy Lounge** built on a live Sims 1 lot from **100% real TS1 game assets** — warm wood floors & cutaway lounge walls, a **VIP Table** (`Formé Table`) with a slotted **Desk Lamp** (`The Gloominator Desk Lamp`), facing **Dining Chairs**, a classic **Saloon Wet Bar**, **Retro Jukebox**, **Art Floor Lamps**, **Roman Loveseat**, **Bird of Paradise** plants, and a parked **Police Backup Cruiser** outside (runs seamlessly in **both 3D and 2D Isometric mode**, with your home lot safely preserved):
+
+- **Click the Suspect -> Lower-Band Wiretap Dialogue Console:** Click the real textured neighborhood Suspect across the VIP table (via pulsing world marker or native Simitone Pie Menu) to open a noir **Wiretap Dialogue Console** anchored cleanly below the Sims. Across 3 escalating turns, choose **`[1] Gentle`**, **`[2] Playful`**, or **`[3] Bold`** undercover lines scored by **Laya AI** (with instant deterministic offline fallback) to build **Confession** while keeping **Suspicion** below 100%.
+- **Charisma, Logic & Wire-Check Mechanics:** **Logic ≥ 2** flags suspect tells & highlights high-leverage approaches; **Charisma** boosts persuasion gains and cushions suspicion spikes; clicking your **Informant / Saloon Bar** triggers **`[W] Check Wire / Sip Drink`** (`-18% Suspicion`, `+6% Confession`, up to 2 charges).
+- **`FLASH BADGE & BUST` Climax & Real VM Rewards:** Once Confession reaches **≥ 65%** (or after Turn 3), flash your badge (**`[B]`** or Suspect Pie Menu) to trigger the synchronized **`sting_flash_badge` + `sting_suspect_handsup`** bust animation, overhead speech balloons, and S/A/B/C Sting Report Scorecard. Returning home writes real Simoleons, Job Performance, Charisma/Logic XP, relationship deltas, and **Sim Memory** intel entries.
+- **6 Custom Blender Noir Animations & 12 Procedural Jazz-Noir SFX:** `sting_seated_idle`, `sting_talk_smooth`, `sting_wire_check`, `sting_flash_badge`, `sting_suspect_nervous`, and `sting_suspect_handsup` paired with `StingAudioSynth` (smoky upright-bass & brushed-ride lounge ambience, wiretap click, gentle/playful/bold stings, slip-captured chord, suspicion heartbeat spike, wire-calm tone, confession-ready chime, dramatic badge-bust brass hit + police radio backup, cover-blown sting, and shift victory fanfare).
+- **Gameplay Videos (HD with Synced Jazz-Noir Audio — 3D & 2D Isometric):** [Watch 3D Mode Demo (MP4)](docs/career-minigames/media/lvl5-vice-squad-sting-demo.mp4) · [Watch 2D Isometric Mode Demo (MP4)](docs/career-minigames/media/lvl5-vice-squad-sting-2d-demo.mp4)
+
+| 3D Mode — Speakeasy VIP Table, Slotted Lamp & Saloon Bar | 2D Isometric Mode — Speakeasy Lounge & Cast |
+| :---: | :---: |
+| ![Vice Squad 3D Clear Lounge](docs/career-minigames/media/23-lvl5-sting-3d-lounge.jpg) | ![Vice Squad 2D Clear Lounge](docs/career-minigames/media/24-lvl5-sting-2d-lounge.jpg) |
+
+| Click Suspect -> Wiretap Dialogue Console (Sims Unobstructed) | Click Bar/Informant -> Check Wire (`-18% Suspicion`) |
+| :---: | :---: |
+| ![Vice Squad Wiretap Dialogue Modal](docs/career-minigames/media/25-lvl5-sting-wiretap-modal.jpg) | ![Vice Squad Wire Check](docs/career-minigames/media/26-lvl5-sting-wire-check.jpg) |
+
+| `FLASH BADGE & BUST` Climax (`sting_flash_badge` + `handsup`) | S-Rank Sting Report & Return Home Rewards |
+| :---: | :---: |
+| ![Vice Squad Badge Bust Climax](docs/career-minigames/media/27-lvl5-sting-badge-bust.jpg) | ![Vice Squad S-Rank Scorecard](docs/career-minigames/media/28-lvl5-sting-scorecard.jpg) |
+
 > **Instant Dev/Test Commands (`SimTestHook` pipe):**
-> - `convo dispatch toast <SimName> [cadet|patrol|triage]` — trigger the mid-shift Radio Dispatch toast
+> - `convo dispatch toast <SimName> [cadet|patrol|triage|sting]` — trigger the mid-shift Radio Dispatch toast
 > - `convo dispatch start` — jump straight into **Lvl 1 Security Guard (CCTV Night Watch)**
 > - `convo dispatch cadet <SimName> <BodyLvl>` — jump straight into **Lvl 2 Cadet (Academy Obstacle & Drill)**
 > - `convo dispatch patrol <SimName> [lotId] [seed]` — jump straight into **Lvl 3 Patrol Officer (Real-Lot Live Beat Patrol)**
 > - `convo dispatch triage <SimName> [logicLvl] [charismaLvl] [seed]` — jump straight into **Lvl 4 Desk Sergeant (911 Dispatch Triage)**
+> - `convo dispatch sting <SimName> [charismaLvl] [logicLvl] [seed]` — jump straight into **Lvl 5 Vice Squad (Undercover Sting)**
 
 # Why is it called Simitone?
 
