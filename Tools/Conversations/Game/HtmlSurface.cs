@@ -231,18 +231,37 @@ namespace Simitone.Conversations
         public void FillGradientCorners(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radiusTop, float radiusBottom)
         {
             var a = C(from); var b = C(to);
-            if (horizontal) FillGradient(x, y, w, h, from, to, true, radiusTop);
+            if (horizontal) HorizontalRounded(x, y, w, h, radiusTop, radiusBottom, a, b);
             else Rounded(x, y, w, h, radiusTop, radiusBottom, t => Color.Lerp(a, b, Math.Max(0, Math.Min(1, t))));
+        }
+
+        // left-to-right gradient with rounded corners: vertical strips between the corner columns, and in each corner column
+        // the smooth corner mask tinted with the gradient colour found there (it barely changes over a corner's width)
+        void HorizontalRounded(float x, float y, float w, float h, float radiusTop, float radiusBottom, Color a, Color b)
+        {
+            if (!rotating) { x = (float)Math.Round(x); y = (float)Math.Round(y); w = (float)Math.Round(w); h = (float)Math.Round(h); }
+            int rt = (int)Math.Round(Math.Min(radiusTop, Math.Min(w, h) / 2)), rb = (int)Math.Round(Math.Min(radiusBottom, Math.Min(w, h) / 2));
+            if (rt < 2) rt = 0;
+            if (rb < 2) rb = 0;
+            int edge = Math.Max(rt, rb);
+            int n = Math.Max(2, Math.Min(48, (int)((w - 2 * edge) / 12)));
+            for (int k = 0; k < n; k++) Rect(x + edge + (w - 2 * edge) * k / n, y, (w - 2 * edge) / n + 0.5f, h, Color.Lerp(a, b, (edge + (w - 2 * edge) * (k + 0.5f) / n) / w));
+            var left = Color.Lerp(a, b, edge * 0.5f / w); var right = Color.Lerp(a, b, 1 - edge * 0.5f / w);
+            for (int i = 0; i < h; i++)
+            {
+                int r = i < rt ? rt : (h - 1 - i < rb ? rb : 0);
+                int ri = i < rt ? i : (h - 1 - i < rb ? (int)(h - 1 - i) : 0);
+                if (r == 0) { Rect(x, y + i, edge, 1, left); Rect(x + w - edge, y + i, edge, 1, right); continue; }
+                var tex = Corners(r);
+                Piece(tex, 0, ri, r, x, y + i, left); Piece(tex, r, ri, r, x + w - r, y + i, right);
+                if (edge > r) { Rect(x + r, y + i, edge - r, 1, left); Rect(x + w - edge, y + i, edge - r, 1, right); }
+            }
         }
 
         public void FillGradient(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radius)
         {
             var a = C(from); var b = C(to);
-            if (horizontal)
-            {
-                int n = Math.Max(2, Math.Min(48, (int)(w / 12)));
-                for (int k = 0; k < n; k++) Rect(x + w * k / n, y, w / n + 0.5f, h, Color.Lerp(a, b, (k + 0.5f) / n));
-            }
+            if (horizontal) HorizontalRounded(x, y, w, h, radius, radius, a, b);
             else Rounded(x, y, w, h, radius, radius, t => Color.Lerp(a, b, Math.Max(0, Math.Min(1, t))));
         }
 
