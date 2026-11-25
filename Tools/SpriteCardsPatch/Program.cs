@@ -141,6 +141,8 @@ int total = 0;
         if (renderPath != null) { entryList.Add((6, "opt_aa.png", "MenuAntiAlias")); entryList.Add((7, "opt_light.png", "MenuLighting")); }
         // the pie menu mode (simplified / full) belongs to the conversations library
         if (conversationsPath != null && renderPath != null) entryList.Add((8, "opt_pie.png", "MenuPieMode"));
+        // the full Options page of the AI library (view, graphics, game buttons, Sims AI), which opens as its own window
+        if (conversationsPath != null) entryList.Add((9, "opt_convo.png", "MenuSimsOptions"));
         var entries = entryList.ToArray();
         sizeIns.OpCode = OpCodes.Ldc_I4; sizeIns.Operand = oldSize + entries.Length;
         var il = m.Body.GetILProcessor();

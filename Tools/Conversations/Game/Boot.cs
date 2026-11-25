@@ -192,6 +192,12 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("memory menu error: " + e.Message); }
         }
 
+        public static void OpenOptionsPage()
+        {
+            try { SimsOptionsMenu.Open(); }
+            catch (Exception e) { Log("open options failed: " + e.Message); }
+        }
+
         public static void OpenMemoryMenu()
         {
             try { SimMemoryMenu.Open(null); }
