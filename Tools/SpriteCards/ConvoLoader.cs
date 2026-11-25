@@ -75,6 +75,11 @@ static class ConvoLoader
         try { Look(); if (boot != null) boot.GetMethod("OpenMemoryMenu").Invoke(null, null); } catch { }
     }
 
+    public static void OpenOptions()
+    {
+        try { Look(); if (boot != null) boot.GetMethod("OpenOptionsPage").Invoke(null, null); } catch { }
+    }
+
     public static void CloseMemoryMenu()
     {
         try { Look(); if (boot != null) boot.GetMethod("CloseMemoryMenu").Invoke(null, null); } catch { }
