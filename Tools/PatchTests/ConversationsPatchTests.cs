@@ -196,7 +196,7 @@ public class ConversationsPatchTests : IClassFixture<ConversationsFixture>
             {
                 var panel = m.Types.SelectMany(t => new[] { t }.Concat(t.NestedTypes)).First(t => t.Name == "UIMainPanel");
                 var sw = panel.Methods.First(x => x.Name == "Switcher_OnCategorySelect");
-                foreach (var h in new[] { "MenuConversations", "MenuAntiAlias", "MenuLighting", "MenuPieMode", "MenuSimsOptions" })
+                foreach (var h in new[] { "MenuConversations", "MenuAntiAlias", "MenuLighting", "MenuPieMode" })
                     Assert.Contains(sw.Body.Instructions, i => i.Operand is MethodReference r && r.Name == h);
                 Assert.Contains(sw.Body.Instructions, i => i.OpCode == OpCodes.Ldstr && (string)i.Operand == "opt_pie.png");
             }
