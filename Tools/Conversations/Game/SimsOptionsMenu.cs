@@ -60,12 +60,21 @@ namespace Simitone.Conversations
             try
             {
                 if (action == "close") { Close(); return Status(); }
+                var view = AiSettingsPageData.ViewOf(action);
+                if (view != null) { GameBridge.SetView(view); return Status(); }
                 switch (AiSettingsPageData.SettingOf(action))
                 {
                     case "convo": Boot.Enabled = !Boot.Enabled; break;
                     case "gossip": Boot.GossipEnabled = !Boot.GossipEnabled; break;
                     case "menu": Boot.SetFullMenu(!Boot.FullMenu, true); break;
                     case "theme": Boot.Theme = Boot.Theme == "day" ? "night" : "day"; break;
+                    case "aa": GameBridge.ToggleAa(); break;
+                    case "light": GameBridge.ToggleLight(); break;
+                    case "reload": GameBridge.ReloadList(); break;
+                    // these three hand over to the game (which asks "save first?" itself), so the page closes first
+                    case "save": Close(); GameBridge.Save(); break;
+                    case "hood": Close(); GameBridge.BackToNeighborhood(); break;
+                    case "quit": Close(); GameBridge.Quit(); break;
                 }
             }
             catch (Exception e) { Boot.Log("options action " + action + ": " + e.Message); }
@@ -90,8 +99,9 @@ namespace Simitone.Conversations
         {
             if (!IsOpen) return;
             string laya = Boot.Laya.Available ? "up" : (Boot.Laya.Configured ? "paused" : "off");
-            var data = AiSettingsPageData.Build(Boot.Enabled, Boot.GossipEnabled, !Boot.FullMenu, Boot.Theme == "day", laya);
-            string key = Boot.Enabled + "|" + Boot.GossipEnabled + "|" + Boot.FullMenu + "|" + Boot.Theme + "|" + laya;
+            string mode = GameBridge.ViewMode; bool aa = GameBridge.AaOn, light = GameBridge.LightOn;
+            var data = AiSettingsPageData.Build(Boot.Enabled, Boot.GossipEnabled, !Boot.FullMenu, Boot.Theme == "day", laya, mode, aa, light, GameBridge.HasView);
+            string key = Boot.Enabled + "|" + Boot.GossipEnabled + "|" + Boot.FullMenu + "|" + Boot.Theme + "|" + laya + "|" + mode + aa + light;
             surface.Theme = Boot.Theme;
             if (key != lastKey) { lastKey = key; surface.SetData(data, key); surface.Invalidate(); }
             surface.Draw(batch);

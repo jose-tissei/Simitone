@@ -137,6 +137,21 @@ namespace Conversations.Tests
         }
 
         [Fact]
+        public void AiSettings_ViewTilesAndGameActions()
+        {
+            var d = AiSettingsPageData.Build(true, true, true, false, "up", "arch", true, false, true);
+            var tiles = ((List<object>)d["tiles"]).Cast<Dictionary<string, object>>().ToList();
+            Assert.Equal(new[] { "grid", "cube", "home", "eye" }, tiles.Select(x => (string)x["icon"]).ToArray());
+            Assert.Equal(new[] { false, false, true, false }, tiles.Select(x => (bool)x["on"]).ToArray());
+            Assert.Equal("arch", AiSettingsPageData.ViewOf("view-arch")); Assert.Null(AiSettingsPageData.ViewOf("save"));
+            foreach (var a in new[] { "save", "hood", "reload", "quit" }) Assert.Equal(a, AiSettingsPageData.SettingOf(a));
+            Assert.Equal("aa", AiSettingsPageData.SettingOf("toggle-aa")); Assert.Equal("light", AiSettingsPageData.SettingOf("toggle-light"));
+            var html = Template.Render(File.ReadAllText(FindPage("sims_options.html")), d);
+            Assert.Contains("data-action=\"view-full3d\"", html); Assert.Contains("class=\"tile on\"", html);
+            Assert.DoesNotContain("data-action=\"view-", Template.Render(File.ReadAllText(FindPage("sims_options.html")), AiSettingsPageData.Build(true, true, true, false, "up")));   // no SpriteCards: no View group
+        }
+
+        [Fact]
         public void AiSettingsPage_RendersEverySwitchWithAWordForItsState()
         {
             var html = Template.Render(File.ReadAllText(FindPage("sims_options.html")), AiSettingsPageData.Build(true, false, true, false, "up"));

@@ -96,16 +96,28 @@ namespace Simitone.Conversations
         }
 
         // for overlays that paint shapes and text directly (speech balloons) without a page: call before FillRect / StrokeRect / DrawText
+        // switching the graphics mode (the Options view tiles) recreates the graphics device and disposes every texture made before:
+        // drop the cached masks and icon sheets so they are built again on the new device
+        void DropStaleTextures()
+        {
+            bool stale = cornerTex.Values.Any(t => t.IsDisposed) || ringTex.Values.Any(t => t.IsDisposed) || tailTex.Values.Any(t => t.IsDisposed)
+                || iconSheets.Values.Any(t => t.IsDisposed) || (icons != null && icons != px && icons.IsDisposed);
+            if (!stale) return;
+            cornerTex.Clear(); ringTex.Clear(); tailTex.Clear(); iconSheets.Clear(); icons = null;
+        }
+
         public void BeginDraw(UISpriteBatch b)
         {
             batch = b;
             px = TextureGenerator.GetPxWhite(b.GraphicsDevice);
+            DropStaleTextures();
         }
 
         public void Draw(UISpriteBatch b)
         {
             batch = b;
             px = TextureGenerator.GetPxWhite(b.GraphicsDevice);
+            DropStaleTextures();
             float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
             float w = b.GraphicsDevice.Viewport.Width / scale, h = b.GraphicsDevice.Viewport.Height / scale;
             if (w != viewW || h != viewH) { viewW = w; viewH = h; view = null; }
