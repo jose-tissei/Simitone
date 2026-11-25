@@ -144,19 +144,20 @@ namespace Simitone.Conversations
             }
         }
 
-        // the design's dashed ellipse through the slots and the accent ring round the Sim in the middle (dashes are small squares placed along the curve)
+        // the design's dashed ellipse through the slots
         void DrawOrbit(float ox, float oy, bool hasBack)
         {
             float ry = ringRy, rx = ry * 235f / 128f;
-            var dash = new Rgba(255, 255, 255, 140);
-            double len = 0, prevX = rx, prevY = 0, on = 10, off = 8, phase = 0; bool drawing = true;
-            for (int i = 1; i <= 360; i++)
+            var dash = new Rgba(255, 255, 255, 150);
+            // dashes made of round dots (anti-aliased by the surface), 4 px apart along the curve: three dots on, two off
+            double prevX = rx, prevY = 0, acc = 0; int idx = 0;
+            for (int i = 1; i <= 1440; i++)
             {
-                double a = i * Math.PI / 180, x = Math.Cos(a) * rx, y = Math.Sin(a) * ry;
-                len = Math.Sqrt((x - prevX) * (x - prevX) + (y - prevY) * (y - prevY)); prevX = x; prevY = y;
-                phase += len;
-                if (phase > (drawing ? on : off)) { phase = 0; drawing = !drawing; }
-                if (drawing) painter.FillRect(ox + (float)x - 1.5f, oy + (float)y - 1.5f, 3, 3, dash, 1);
+                double a = i * Math.PI / 720, x = Math.Cos(a) * rx, y = Math.Sin(a) * ry;
+                acc += Math.Sqrt((x - prevX) * (x - prevX) + (y - prevY) * (y - prevY)); prevX = x; prevY = y;
+                if (acc < 4) continue;
+                acc -= 4; idx++;
+                if (idx % 5 < 3) painter.FillRect(ox + (float)x - 2, oy + (float)y - 2, 4, 4, dash, 2);
             }
         }
 
