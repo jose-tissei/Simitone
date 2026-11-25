@@ -254,6 +254,15 @@ namespace Conversations.Tests
             Assert.True((bool)none["newsNoMatch"]); Assert.False((bool)none["newsEmpty"]);
         }
 
+        [Fact]
+        public void PageData_SearchMatchesNamesAnyCase()
+        {
+            Assert.True(SimMemoryPageData.NameMatches("Betty Newbie", "newb")); Assert.True(SimMemoryPageData.NameMatches("Betty", "  "));
+            Assert.False(SimMemoryPageData.NameMatches("Betty", "bob"));
+            var d = SimMemoryPageData.Build(Snapshot(), new List<SpeakerIdentity>(), "n:2", "n:1", false, new List<NewsEntry>(), "Bob", "all", false, "zzz", 5);
+            Assert.Contains("5 Sims", (string)d["subtitle"]);
+        }
+
         static string FindPage(string name)
         {
             for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)

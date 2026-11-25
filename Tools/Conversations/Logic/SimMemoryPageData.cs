@@ -9,7 +9,7 @@ namespace Simitone.Conversations
     public static class SimMemoryPageData
     {
         public static Dictionary<string, object> Build(SimMemorySnapshot snap, IList<SpeakerIdentity> speakers, string selectedSpeakerKey,
-            string selectedListenerKey, bool showNews, IList<NewsEntry> news, string speakerName, string newsFilter = "all", bool newsAll = false)
+            string selectedListenerKey, bool showNews, IList<NewsEntry> news, string speakerName, string newsFilter = "all", bool newsAll = false, string search = "", int totalKnown = -1)
         {
             speakerName = string.IsNullOrWhiteSpace(speakerName) ? (snap != null ? snap.SpeakerName : "Sim") : speakerName;
             var d = new Dictionary<string, object>
@@ -21,7 +21,7 @@ namespace Simitone.Conversations
                 { "title", speakerName + "'s Sim Memory" },
                 { "subtitle", showNews
                     ? "What " + speakerName + " saw or heard about other Sims"
-                    : "What " + speakerName + " has learned about " + (snap.KnownSims.Count == 1 ? "1 Sim" : snap.KnownSims.Count + " Sims") },
+                    : "What " + speakerName + " has learned about " + (TotalOf(snap, totalKnown) == 1 ? "1 Sim" : TotalOf(snap, totalKnown) + " Sims") },
                 { "switchLabel", showNews ? "Dossier" : "News" },
                 { "switchIcon", showNews ? "book" : "news" },
             };
@@ -32,6 +32,9 @@ namespace Simitone.Conversations
                 { "active", string.Equals(s.Key, selectedSpeakerKey, StringComparison.OrdinalIgnoreCase) },
             }).ToList();
 
+            d["search"] = search ?? "";
+            d["searchEmpty"] = string.IsNullOrEmpty(search);
+            d["noMatches"] = !string.IsNullOrEmpty(search) && snap.KnownSims.Count == 0 && TotalOf(snap, totalKnown) > 0;
             var selected = snap.KnownSims.FirstOrDefault(k => string.Equals(k.ListenerKey, selectedListenerKey, StringComparison.OrdinalIgnoreCase))
                            ?? snap.KnownSims.FirstOrDefault();
             d["known"] = snap.KnownSims.Select(k => (object)new Dictionary<string, object>
@@ -57,6 +60,14 @@ namespace Simitone.Conversations
             d["newsFooter"] = (news == null ? 0 : news.Count) + (news != null && news.Count == 1 ? " story" : " stories");
             d["newsHint"] = "Newest first. Certainty shows how sure " + speakerName + " is.";
             return d;
+        }
+
+        static int TotalOf(SimMemorySnapshot snap, int total) { return total >= 0 ? total : snap.KnownSims.Count; }
+
+        // the Known Sims search: a name contains the typed text (any case)
+        public static bool NameMatches(string name, string search)
+        {
+            return string.IsNullOrWhiteSpace(search) || (name ?? "").IndexOf(search.Trim(), StringComparison.OrdinalIgnoreCase) >= 0;
         }
 
         // the News filter: all | saw (they saw it) | heard (told by someone, or only a guess) | mismatch (their version differs from what happened)

@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,6 +41,8 @@ namespace Simitone.Conversations
         string selectedSpeakerName = "";
         string selectedListenerKey = "";
         int scrollOffset;
+        readonly System.Text.StringBuilder search = new System.Text.StringBuilder();   // typed into the Known Sims search field
+        int totalKnown;
         string newsFilter = "all"; bool newsAll;   // the News tab: which stories, and whether all of them are listed
         SimMemorySnapshot snapshot = new SimMemorySnapshot();
         double refreshTimer;
@@ -164,6 +167,7 @@ namespace Simitone.Conversations
             speakers.Clear();
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             string activeKey = null, activeName = null;
+            HashSet<string> familyKeys = null;
 
             // 1. Add currently active Sim & lot avatars first so they're always selectable
             try
@@ -186,12 +190,14 @@ namespace Simitone.Conversations
                 }
                 if (vm != null && vm.Ready)
                 {
-                    foreach (var av in vm.Entities.OfType<VMAvatar>().Where(a => !a.Dead && !a.IsPet && a.GetPersonData(VMPersonDataVariable.PersonsAge) >= 18))
+                    var family = FamilyGuids(screen);
+                    foreach (var av in vm.Entities.OfType<VMAvatar>().Where(a => !a.Dead && !a.IsPet && (family != null ? family.Contains(av_guid(a)) : a.GetPersonData(VMPersonDataVariable.PersonsAge) >= 18)))
                     {
                         var k = KeyOf(av);
                         if (seen.Add(k))
                             speakers.Add(new SpeakerIdentity { Key = k, Name = SafeName(av.Name), KnownCount = Boot.Memory.GetKnownSims(k).Count });
                     }
+                    if (family != null) familyKeys = new HashSet<string>(speakers.Select(x => x.Key), StringComparer.OrdinalIgnoreCase);
                 }
             }
             catch { }
@@ -199,6 +205,7 @@ namespace Simitone.Conversations
             // 2. Add any other Sims present in persisted SocialMemory
             foreach (var sp in Boot.Memory.GetAllSpeakers())
             {
+                if (familyKeys != null && !familyKeys.Contains(sp.Key)) continue;   // the household only: other Sims' memories are not shown
                 if (seen.Add(sp.Key)) speakers.Add(sp);
             }
 
@@ -228,6 +235,8 @@ namespace Simitone.Conversations
             }
 
             snapshot = SimMemoryViewModel.Build(Boot.Memory, selectedSpeakerKey, selectedSpeakerName, Boot.Subjects);
+            totalKnown = snapshot.KnownSims.Count;
+            if (search.Length > 0) snapshot.KnownSims.RemoveAll(k => !SimMemoryPageData.NameMatches(k.ListenerName, search.ToString()));
             if (snapshot.KnownSims.Count == 0)
             {
                 selectedListenerKey = "";
@@ -238,6 +247,21 @@ namespace Simitone.Conversations
                 selectedListenerKey = snapshot.KnownSims[0].ListenerKey;
                 scrollOffset = 0;
             }
+        }
+
+        static uint av_guid(VMAvatar a) { try { return a.Object.OBJ.GUID; } catch { return 0; } }
+
+        // GUIDs of the Sims in the household being played (FAMI.FamilyGUIDs of the screen's ActiveFamily); null when it cannot be read
+        static HashSet<uint> FamilyGuids(object screen)
+        {
+            try
+            {
+                var fam = screen == null ? null : screen.GetType().GetField("ActiveFamily", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(screen);
+                if (fam == null) fam = screen.GetType().GetProperty("ActiveFamily", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic).GetValue(screen, null);
+                var guids = fam == null ? null : fam.GetType().GetField("FamilyGUIDs").GetValue(fam) as uint[];
+                return guids == null || guids.Length == 0 ? null : new HashSet<uint>(guids);
+            }
+            catch { return null; }
         }
 
         static string KeyOf(VMAvatar a)
@@ -271,9 +295,11 @@ namespace Simitone.Conversations
             if (esc && !prevEscDown)
             {
                 prevEscDown = true;
+                if (search.Length > 0) { search.Clear(); scrollOffset = 0; RefreshData(null, false); return; }   // Esc clears the search first, then closes
                 Close();
                 return;
             }
+            if (UseHtml && !showNews) TypeIntoSearch(state);
             prevEscDown = esc;
 
             if (UseHtml)
@@ -556,13 +582,40 @@ namespace Simitone.Conversations
             if (htmlDirty)
             {
                 htmlDirty = false;
-                var data = SimMemoryPageData.Build(snapshot, speakers, selectedSpeakerKey, selectedListenerKey, showNews, CurrentNews(), selectedSpeakerName, newsFilter, newsAll);
+                var data = SimMemoryPageData.Build(snapshot, speakers, selectedSpeakerKey, selectedListenerKey, showNews, CurrentNews(), selectedSpeakerName, newsFilter, newsAll, search.ToString(), totalKnown);
                 var known = data["known"] as List<object>;
                 if (known != null && scrollOffset > 0) data["known"] = known.Skip(Math.Min(scrollOffset, known.Count)).ToList();
                 string key = Newtonsoft.Json.JsonConvert.SerializeObject(data);
                 if (key != htmlKey) { htmlKey = key; surface.SetData(data, key); }
             }
             surface.Draw(batch);
+        }
+
+        // keys typed while the Dossier is open go to the search field (the game's own text routine: letters, Backspace, Delete, Ctrl+Backspace)
+        void TypeIntoSearch(UpdateState state)
+        {
+            try
+            {
+                int before = search.Length; string was = search.ToString();
+                var r = state.InputManager.ApplyKeyboardInput(search, state, -1, -1, true);
+                // a keyboard that only reports key presses (no text events, like the test hook) still types letters, digits and space
+                bool noText = state.FrameTextInput == null || state.FrameTextInput.Count == 0;
+                if (noText && search.ToString() == was)
+                {
+                    bool shift = state.KeyboardState.IsKeyDown(Keys.LeftShift) || state.KeyboardState.IsKeyDown(Keys.RightShift);
+                    foreach (var k in state.NewKeys)
+                        if ((k >= Keys.A && k <= Keys.Z) || (k >= Keys.D0 && k <= Keys.D9) || k == Keys.Space)
+                        {
+                            char c = FSO.Common.Rendering.Framework.IO.InputManager.TranslateChar(k, shift, state.KeyboardState.CapsLock, false);
+                            if (c != 0) search.Append(c);
+                        }
+                }
+                if (r == null) return;
+                search.Replace("\r", "").Replace("\n", "").Replace("\t", "");
+                if (search.Length > 40) search.Length = 40;
+                if (search.ToString() != was) { scrollOffset = 0; htmlDirty = true; RefreshData(null, false); }
+            }
+            catch (Exception e) { Boot.Log("search typing: " + e.Message); }
         }
 
         void OnPageAction(string action)

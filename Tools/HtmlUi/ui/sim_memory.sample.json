@@ -22,5 +22,5 @@
     { "text": "Lena and maybe Omar got romantic today", "flagged": false, "icon": "heart", "chips": [ { "label": "Not sure", "cls": "warn", "icon": "alert" }, { "label": "Heard from Bob", "cls": "", "icon": "chat" } ] },
     { "text": "Ann gave maybe Hank a gift today", "flagged": true, "icon": "gift", "chips": [ { "label": "Not sure", "cls": "warn", "icon": "alert" }, { "label": "Told Bob", "cls": "", "icon": "chat" }, { "label": "Differs from what really happened", "cls": "bad", "icon": "close" } ] }
   ],
-  "newsEmpty": false, "newsNoMatch": false, "filters": [{"key":"all","label":"All","on":true},{"key":"saw","label":"Saw it","on":false},{"key":"heard","label":"Heard","on":false},{"key":"mismatch","label":"Mismatch","on":false}], "newsMore": "", "newsFooter": "2 stories", "newsHint": "Newest first. Certainty shows how sure Bob is."
+  "newsEmpty": false, "search": "", "searchEmpty": true, "noMatches": false, "newsNoMatch": false, "filters": [{"key":"all","label":"All","on":true},{"key":"saw","label":"Saw it","on":false},{"key":"heard","label":"Heard","on":false},{"key":"mismatch","label":"Mismatch","on":false}], "newsMore": "", "newsFooter": "2 stories", "newsHint": "Newest first. Certainty shows how sure Bob is."
 }

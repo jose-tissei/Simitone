@@ -18,6 +18,8 @@
   <div style="flex-direction: row; gap: 24px; padding: 12px 28px 14px 28px; flex-grow: 1; flex-shrink: 1; overflow: hidden;">
     <div style="width: 340px; flex-direction: column; gap: 10px; flex-shrink: 0; overflow: hidden;">
       <span class="t-over">Known Sims</span>
+      <div class="search"><span class="ic s20 i-search"></span><!--#if searchEmpty--><span class="muted">Search Sims</span><!--#else--><span>{{search}}</span><!--/if--></div>
+      <!--#if noMatches--><div class="card"><span class="t-body">No Sims match "{{search}}".</span></div><!--/if-->
       <!--#each known-->
       <div class="row<!--#if selected--> sel<!--/if-->" data-action="pick-{{#}}">
         <div class="avatar" style="background-color: var(--sim-{{sim}});">{{letter}}</div>
@@ -104,7 +106,7 @@
         <!--#if card.topics--><div class="lesson"><span class="k">Topics</span><div class="chips"><!--#each card.topics--><div class="chip<!--#if awkward--> warn<!--/if-->"><!--#if awkward--><span class="ic s16 i-alert"></span><!--/if--><span>{{title}} · {{outcome}}</span></div><!--/each--></div></div><!--/if-->
       </div>
       <!--#else-->
-      <div class="card"><span class="t-display">Nothing learned yet</span><span class="t-body">{{speakerName}} has not talked with anyone yet. Use Talk, or let Sims chat on their own in the same room. Every conversation records traits, interests, skills, temperament and what approaches work best.</span></div>
+      <!--#if noMatches--><!--#else--><div class="card"><span class="t-display">Nothing learned yet</span><span class="t-body">{{speakerName}} has not talked with anyone yet. Use Talk, or let Sims chat on their own in the same room. Every conversation records traits, interests, skills, temperament and what approaches work best.</span></div><!--/if-->
       <!--/if-->
     </div>
     <!--/if-->
