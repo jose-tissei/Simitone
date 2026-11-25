@@ -108,7 +108,7 @@ namespace Simitone.Conversations
         static string Str(object o, string name) { var v = Prop(o, name); return v == null ? "" : v.ToString(); }
 
         object laidOut; int laidCount;
-        const float SlotH = 44;
+        const float SlotH = 48;
         float ringRy = 128;
 
         // Moves the native buttons onto the design's orbit around the head (PieStyle.Orbit) and sizes each to its label, so the click areas are the slots we draw.
@@ -167,18 +167,22 @@ namespace Simitone.Conversations
             float x = nx + nw / 2 - w / 2, y = ny + nh / 2 - h / 2;
 
             var white = Token("pie-rim", new Rgba(255, 255, 255));
-            var a = Token("pie-a", new Rgba(38, 88, 200)); var bcol = Token("pie-b", new Rgba(18, 58, 143));
-            var edge = Token("pie-edge", new Rgba(10, 37, 97));
+            var fa = Token("pie-a", new Rgba(38, 88, 200)); var fb = Token("pie-b", new Rgba(18, 58, 143));
+            var lip = Token("pie-edge", new Rgba(10, 37, 97));
             var ink = white;
-            if (hover) { a = new Rgba(180, 255, 230); bcol = Token("accent-2", new Rgba(0, 217, 139)); edge = bcol; ink = Token("on-accent", new Rgba(3, 48, 42)); }   // mint "on" slot with dark text
-            if (hover) painter.SetRotation(x + w / 2, y + h / 2, -1.5f * (float)Math.PI / 180f);   // the design tilts the "on" slot by -1.5 degrees
-            painter.FillRect(x - 1, y - 1, w + 2, h + 2, edge, h / 2 + 1);
-            painter.FillGradient(x, y, w, h, a, bcol, false, h / 2);
+            float lipH = 4, lift = 0;
+            if (hover) { fa = new Rgba(180, 255, 230); fb = Token("accent-2", new Rgba(0, 217, 139)); ink = Token("on-accent", new Rgba(3, 48, 42)); lipH = 7; lift = 3; }   // mint "on" slot: lifted, so its lip shows more instead of the design's 1.5 degree tilt (which looks jagged here)
+            y -= lift;
+            // the design's slot: soft drop shadow, a hard lip under the pill, a 3 px white border, then the blue (or mint) face
+            painter.FillRect(x + 2, y + lipH + 3, w - 4, h, new Rgba(0, 0, 0, 40), h / 2);
+            painter.FillRect(x + 5, y + lipH + 6, w - 10, h, new Rgba(0, 0, 0, 30), h / 2);
+            painter.FillRect(x, y + lipH, w, h, lip, h / 2);
+            painter.FillRect(x, y, w, h, white, h / 2);
+            painter.FillGradient(x + 3, y + 3, w - 6, h - 6, fa, fb, false, h / 2 - 3);
             float cx = x + 14 * grow;
             painter.DrawIcon(Icons.Find(back ? "left" : PieStyle.IconFor(full)), cx, y + (h - IconSize) / 2, IconSize, ink);
             painter.DrawText(label, cx + IconSize + 10, y + (h - th) / 2, TextSize, false, ink);
             if (sub) painter.DrawIcon(Icons.Find("right"), x + w - 14 - 14, y + (h - 14) / 2, 14, ink);   // "..." marks a submenu
-            painter.ClearRotation();
         }
 
         Rgba Token(string name, Rgba fallback)
