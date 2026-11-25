@@ -98,6 +98,27 @@ namespace Simitone.HtmlUi.Preview
             p.CloseFigure(); return p;
         }
 
+        static GraphicsPath Round2(float x, float y, float w, float h, float rt, float rb)
+        {
+            var p = new GraphicsPath();
+            rt = Math.Min(rt, Math.Min(w, h) / 2); rb = Math.Min(rb, Math.Min(w, h) / 2);
+            if (rt > 0) { p.AddArc(x, y, rt * 2, rt * 2, 180, 90); p.AddArc(x + w - rt * 2, y, rt * 2, rt * 2, 270, 90); }
+            else { p.AddLine(x, y, x + w, y); }
+            if (rb > 0) { p.AddArc(x + w - rb * 2, y + h - rb * 2, rb * 2, rb * 2, 0, 90); p.AddArc(x, y + h - rb * 2, rb * 2, rb * 2, 90, 90); }
+            else { p.AddLine(x + w, y + h, x, y + h); }
+            p.CloseFigure(); return p;
+        }
+
+        public void FillRectCorners(float x, float y, float w, float h, Rgba c, float rt, float rb)
+        { using (var b = new SolidBrush(C(c))) using (var p = Round2(x, y, w, h, rt, rb)) g.FillPath(b, p); }
+
+        public void FillGradientCorners(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float rt, float rb)
+        {
+            if (w < 1 || h < 1) return;
+            using (var b = new LinearGradientBrush(new RectangleF(x, y, w, h), C(from), C(to), horizontal ? LinearGradientMode.Horizontal : LinearGradientMode.Vertical))
+            using (var p = Round2(x, y, w, h, rt, rb)) g.FillPath(b, p);
+        }
+
         public void FillRect(float x, float y, float w, float h, Rgba c, float r)
         { using (var b = new SolidBrush(C(c))) using (var p = Round(x, y, w, h, r)) g.FillPath(b, p); }
 

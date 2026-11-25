@@ -20,8 +20,9 @@ namespace Simitone.HtmlUi
         public string Text;            // text run
         public List<string> Lines;     // wrapped text
         public Rgba Background, Color, BorderColor;
-        public float BorderWidth, Radius, FontSize = 16, LineHeight;
+        public float BorderWidth, Radius, RadiusBottom, FontSize = 16, LineHeight;
         public bool Bold, Upper, HasGradient, GradHorizontal;
+        public bool Clip;              // overflow hidden/auto/scroll: children that do not fully fit inside are not drawn (the painters have no scissor)
         public Rgba GradA, GradB;
         public int Icon = -1;          // cell of the icon sheet, -1 when this is not an icon
         public float X, Y, W, H;       // absolute, in view space
@@ -167,11 +168,17 @@ namespace Simitone.HtmlUi
             foreach (var c in b.Children) Place(c, b.X, b.Y);
         }
 
+        // a child of a clipping box is drawn (and clickable) only when it fits inside completely
+        static bool Fits(Box parent, Box child)
+        {
+            return child.X >= parent.X - 0.5f && child.Y >= parent.Y - 0.5f && child.X + child.W <= parent.X + parent.W + 0.5f && child.Y + child.H <= parent.Y + parent.H + 0.5f;
+        }
+
         static Box HitTest(Box b, float x, float y)
         {
             if (b.Tag == "#text") return null;
             if (x < b.X || y < b.Y || x >= b.X + b.W || y >= b.Y + b.H) return null;
-            for (int i = b.Children.Count - 1; i >= 0; i--) { var h = HitTest(b.Children[i], x, y); if (h != null) return h; }
+            for (int i = b.Children.Count - 1; i >= 0; i--) { if (b.Clip && !Fits(b, b.Children[i])) continue; var h = HitTest(b.Children[i], x, y); if (h != null) return h; }
             return b;
         }
 
@@ -184,11 +191,11 @@ namespace Simitone.HtmlUi
                 return;
             }
             bool border = b.BorderWidth > 0 && b.BorderColor.Visible;
-            if (b.HasGradient) p.FillGradient(b.X, b.Y, b.W, b.H, b.GradA, b.GradB, b.GradHorizontal, b.Radius);
-            else if (b.Background.Visible) p.FillRect(b.X, b.Y, b.W, b.H, b.Background, b.Radius);
+            if (b.HasGradient) p.FillGradientCorners(b.X, b.Y, b.W, b.H, b.GradA, b.GradB, b.GradHorizontal, b.Radius, b.RadiusBottom);
+            else if (b.Background.Visible) p.FillRectCorners(b.X, b.Y, b.W, b.H, b.Background, b.Radius, b.RadiusBottom);
             if (border) p.StrokeRect(b.X, b.Y, b.W, b.H, b.BorderColor, b.BorderWidth, b.Radius);
             if (b.Icon >= 0) p.DrawIcon(b.Icon, b.X, b.Y, Math.Min(b.W, b.H), b.Color);
-            foreach (var c in b.Children) PaintBox(p, c);
+            foreach (var c in b.Children) { if (b.Clip && !Fits(b, c)) continue; PaintBox(p, c); }
         }
 
         // ---- CSS to Yoga ----
@@ -228,7 +235,9 @@ namespace Simitone.HtmlUi
             b.BorderColor = Color(cs.GetPropertyValue("border-top-color"), new Rgba(0, 0, 0, 0));
             float bw = 0; Dim(cs.GetPropertyValue("border-top-width"), (v, pct) => bw = v); b.BorderWidth = bw;
             if (cs.GetPropertyValue("border-top-style") == "none") b.BorderWidth = 0;
+            string ov = cs.GetPropertyValue("overflow"); b.Clip = ov == "hidden" || ov == "auto" || ov == "scroll";
             float rad = 0; Dim(cs.GetPropertyValue("border-top-left-radius"), (v, pct) => rad = v); b.Radius = rad;
+            float radB = 0; Dim(cs.GetPropertyValue("border-bottom-left-radius"), (v, pct) => radB = v); b.RadiusBottom = radB;
             float fsz = parent != null ? parent.FontSize : 16; Dim(cs.GetPropertyValue("font-size"), (v, pct) => fsz = v); b.FontSize = fsz;
             var fw = cs.GetPropertyValue("font-weight"); int wv; if (fw.Length == 0 && parent != null) fw = parent.Bold ? "bold" : "";
             b.Bold = fw == "bold" || fw == "bolder" || (int.TryParse(fw, out wv) && wv >= 600);

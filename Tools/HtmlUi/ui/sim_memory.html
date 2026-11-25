@@ -15,8 +15,8 @@
     <!--/each-->
   </div>
 
-  <div style="flex-direction: row; gap: 24px; padding: 12px 28px 14px 28px; flex-grow: 1;">
-    <div style="width: 340px; flex-direction: column; gap: 10px;">
+  <div style="flex-direction: row; gap: 24px; padding: 12px 28px 14px 28px; flex-grow: 1; flex-shrink: 1; overflow: hidden;">
+    <div style="width: 340px; flex-direction: column; gap: 10px; flex-shrink: 0; overflow: hidden;">
       <span class="t-over">Known Sims</span>
       <!--#each known-->
       <div class="row<!--#if selected--> sel<!--/if-->" data-action="pick-{{#}}">
@@ -28,10 +28,14 @@
 
     <!--#if showNews-->
     <div style="flex-grow: 1; flex-direction: column; gap: 10px; flex-shrink: 1;">
-      <div style="flex-direction: column;">
-        <span class="t-display">{{speakerName}}'s news</span>
-        <span class="t-label muted">{{newsHint}}</span>
+      <div style="flex-direction: row; align-items: flex-end; justify-content: space-between; gap: 20px;">
+        <div style="flex-direction: column; flex-shrink: 1;">
+          <span class="t-display">{{speakerName}}'s news</span>
+          <span class="t-label muted">{{newsHint}}</span>
+        </div>
+        <div class="seg"><!--#each filters--><div class="opt<!--#if on--> on<!--/if-->" data-action="filter-{{key}}"><span>{{label}}</span></div><!--/each--></div>
       </div>
+      <!--#if newsNoMatch--><div class="card"><span class="t-body">No stories match this filter.</span></div><!--/if-->
       <!--#if newsEmpty-->
       <div class="card"><span class="t-body">Nothing yet. News is picked up when something happens in the same room (a promotion, a new skill point, new friends, a kiss, a fight, a gift) and spreads when Sims chat.</span></div>
       <!--/if-->
@@ -46,7 +50,7 @@
         </div>
       </div>
       <!--/each-->
-      <!--#if newsMore--><div style="flex-direction: row; justify-content: center;"><span class="t-label muted">{{newsMore}}</span></div><!--/if-->
+      <!--#if newsMore--><div style="flex-direction: row; justify-content: center;"><div class="tab" data-action="more"><span>{{newsMore}}</span></div></div><!--/if-->
     </div>
     <!--#else-->
     <div style="flex-grow: 1; flex-direction: column; gap: 10px; flex-shrink: 1;">

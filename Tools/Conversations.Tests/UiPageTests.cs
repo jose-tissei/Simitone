@@ -140,7 +140,8 @@ namespace Conversations.Tests
         public void AiSettingsPage_RendersEverySwitchWithAWordForItsState()
         {
             var html = Template.Render(File.ReadAllText(FindPage("sims_options.html")), AiSettingsPageData.Build(true, false, true, false, "up"));
-            Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(html, @"class=""sw on""").Count);   // conversations + simplified menu are on
+            Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(html, @"class=""sw on""").Count);   // only conversations is on (gossip and day theme are off)
+            Assert.Contains(@"class=""opt on""><span>Simplified<", html);                                  // the pie menu style is a segmented choice, not a switch
             Assert.Contains(">Off<", html); Assert.Contains(">On<", html);
         }
 
@@ -202,6 +203,40 @@ namespace Conversations.Tests
             Assert.Equal("Walk to this spot.", PieStyle.Tooltip("Go Here", ""));
             Assert.Equal("More choices: Zzz.", PieStyle.Tooltip("Zzz...", "Bob"));
             Assert.Null(PieStyle.Tooltip("Zzz", "Bob"));
+        }
+
+        // Rounded shapes, borders and icons are only smooth when they go through HtmlSurface (anti-aliased corner masks, averaged icons).
+        // Drawing a rectangle by hand elsewhere would bring the stair-stepped edges back, so new UI must use the painter.
+        [Fact]
+        public void NewUi_NeverDrawsShapesByHand()
+        {
+            string dir = null;
+            for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null && dir == null; d = d.Parent)
+            {
+                var p = Path.Combine(d.FullName, "Tools", "Conversations", "Game");
+                if (Directory.Exists(p)) dir = p;
+            }
+            Assert.NotNull(dir);
+            var allowed = new[] { "HtmlSurface.cs", "SimMemoryMenu.cs" };   // the painter itself, and the old hand-drawn Sim Memory fallback
+            foreach (var f in Directory.GetFiles(dir, "*.cs").Where(f => !allowed.Contains(Path.GetFileName(f))))
+                Assert.False(File.ReadAllText(f).Contains("DrawLocalTexture("), Path.GetFileName(f) + " draws textures itself: use HtmlSurface (FillRect, FillGradient, StrokeRect, DrawIcon, FillTail)");
+        }
+
+        [Fact]
+        public void PageData_NewsFilterAndShowMore()
+        {
+            var news = new List<NewsEntry>();
+            for (int i = 0; i < 7; i++) news.Add(new NewsEntry { Text = "story " + i, Certainty = i % 2 == 0 ? "saw it" : "not sure", Differs = i == 3 });
+            var speakers = new List<SpeakerIdentity>();
+            var all = SimMemoryPageData.Build(Snapshot(), speakers, "n:2", "n:1", true, news, "Bob");
+            Assert.Equal(5, ((List<object>)all["news"]).Count);
+            Assert.Equal("Show 2 more", all["newsMore"]);
+            var more = SimMemoryPageData.Build(Snapshot(), speakers, "n:2", "n:1", true, news, "Bob", "all", true);
+            Assert.Equal(7, ((List<object>)more["news"]).Count); Assert.Equal("", more["newsMore"]);
+            Assert.Equal(4, ((List<object>)SimMemoryPageData.Build(Snapshot(), speakers, "n:2", "n:1", true, news, "Bob", "saw")["news"]).Count);
+            Assert.Single((List<object>)SimMemoryPageData.Build(Snapshot(), speakers, "n:2", "n:1", true, news, "Bob", "mismatch")["news"]);
+            var none = SimMemoryPageData.Build(Snapshot(), speakers, "n:2", "n:1", true, new List<NewsEntry> { news[0] }, "Bob", "mismatch");
+            Assert.True((bool)none["newsNoMatch"]); Assert.False((bool)none["newsEmpty"]);
         }
 
         static string FindPage(string name)

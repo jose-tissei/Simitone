@@ -40,6 +40,7 @@ namespace Simitone.Conversations
         string selectedSpeakerName = "";
         string selectedListenerKey = "";
         int scrollOffset;
+        string newsFilter = "all"; bool newsAll;   // the News tab: which stories, and whether all of them are listed
         SimMemorySnapshot snapshot = new SimMemorySnapshot();
         double refreshTimer;
         bool prevLeftDown, prevEscDown;
@@ -60,6 +61,7 @@ namespace Simitone.Conversations
         {
             try
             {
+                if (SimsOptionsMenu.IsOpen) SimsOptionsMenu.Close();   // one modal at a time (the redesign's rule)
                 var screen = UIScreen.Current;
                 if (screen == null) return "no screen";
                 if (instance == null) instance = new SimMemoryMenu();
@@ -132,6 +134,7 @@ namespace Simitone.Conversations
 
         SimMemoryMenu()
         {
+            ListenForMouse(new Microsoft.Xna.Framework.Rectangle(0, 0, 4000, 3000), (type, st) => { });   // modal: the world underneath must not get these clicks
             titleStyle = MakeStyle(20, new Color(255, 228, 130));
             subtitleStyle = MakeStyle(13, new Color(185, 198, 214));
             sectionStyle = MakeStyle(13, new Color(130, 214, 232));
@@ -279,6 +282,15 @@ namespace Simitone.Conversations
                 bool pressed = state.MouseState.LeftButton == ButtonState.Pressed;
                 if (pressed && !prevLeftDown && !surface.PointInFirstBox(state.MouseState.X / sc, state.MouseState.Y / sc)) { prevLeftDown = true; Close(); return; }
                 prevLeftDown = pressed;
+                int wheelNow = state.MouseState.ScrollWheelValue;
+                if (wheelNow != prevScrollWheel && surface.PointInFirstBox(state.MouseState.X / sc, state.MouseState.Y / sc))
+                {
+                    // the Known Sims list shows only the rows that fit: the wheel moves the first row shown
+                    int max = Math.Max(0, (snapshot == null ? 0 : snapshot.KnownSims.Count) - 1);
+                    scrollOffset = wheelNow < prevScrollWheel ? Math.Min(max, scrollOffset + 1) : Math.Max(0, scrollOffset - 1);
+                    htmlDirty = true;
+                }
+                prevScrollWheel = wheelNow;
                 surface.Update(state);
                 return;
             }
@@ -544,7 +556,9 @@ namespace Simitone.Conversations
             if (htmlDirty)
             {
                 htmlDirty = false;
-                var data = SimMemoryPageData.Build(snapshot, speakers, selectedSpeakerKey, selectedListenerKey, showNews, CurrentNews(), selectedSpeakerName);
+                var data = SimMemoryPageData.Build(snapshot, speakers, selectedSpeakerKey, selectedListenerKey, showNews, CurrentNews(), selectedSpeakerName, newsFilter, newsAll);
+                var known = data["known"] as List<object>;
+                if (known != null && scrollOffset > 0) data["known"] = known.Skip(Math.Min(scrollOffset, known.Count)).ToList();
                 string key = Newtonsoft.Json.JsonConvert.SerializeObject(data);
                 if (key != htmlKey) { htmlKey = key; surface.SetData(data, key); }
             }
@@ -556,14 +570,16 @@ namespace Simitone.Conversations
             htmlDirty = true;
             if (action == "close") { Close(); return; }
             if (action == "switch") { showNews = !showNews; return; }
+            if (action == "more") { newsAll = true; return; }
+            if (action.StartsWith("filter-")) { newsFilter = action.Substring(7); newsAll = false; return; }
             int n;
             if (action.StartsWith("speaker-") && int.TryParse(action.Substring(8), out n) && n < speakers.Count)
             {
                 selectedSpeakerKey = speakers[n].Key; selectedSpeakerName = speakers[n].Name;
                 selectedListenerKey = ""; scrollOffset = 0; RefreshData(null, false);
             }
-            else if (action.StartsWith("pick-") && int.TryParse(action.Substring(5), out n) && n < snapshot.KnownSims.Count)
-                selectedListenerKey = snapshot.KnownSims[n].ListenerKey;
+            else if (action.StartsWith("pick-") && int.TryParse(action.Substring(5), out n) && n + scrollOffset < snapshot.KnownSims.Count)
+                selectedListenerKey = snapshot.KnownSims[n + scrollOffset].ListenerKey;
         }
 
         // "n:48" -> 48 (the key SocialMemory uses for a Sim with a neighbour number)

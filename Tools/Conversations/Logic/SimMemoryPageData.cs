@@ -9,7 +9,7 @@ namespace Simitone.Conversations
     public static class SimMemoryPageData
     {
         public static Dictionary<string, object> Build(SimMemorySnapshot snap, IList<SpeakerIdentity> speakers, string selectedSpeakerKey,
-            string selectedListenerKey, bool showNews, IList<NewsEntry> news, string speakerName)
+            string selectedListenerKey, bool showNews, IList<NewsEntry> news, string speakerName, string newsFilter = "all", bool newsAll = false)
         {
             speakerName = string.IsNullOrWhiteSpace(speakerName) ? (snap != null ? snap.SpeakerName : "Sim") : speakerName;
             var d = new Dictionary<string, object>
@@ -44,13 +44,31 @@ namespace Simitone.Conversations
 
             if (selected != null) d["card"] = Card(selected);
 
-            var newsRows = (news ?? new List<NewsEntry>()).Take(5).Select(News).ToList();
+            var all = news ?? new List<NewsEntry>();
+            var filtered = all.Where(e => NewsMatches(e, newsFilter)).ToList();
+            int shown = newsAll ? filtered.Count : Math.Min(5, filtered.Count);
+            var newsRows = filtered.Take(shown).Select(News).ToList();
             d["news"] = newsRows;
-            d["newsEmpty"] = newsRows.Count == 0;
-            d["newsMore"] = news != null && news.Count > 5 ? "+" + (news.Count - 5) + " more stories" : "";
+            d["newsEmpty"] = all.Count == 0;
+            d["newsNoMatch"] = all.Count > 0 && filtered.Count == 0;
+            d["newsMore"] = filtered.Count > shown ? "Show " + (filtered.Count - shown) + " more" : "";
+            d["filters"] = new[] { new[] { "all", "All" }, new[] { "saw", "Saw it" }, new[] { "heard", "Heard" }, new[] { "mismatch", "Mismatch" } }
+                .Select(f => (object)new Dictionary<string, object> { { "key", f[0] }, { "label", f[1] }, { "on", string.Equals(f[0], newsFilter ?? "all", StringComparison.OrdinalIgnoreCase) } }).ToList();
             d["newsFooter"] = (news == null ? 0 : news.Count) + (news != null && news.Count == 1 ? " story" : " stories");
             d["newsHint"] = "Newest first. Certainty shows how sure " + speakerName + " is.";
             return d;
+        }
+
+        // the News filter: all | saw (they saw it) | heard (told by someone, or only a guess) | mismatch (their version differs from what happened)
+        public static bool NewsMatches(NewsEntry e, string filter)
+        {
+            switch ((filter ?? "all").ToLowerInvariant())
+            {
+                case "saw": return string.Equals(e.Certainty, "saw it", StringComparison.OrdinalIgnoreCase);
+                case "heard": return !string.Equals(e.Certainty, "saw it", StringComparison.OrdinalIgnoreCase);
+                case "mismatch": return e.Differs;
+                default: return true;
+            }
         }
 
         static Dictionary<string, object> Card(SimKnowledgeCard c)

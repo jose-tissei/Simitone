@@ -69,6 +69,7 @@ namespace Simitone.Conversations
         public override void Draw(UISpriteBatch batch)
         {
             if (!Enabled) { LastState = "native"; return; }
+            if (SimMemoryMenu.IsOpen || SimsOptionsMenu.IsOpen) { LastState = "idle (modal open)"; return; }
             try
             {
                 var pie = NativePie() as UIElement;

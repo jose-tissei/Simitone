@@ -135,8 +135,7 @@ namespace Simitone.Conversations
                 {
                     // a small tail pointing down at the Sim
                     float cx = Math.Max(box.X + 14, Math.Min(anchor.Value.X, box.X + box.W - 14));
-                    for (int i = 0; i < 8; i++)
-                        painter.FillRect(cx - (8 - i), box.Y + box.H + i - 1, (8 - i) * 2, 1, BalloonBg, 0);
+                    painter.FillTail(cx, box.Y + box.H - 1, 9, 9, BalloonBg);
                 }
                 painter.DrawText(l.Who, box.X + 14, box.Y + 10, NameSize, true, ident);
                 float ty = box.Y + 32;

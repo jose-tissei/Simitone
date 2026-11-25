@@ -21,6 +21,7 @@ namespace Simitone.Conversations
 
         SimsOptionsMenu()
         {
+            ListenForMouse(new Microsoft.Xna.Framework.Rectangle(0, 0, 4000, 3000), (type, st) => { });   // modal: the world underneath must not get these clicks
             surface = new HtmlSurface(this, "sims_options.html");
             surface.Action += a => Act(a);
         }
@@ -29,6 +30,7 @@ namespace Simitone.Conversations
         {
             try
             {
+                if (SimMemoryMenu.IsOpen) SimMemoryMenu.Close();   // one modal at a time (the redesign's rule)
                 var screen = UIScreen.Current;
                 if (screen == null) return "no screen";
                 if (!File.Exists(Path.Combine(Boot.GameDir, "Content", "ui", "sims_options.html"))) return "missing sims_options.html";

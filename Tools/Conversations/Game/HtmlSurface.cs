@@ -169,37 +169,58 @@ namespace Simitone.Conversations
             else owner.DrawLocalTexture(batch, tex, src, Turn(dx, dy), new Vector2(1.02f, 1.6f), c, rotRad);
         }
 
-        // rounded rectangle: smooth corner rows at the top and bottom, a centre block between; colorAt(t) gives the colour at relative height t (0 top .. 1 bottom)
-        void Rounded(float x, float y, float w, float h, float radius, Func<float, Color> colorAt)
+        // rounded rectangle: smooth corner rows at the top and bottom (radii may differ), a centre block between;
+        // colorAt(t) gives the colour at relative height t (0 top .. 1 bottom)
+        void Rounded(float x, float y, float w, float h, float radiusTop, float radiusBottom, Func<float, Color> colorAt)
         {
             if (!rotating) { x = (float)Math.Round(x); y = (float)Math.Round(y); w = (float)Math.Round(w); h = (float)Math.Round(h); }
-            int r = (int)Math.Round(Math.Min(radius, Math.Min(w, h) / 2));
-            if (r < 2) { Rect(x, y, w, h, colorAt(0.5f)); return; }
-            var tex = Corners(r);
-            for (int i = 0; i < r; i++)
+            int rt = (int)Math.Round(Math.Min(radiusTop, Math.Min(w, h) / 2)), rb = (int)Math.Round(Math.Min(radiusBottom, Math.Min(w, h) / 2));
+            if (rt < 2) rt = 0;
+            if (rb < 2) rb = 0;
+            for (int i = 0; i < rt; i++)
             {
-                var ct = colorAt((i + 0.5f) / h); var cb = colorAt(1 - (i + 0.5f) / h);
-                Piece(tex, 0, i, r, x, y + i, ct); Piece(tex, r, i, r, x + w - r, y + i, ct);
-                Rect(x + r, y + i, w - 2 * r, 1, ct);
-                Piece(tex, 0, i, r, x, y + h - 1 - i, cb); Piece(tex, r, i, r, x + w - r, y + h - 1 - i, cb);
-                Rect(x + r, y + h - 1 - i, w - 2 * r, 1, cb);
+                var ct = colorAt((i + 0.5f) / h);
+                var tex = Corners(rt);
+                Piece(tex, 0, i, rt, x, y + i, ct); Piece(tex, rt, i, rt, x + w - rt, y + i, ct);
+                Rect(x + rt, y + i, w - 2 * rt, 1, ct);
+            }
+            for (int i = 0; i < rb; i++)
+            {
+                var cb = colorAt(1 - (i + 0.5f) / h);
+                var tex = Corners(rb);
+                Piece(tex, 0, i, rb, x, y + h - 1 - i, cb); Piece(tex, rb, i, rb, x + w - rb, y + h - 1 - i, cb);
+                Rect(x + rb, y + h - 1 - i, w - 2 * rb, 1, cb);
             }
             // the middle part, banded when it is a gradient
-            float midY = y + r, midH = h - 2 * r;
-            var top = colorAt(r / h); var bot = colorAt(1 - r / h);
+            float midY = y + rt, midH = h - rt - rb;
+            if (midH <= 0) return;
+            var top = colorAt(rt / h); var bot = colorAt(1 - rb / h);
             if (top == bot) Rect(x, midY, w, midH, top);
             else
             {
                 int bands = Math.Max(1, Math.Min(24, (int)(midH / 3)));
                 for (int k = 0; k < bands; k++)
-                    Rect(x, midY + midH * k / bands, w, midH / bands + 0.5f, colorAt((r + midH * (k + 0.5f) / bands) / h));
+                    Rect(x, midY + midH * k / bands, w, midH / bands + 0.5f, colorAt((rt + midH * (k + 0.5f) / bands) / h));
             }
         }
 
         public void FillRect(float x, float y, float w, float h, Rgba color, float radius)
         {
             var c = C(color);
-            Rounded(x, y, w, h, radius, t => c);
+            Rounded(x, y, w, h, radius, radius, t => c);
+        }
+
+        public void FillRectCorners(float x, float y, float w, float h, Rgba color, float radiusTop, float radiusBottom)
+        {
+            var c = C(color);
+            Rounded(x, y, w, h, radiusTop, radiusBottom, t => c);
+        }
+
+        public void FillGradientCorners(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radiusTop, float radiusBottom)
+        {
+            var a = C(from); var b = C(to);
+            if (horizontal) FillGradient(x, y, w, h, from, to, true, radiusTop);
+            else Rounded(x, y, w, h, radiusTop, radiusBottom, t => Color.Lerp(a, b, Math.Max(0, Math.Min(1, t))));
         }
 
         public void FillGradient(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radius)
@@ -210,30 +231,83 @@ namespace Simitone.Conversations
                 int n = Math.Max(2, Math.Min(48, (int)(w / 12)));
                 for (int k = 0; k < n; k++) Rect(x + w * k / n, y, w / n + 0.5f, h, Color.Lerp(a, b, (k + 0.5f) / n));
             }
-            else Rounded(x, y, w, h, radius, t => Color.Lerp(a, b, Math.Max(0, Math.Min(1, t))));
+            else Rounded(x, y, w, h, radius, radius, t => Color.Lerp(a, b, Math.Max(0, Math.Min(1, t))));
         }
 
-        public void StrokeRect(float x, float y, float w, float h, Rgba color, float t, float radius)
+        // Anti-aliased ring corners (outer circle minus inner circle) for radius r and thickness t: a 2r x r mask like Corners()
+        readonly Dictionary<int, Texture2D> ringTex = new Dictionary<int, Texture2D>();
+        Texture2D RingCorners(int r, int t)
+        {
+            int key = r * 1000 + t;
+            Texture2D tex;
+            if (ringTex.TryGetValue(key, out tex)) return tex;
+            tex = new Texture2D(batch.GraphicsDevice, 2 * r, r);
+            var data = new Color[2 * r * r];
+            for (int py = 0; py < r; py++)
+                for (int k = 0; k < r; k++)
+                {
+                    float dx = r - (k + 0.5f), dy = r - (py + 0.5f);
+                    float dist = (float)Math.Sqrt(dx * dx + dy * dy);
+                    float outer = Math.Max(0, Math.Min(1, r - dist + 0.5f));        // inside the outer circle
+                    float inner = Math.Max(0, Math.Min(1, (r - t) - dist + 0.5f));  // inside the inner circle (the hole)
+                    byte a = (byte)(255 * Math.Max(0, outer - inner));
+                    var c = new Color(a, a, a, a);
+                    data[py * 2 * r + k] = c; data[py * 2 * r + 2 * r - 1 - k] = c;   // right corner mirrors the left
+                }
+            tex.SetData(data);
+            ringTex[key] = tex;
+            return tex;
+        }
+
+        public void StrokeRect(float x, float y, float w, float h, Rgba color, float thickness, float radius)
         {
             var c = C(color);
-            float r = Math.Min(radius, Math.Min(w, h) / 2);
-            if (r < 1.5f) { Rect(x, y, w, t, c); Rect(x, y + h - t, w, t, c); Rect(x, y + t, t, h - 2 * t, c); Rect(x + w - t, y + t, t, h - 2 * t, c); return; }
-            // rounded ring: one row at a time through the corner zones, two bars in between
-            float ri = Math.Max(0, r - t);
-            for (float i = 0; i < r; i++)
+            if (!rotating) { x = (float)Math.Round(x); y = (float)Math.Round(y); w = (float)Math.Round(w); h = (float)Math.Round(h); }
+            int t = Math.Max(1, (int)Math.Round(thickness));
+            int r = (int)Math.Round(Math.Min(radius, Math.Min(w, h) / 2));
+            if (r < 2) { Rect(x, y, w, t, c); Rect(x, y + h - t, w, t, c); Rect(x, y + t, t, h - 2 * t, c); Rect(x + w - t, y + t, t, h - 2 * t, c); return; }
+            t = Math.Min(t, r);
+            var tex = RingCorners(r, t);
+            for (int i = 0; i < r; i++)
             {
-                float dy = r - (i + 0.5f);
-                float outer = r - (float)Math.Sqrt(Math.Max(0, r * r - dy * dy));
-                float innerSq = ri * ri - dy * dy;
-                float inner = i < t || innerSq <= 0 ? -1 : r - (float)Math.Sqrt(innerSq);
-                foreach (float ry in new[] { y + i, y + h - i - 1 })
-                {
-                    if (inner < 0) Rect(x + outer, ry, w - 2 * outer, 1, c);
-                    else { Rect(x + outer, ry, inner - outer + 0.5f, 1, c); Rect(x + w - inner - 0.5f, ry, inner - outer + 0.5f, 1, c); }
-                }
+                Piece(tex, 0, i, r, x, y + i, c); Piece(tex, r, i, r, x + w - r, y + i, c);
+                Piece(tex, 0, i, r, x, y + h - 1 - i, c); Piece(tex, r, i, r, x + w - r, y + h - 1 - i, c);
+                if (i < t) { Rect(x + r, y + i, w - 2 * r, 1, c); Rect(x + r, y + h - 1 - i, w - 2 * r, 1, c); }   // top and bottom bars between the corners
             }
             float midH = h - 2 * r;
             Rect(x, y + r, t, midH, c); Rect(x + w - t, y + r, t, midH, c);
+        }
+
+        // A small anti-aliased triangle pointing down (apex at the bottom centre): the speech balloon's tail.
+        readonly Dictionary<int, Texture2D> tailTex = new Dictionary<int, Texture2D>();
+        public void FillTail(float cx, float y, int halfWidth, int height, Rgba color)
+        {
+            int key = halfWidth * 1000 + height;
+            Texture2D tex;
+            if (!tailTex.TryGetValue(key, out tex))
+            {
+                int w = halfWidth * 2;
+                tex = new Texture2D(batch.GraphicsDevice, w, height);
+                var data = new Color[w * height];
+                for (int py = 0; py < height; py++)
+                    for (int pxl = 0; pxl < w; pxl++)
+                    {
+                        int hit = 0;
+                        for (int sy = 0; sy < 4; sy++)
+                            for (int sx = 0; sx < 4; sx++)
+                            {
+                                float fx = pxl + (sx + 0.5f) / 4 - halfWidth, fy = py + (sy + 0.5f) / 4;
+                                if (Math.Abs(fx) <= halfWidth * (1 - fy / height)) hit++;
+                            }
+                        byte a = (byte)(255 * hit / 16);
+                        data[py * w + pxl] = new Color(a, a, a, a);
+                    }
+                tex.SetData(data);
+                tailTex[key] = tex;
+            }
+            var col = C(color);
+            float dx = (float)Math.Round(cx) - halfWidth, dy = (float)Math.Round(y);
+            owner.DrawLocalTexture(batch, tex, null, new Vector2(dx, dy), Vector2.One, col);
         }
 
         TextStyle Style(float size, Rgba color)

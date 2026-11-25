@@ -13,6 +13,9 @@ namespace Simitone.HtmlUi
         void FillRect(float x, float y, float w, float h, Rgba color, float radius);
         // two-colour gradient, top to bottom (or left to right when horizontal)
         void FillGradient(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radius);
+        // same, with different radii on the top and bottom corners (a header or footer that sits inside a rounded panel)
+        void FillRectCorners(float x, float y, float w, float h, Rgba color, float radiusTop, float radiusBottom);
+        void FillGradientCorners(float x, float y, float w, float h, Rgba from, Rgba to, bool horizontal, float radiusTop, float radiusBottom);
         void StrokeRect(float x, float y, float w, float h, Rgba color, float thickness, float radius);
         void DrawText(string text, float x, float y, float size, bool bold, Rgba color);
         void MeasureText(string text, float size, bool bold, out float w, out float h);
