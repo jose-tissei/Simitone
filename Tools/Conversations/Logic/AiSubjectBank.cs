@@ -115,6 +115,13 @@ namespace Simitone.Conversations
             return picks;
         }
 
+        // how much the listener is expected to enjoy a subject (0..0.8): Laya knows names, not tastes, so without this a topic the listener dislikes can come first
+        public static double ListenerTaste(RawSim listener, AiSubject s, double knowledge)
+        {
+            var lsInt = listener.Interests != null && listener.Interests.Length >= 8 ? listener.Interests : new short[8];
+            return (lsInt[s.Interest] / 1000.0) * 0.8 * Math.Max(0.5, knowledge);
+        }
+
         // Picks 3 distinct AI subjects to show in the manual Talk dialog, using Laya ranking when available.
         public List<AiSubject> OfferForManualTalk(RawSim speaker, RawSim listener, LayaClient laya, SocialMemory memory, Random rng)
         {
@@ -140,7 +147,7 @@ namespace Simitone.Conversations
                 if (probs != null && probs.Count > 0)
                 {
                     candidates = candidates
-                        .OrderByDescending(c => (probs.ContainsKey(c.Id) ? probs[c.Id] : 0.0) + (memory != null ? memory.SubjectAdjustment(speaker, listener, c.Id) * 0.5 : 0.0))
+                        .OrderByDescending(c => (probs.ContainsKey(c.Id) ? probs[c.Id] : 0.0) + (memory != null ? memory.SubjectAdjustment(speaker, listener, c.Id) * 0.5 : 0.0) + ListenerTaste(listener, c, knowledge))
                         .ToList();
                 }
             }

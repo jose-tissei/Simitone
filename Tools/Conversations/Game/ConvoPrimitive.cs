@@ -93,18 +93,39 @@ namespace Simitone.Conversations
         // The dialog is for the Sim the player is controlling. (Queue priorities cannot tell: the social script runs as a pushed
         // interaction with a low priority even when the player asked for it.)
         // And only when the player asked for this: the Sim being played also chats on its own (free will), and then no window should appear.
-        // An action the player started runs at user-driven priority (50); one the Sim chose itself runs at 2 or less.
-        public static bool PlayerControls(VMEntity speaker, VMThread thread = null)
+        // The game builds a Sim's pie menu only when the player points at it (UILotControl) and never for a Sim's own free will,
+        // so a pie built for this pair a moment ago means the player is behind the conversation.
+        const long AskedWindowMs = 60000;
+        static readonly System.Diagnostics.Stopwatch askedClock = System.Diagnostics.Stopwatch.StartNew();
+        static readonly Dictionary<int, long> asked = new Dictionary<int, long>();
+
+        static int PairKey(VMEntity a, VMEntity b) { return (a.ObjectID << 16) ^ (ushort)b.ObjectID; }
+
+        public static void MarkAsked(VMEntity caller, VMEntity target)
+        {
+            if (caller == null || target == null || ReferenceEquals(caller, target)) return;
+            lock (asked) asked[PairKey(caller, target)] = askedClock.ElapsedMilliseconds;
+        }
+
+        // test aid: forget that the player pointed at this pair (the test hook builds menus too, which would look like a player click)
+        public static void ClearAsked(VMEntity caller, VMEntity target) { lock (asked) asked.Remove(PairKey(caller, target)); }
+
+        static bool WasAsked(VMEntity speaker, VMEntity listener)
+        {
+            if (speaker == null || listener == null) return false;
+            long at;
+            lock (asked) return asked.TryGetValue(PairKey(speaker, listener), out at) && askedClock.ElapsedMilliseconds - at <= AskedWindowMs;
+        }
+
+        public static bool PlayerControls(VMEntity speaker, VMEntity listener)
         {
             if (Boot.TreatAsAutonomous) return false;
             try
             {
-                var q = (thread ?? (speaker as VMAvatar)?.Thread)?.Queue;
-                if (q != null && q.Count > 0 && q[0].Priority < 40) return false;
                 var screen = FSO.Client.UI.Framework.UIScreen.Current;
                 var lot = screen?.GetType().GetProperty("LotControl")?.GetValue(screen, null);
                 var active = lot?.GetType().GetProperty("ActiveEntity")?.GetValue(lot, null);
-                return active != null && ReferenceEquals(active, speaker);
+                return active != null && ReferenceEquals(active, speaker) && WasAsked(speaker, listener);
             }
             catch { return false; }
         }
@@ -143,9 +164,9 @@ namespace Simitone.Conversations
                 };
                 for (int i = 0; i < 3; i++) p.SpeakerLines[i] = DialogueBank.Fill(p.SpeakerLines[i], ps.Name, pl.Name, pl.JobTitle);
 
-                Boot.Log("social step: " + key + " " + ps.Name + " -> " + pl.Name + " window=" + PlayerControls(speaker, thread) + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
+                Boot.Log("social step: " + key + " " + ps.Name + " -> " + pl.Name + " window=" + PlayerControls(speaker, listener) + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
                 if (Boot.AutoTone >= 0) p.Tone = (Tone)Math.Min(2, Boot.AutoTone);
-                else if (PlayerControls(speaker, thread))
+                else if (PlayerControls(speaker, listener))
                 {
                     ShowDialog(ctx, p, key);
                     pending.Add(thread, p);
@@ -357,6 +378,7 @@ namespace Simitone.Conversations
                 ParallelSocialDriver.ReadRelationship(vm, target, a, out s.TargetStrToMe, out s.TargetLtrToMe);
             }
             for (int i = 0; i < 8; i++) s.Interests[i] = a.GetPersonData((VMPersonDataVariable)((int)VMPersonDataVariable.Interest_TravelToys + i));
+            s.Interests = TopicLogic.Normalize(s.Interests);
             try
             {
                 var jobType = a.GetPersonData(VMPersonDataVariable.JobType);

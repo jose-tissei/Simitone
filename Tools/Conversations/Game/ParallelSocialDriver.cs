@@ -15,8 +15,8 @@ namespace Simitone.Conversations
     public static class ParallelSocialDriver
     {
         const int ScanIntervalTicks = 30;         // ~1 s of game time between room scans
-        const int SimCooldownTicks = 150;         // ~5 s of game time per Sim between parallel exchanges
-        const int PairCooldownTicks = 180;        // ~6 s of game time per pair
+        const int SimCooldownTicks = 240;         // ~8 s of game time per Sim between parallel exchanges
+        const int PairCooldownTicks = 270;        // ~9 s of game time per pair
 
         class CompletedExchange
         {
@@ -56,7 +56,8 @@ namespace Simitone.Conversations
         {
             int worker, io, maxWorker, maxIo;
             ThreadPool.GetAvailableThreads(out worker, out io); ThreadPool.GetMaxThreads(out maxWorker, out maxIo);
-            lock (gate) return "inFlight=" + inFlight.Count + " completed=" + completed.Count + " pendingBalloons=" + pendingBalloons.Count + " tick=" + tickCount + " poolFree=" + worker + "/" + maxWorker;
+            var dv = lastVm; string why = dv == null ? "no lot" : (!dv.Ready ? "not ready" : (!Boot.Enabled ? "off" : (dv.SpeedMultiplier <= 0 ? "paused(speed " + dv.SpeedMultiplier + ")" : (dv.GlobalBlockingDialog != null ? "blocked by a dialog (" + dv.GlobalBlockingDialog.Name + ")" : "running"))));
+            lock (gate) return "state=" + why + " inFlight=" + inFlight.Count + " completed=" + completed.Count + " pendingBalloons=" + pendingBalloons.Count + " tick=" + tickCount + " poolFree=" + worker + "/" + maxWorker;
         }
         public static int TotalExchanges { get { return totalExchanges; } }
 

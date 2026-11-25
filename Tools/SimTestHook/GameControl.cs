@@ -327,13 +327,16 @@ public static class GameControl
     static string Interact(VM vm, VMAvatar actor, VMAvatar target, string name)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("interaction name required (see 'menu')");
+        // a trailing "auto" queues the action the way a Sim's own free will does (autonomous priority) instead of as the player's click
+        bool auto = name.EndsWith(" auto", StringComparison.OrdinalIgnoreCase);
+        if (auto) name = name.Substring(0, name.Length - 5);
         var items = PieMenu(vm, actor, target);
         var exact = items.Where(i => string.Equals(Norm(i.Name), Norm(name), StringComparison.OrdinalIgnoreCase)).ToList();
         var found = exact.Count > 0 ? exact : items.Where(i => Norm(i.Name).IndexOf(Norm(name), StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         if (found.Count == 0) throw new Exception("no interaction '" + name + "' available from " + actor.Name + " to " + target.Name);
         if (found.Count > 1) throw new Exception("'" + name + "' is ambiguous: " + string.Join(", ", found.Select(i => Norm(i.Name))));
         var act = found[0];
-        vm.SendCommand(new VMNetInteractionCmd
+        var cmd = new VMNetInteractionCmd
         {
             Interaction = act.ID,
             ActorUID = actor.PersistID,
@@ -341,7 +344,16 @@ public static class GameControl
             CalleeID = target.ObjectID,
             Param0 = act.Param0,
             Global = act.Global
-        });
+        };
+        if (auto)
+        {
+            var cp = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("Simitone.Conversations.ConvoPrimitive", false)).FirstOrDefault(x => x != null);
+            cp?.GetMethod("ClearAsked")?.Invoke(null, new object[] { actor, target });   // the menu lookup above is not a player click
+            cmd.Execute(vm, actor);
+            foreach (var q in actor.Thread.Queue) if (q.Callee == target) q.Priority = (short)FSO.SimAntics.Engine.VMQueuePriority.Autonomous;
+            return "ok queued " + Norm(act.Name) + " as an autonomous action (" + actor.Name + " -> " + target.Name + ")";
+        }
+        vm.SendCommand(cmd);
         return "ok queued " + Norm(act.Name) + " (" + actor.Name + " -> " + target.Name + ")";
     }
 

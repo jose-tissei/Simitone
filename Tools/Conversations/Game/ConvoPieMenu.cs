@@ -14,6 +14,7 @@ namespace Simitone.Conversations
         {
             try
             {
+                if (caller is VMAvatar && target is VMAvatar) ConvoPrimitive.MarkAsked(caller, target);   // the player pointed at this Sim: a conversation that follows is theirs
                 if (raw == null || raw.Count == 0 || !Boot.Enabled || Boot.FullMenu) return raw;
                 var targetAv = target as VMAvatar;
                 var callerAv = caller as VMAvatar;

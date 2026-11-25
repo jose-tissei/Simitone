@@ -14,6 +14,17 @@ public class TopicLogicTests
     public void OutcomeFollowsTheListenersInterest(int interest, int outcome) { Assert.Equal(outcome, TopicLogic.OutcomeFor((short)interest)); }
 
     [Fact]
+    public void InterestsOnTheTenPointScaleAreScaledUp()
+    {
+        var n = TopicLogic.Normalize(new short[] { 9, 0, 10, 5, 2, 7, 1, 8 });
+        Assert.Equal(new short[] { 900, 0, 1000, 500, 200, 700, 100, 800 }, n);
+        Assert.Equal(2, TopicLogic.Liking(n[0]));   // 9 of 10 is liked
+        Assert.Equal(0, TopicLogic.Liking(n[6]));   // 1 of 10 is not
+        var big = new short[] { 900, 0, 10, 5, 2, 7, 1, 8 };
+        Assert.Same(big, TopicLogic.Normalize(big));   // already 0..1000: untouched
+    }
+
+    [Fact]
     public void OffersThreeDistinctSubjects()
     {
         var speaker = new short[] { 900, 0, 0, 0, 0, 0, 0, 0 };

@@ -116,7 +116,7 @@ namespace Simitone.Conversations
                     Listener = rl,
                     SpeakerProfile = ps,
                     ListenerProfile = pl,
-                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker, thread),
+                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker, listener),
                 };
 
                 Boot.Log("talk step: " + ps.Name + " -> " + pl.Name + " window=" + p.PlayerControlled + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
@@ -159,7 +159,7 @@ namespace Simitone.Conversations
                 if (!p.PlayerControlled && Boot.AutoTone < 0)
                 {
                     pending.Remove(thread);
-                    Finish(ctx, p, subjects[0]);
+                    Finish(ctx, p, BestForListener(p, subjects));
                     return VMPrimitiveExitCode.RETURN_TRUE;
                 }
                 if (Boot.AutoTone >= 0)
@@ -181,6 +181,13 @@ namespace Simitone.Conversations
             var chosen = subjects[dr.Responded ? Math.Min(subjects.Count - 1, (int)dr.ResponseCode) : 0];
             Finish(ctx, p, chosen);
             return VMPrimitiveExitCode.RETURN_TRUE;   // the routine's job (choosing a topic) is done
+        }
+
+        // a Sim chatting on its own brings up the offered subject the listener is likeliest to enjoy
+        static AiSubject BestForListener(Pending p, List<AiSubject> subjects)
+        {
+            double know = Math.Max(0.4, Math.Min(1.0, (p.Speaker.LtrToTarget + 20) / 120.0));
+            return subjects.OrderByDescending(s => AiSubjectBank.ListenerTaste(p.Listener, s, know) + (p.Speaker.Interests[s.Interest] / 1000.0) * 0.2 + rng.NextDouble() * 0.3).First();   // the jitter keeps the same topic from coming up every time
         }
 
         static void Finish(VMStackFrame ctx, Pending p, AiSubject s)
