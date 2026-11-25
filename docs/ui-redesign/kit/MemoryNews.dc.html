@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sim Memory news, Sunny Lot theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.cap{font:700 14px/16px var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
+.news{display:flex;align-items:center;gap:16px;min-height:76px;padding:10px 16px;border-radius:16px;background:var(--card);border:2px solid var(--line)}
+.news .ico{width:44px;height:44px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--raised);border:2px solid var(--line-strong)}
+.news .hd{font:700 19px/24px var(--font-ui)}
+.news .meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.news.flag{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--card))}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-day" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#3a5a2a">
+<img alt="" aria-hidden="true" src="./assets/dbc01b4804d2162aa16b52e8843fe78f.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+<div class="abs" style="left:0;top:0;width:1920px;height:1080px;background:var(--scrim)"></div>
+
+<div class="abs dlg" style="left:280px;top:110px;width:1360px">
+<div class="head"><span class="ic s32 i-news"></span><span>Betty's Sim Memory</span><span class="t-label" style="opacity:.8;font-weight:600;margin-left:8px">What Betty saw or heard about other Sims</span><span style="flex:1"></span>
+<span class="tab" style="background:var(--dock);color:var(--text);min-height:44px"><span class="ic s20 i-book"></span>Dossier</span>
+<span class="ibtn sm round" aria-label="Close" style="width:44px;height:44px"><span class="ic s24 i-close"></span></span></div>
+<div style="padding:20px 28px 0;display:flex;align-items:center;gap:10px"><span class="t-over" style="margin-right:6px">Memory of</span>
+<span class="tab">Bob<span class="badge" style="background:var(--raised);color:var(--text)">2</span></span><span class="tab on">Betty<span class="badge">2</span></span><span class="tab">Mystery Man<span class="badge" style="background:var(--raised);color:var(--text)">2</span></span></div>
+
+<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;padding:18px 28px 20px;height:640px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="cap" style="margin:0 0 2px">Known Sims</div>
+<div class="row sel"><span class="avatar" style="background:var(--sim-1)">B</span><span style="flex:1">Bob<span class="sub">Acquaintance · 52%<br>31 chats</span></span></div>
+<div class="row"><span class="avatar" style="background:var(--sim-2)">M</span><span style="flex:1">Mystery Man<span class="sub">Acquaintance · 53%<br>1 chat</span></span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px;min-width:0">
+<div style="display:flex;align-items:flex-end;justify-content:space-between"><div><div class="t-display">Betty's news</div><div class="t-body muted" style="font-size:16px;line-height:22px">Newest first. Certainty shows how sure Betty is.</div></div>
+<div class="seg"><b class="on">All</b><b>Saw it</b><b>Heard</b><b>Mismatch</b></div></div>
+
+<div class="news"><span class="ico"><span class="ic s24 i-heart"></span></span><div style="flex:1"><div class="hd">Lena and maybe Omar got romantic today</div><div class="meta"><span class="chip warn"><span class="ic s16 i-alert"></span>Not sure</span><span class="chip"><span class="ic s16 i-chat"></span>Heard from Bob</span></div></div></div>
+<div class="news flag"><span class="ico"><span class="ic s24 i-gift"></span></span><div style="flex:1"><div class="hd">Ann gave maybe Hank a gift today</div><div class="meta"><span class="chip warn"><span class="ic s16 i-alert"></span>Not sure</span><span class="chip"><span class="ic s16 i-chat"></span>Told Bob</span><span class="chip bad"><span class="ic s16 i-close"></span>Differs from what really happened</span></div></div></div>
+<div class="news"><span class="ico"><span class="ic s24 i-star"></span></span><div style="flex:1"><div class="hd">Somebody reached level 4 in cooking</div><div class="meta"><span class="chip"><span class="ic s16 i-thought"></span>Fuzzy</span><span class="chip"><span class="ic s16 i-chat"></span>Heard from Bob</span><span class="chip"><span class="ic s16 i-chat"></span>Told Mystery Man</span></div></div></div>
+<div class="news"><span class="ico"><span class="ic s24 i-heart"></span></span><div style="flex:1"><div class="hd">Somebody and somebody got romantic</div><div class="meta"><span class="chip"><span class="ic s16 i-thought"></span>Fuzzy</span><span class="chip"><span class="ic s16 i-chat"></span>Heard from Bob</span></div></div></div>
+<div class="news"><span class="ico"><span class="ic s24 i-people"></span></span><div style="flex:1"><div class="hd">Betty and Bob became friends today</div><div class="meta"><span class="chip good"><span class="ic s16 i-eye"></span>Saw it</span></div></div></div>
+<div style="display:flex;justify-content:center;margin-top:4px"><span class="btn sm"><span class="ic s20 i-sort"></span>Show 3 more</span></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:var(--dock)"><span class="t-label muted" style="display:flex;align-items:center;gap:10px"><span class="key">Esc</span>or click outside to close</span><span class="t-label muted">10 stories</span></div>
+</div>
+<div class="ann" style="left:310px;top:68px"><span class="ic s16 i-info"></span>Certainty is an icon + label chip; mismatches get a flagged card</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

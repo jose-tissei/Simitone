@@ -1,0 +1,245 @@
+[speaker tease gentle]
+You're adorable when you concentrate, {name}.
+I hope you don't mind me teasing you a little.
+You blush so easily. It's cute.
+I'm only kidding, {name}. Mostly.
+You're fun to tease, you know that?
+Don't be shy, {name}. I only tease people I like.
+[speaker tease playful]
+Nice hair, {name}! Did you do it yourself?
+Aww, someone's grumpy! Do you need a nap?
+I bet you can't catch me!
+You know you love it when I tease you.
+Look who's getting all flustered!
+I can't help it. You're so easy to rile up.
+[speaker tease bold]
+You call that effort, {name}?
+Is that the best you can do?
+You're not as tough as you pretend.
+Admit it, {name}. I'm better than you.
+Come on, {name}. Say something clever.
+You've got nothing, {name}. Nothing.
+[reply tease 2 easily_offended]
+Stop teasing me, {me}! It isn't funny.
+That's not nice. I'm really sensitive.
+Why are you being mean?
+I don't like that. Please stop.
+You always pick on me!
+[reply tease 2 thick_skinned]
+Ha! Good one, {me}.
+Is that all? I've heard worse.
+Tease away. I don't mind.
+Keep going. I'm enjoying this.
+Ha ha. Very clever.
+[reply tease 2 cold]
+...Hm.
+How amusing.
+I'm not laughing.
+Are you finished?
+Childish.
+[reply tease 2 receptive]
+Ha ha! Okay, that was funny, {me}.
+You're such a tease!
+Oh stop it, you!
+I can take it, {me}.
+Alright, you got me.
+[reply tease 2 any]
+Very funny, {me}.
+Ha, okay.
+Stop it!
+Hey!
+You're teasing me again.
+
+[speaker tickle gentle]
+May I tickle you a little, {name}?
+Don't worry. This is a gentle tickle.
+I'm just going to tickle you, softly.
+You look like you need a laugh, {name}.
+Let me make you laugh a little.
+Be still. This tickles me too.
+[speaker tickle playful]
+Tickle attack! Incoming!
+Coochie coo, {name}!
+Run, {name}! The tickle monster is coming!
+Can't catch me! I mean, can't escape me!
+Tickle tickle tickle!
+I know your ticklish spot, {name}.
+[speaker tickle bold]
+Hold still, {name}. I'm tickling you.
+You can't escape me, {name}.
+Prepare to laugh, {name}.
+I'm going to tickle you until you give up.
+Stop wiggling. This is happening.
+Nobody avoids my tickles.
+[reply tickle 1 easily_offended]
+Stop it! I hate being tickled, {me}!
+Please don't. It's not funny.
+That's really uncomfortable.
+Get your hands off me!
+I'm not in the mood for games.
+[reply tickle 1 thick_skinned]
+Nope. Not ticklish, {me}.
+Is that supposed to do something?
+You'll have to try harder.
+Nah. Didn't feel a thing.
+Hands off, champ.
+[reply tickle 1 cold]
+Don't.
+Stop that.
+Not amusing, {me}.
+I'm not ticklish.
+Remove your hands.
+[reply tickle 1 receptive]
+Hee, {me}, not right now!
+I'm sorry, I'm too stressed to laugh.
+Maybe later, okay?
+Aw, I'm not up for it.
+Thanks, but I'd rather not.
+[reply tickle 1 any]
+Stop it, {me}!
+Not now.
+That's not funny.
+No, thanks.
+Please stop.
+[reply tickle 3 easily_offended]
+Ha ha ha! Stop! No, don't stop!
+Hee hee! Oh, {me}, I can't breathe!
+Oh my gosh! I'm laughing so hard!
+Stop! Please! I love it!
+You got me! Hahaha!
+[reply tickle 3 thick_skinned]
+Ha! Okay, okay! You win, {me}!
+Alright, that tickles!
+Ha ha! Stop! Mercy!
+Okay, now I'm ticklish!
+Ha! You found my weak spot!
+[reply tickle 3 cold]
+...Hee. Stop. Okay. Fine.
+Hm. Heh. Don't tell anyone.
+Alright, that was funny.
+I can't help it. Hee!
+Argh, {me}, that tickles!
+[reply tickle 3 receptive]
+Hee hee hee! You're the best, {me}!
+Hahaha! Do it again!
+Ha ha! I love tickle fights!
+Oh, {me}! I'm giggling!
+This is so much fun!
+[reply tickle 3 any]
+Hahaha! Stop it, {me}!
+Hee hee!
+That tickles!
+Ha ha ha!
+I'm laughing so hard!
+
+[speaker talk gentle]
+Have you ever thought about {topic}, {name}?
+I've been curious about {topic} lately.
+Do you have a moment to chat about {topic}?
+I'd love to hear your thoughts on {topic}.
+{topic} came up the other day. It made me think of you.
+Would you mind talking about {topic} with me?
+[speaker talk playful]
+Okay, {name}, tell me everything you know about {topic}!
+Quick question: how do you feel about {topic}?
+I have so many questions about {topic}!
+Guess what I've been obsessed with? {topic}!
+Let's talk about {topic}, {name}. It'll be fun!
+You and me, and {topic}. Go!
+[speaker talk bold]
+{name}, we need to talk about {topic}.
+I have strong opinions about {topic}. Want to hear them?
+Let's settle this, {name}. What do you think about {topic}?
+{topic} matters more than people admit.
+I'm going to tell you about {topic}, {name}, and you'll listen.
+Here's my take on {topic}. Try to keep up.
+[reply talk 1 easily_offended]
+Must we talk about this, {me}? It bores me.
+I'm not in the mood for this.
+Honestly, this makes me uncomfortable.
+Can we talk about something else, please?
+I'd rather not go into it, {me}.
+[reply talk 1 thick_skinned]
+Yawn. Is this still going?
+Come on, {me}. Anything but this.
+I've lost interest already.
+Is there a point to this?
+Wake me when it's over.
+[reply talk 1 cold]
+...I don't care about this.
+Boring.
+Not interested, {me}.
+Change the subject.
+Is this going anywhere?
+[reply talk 1 receptive]
+I'm trying to listen, {me}, but this isn't for me.
+Sorry, I'm a bit lost. Could we talk about something else?
+That's not really my thing.
+I don't know enough about it.
+Maybe another topic?
+[reply talk 1 any]
+Hm. I'm not very interested, {me}.
+Can we talk about something else?
+That's not for me.
+I'm lost.
+Okay... sure.
+[reply talk 2 easily_offended]
+Hm, that's interesting, {me}.
+I hadn't thought of it that way.
+Okay. Go on, I'm listening.
+I suppose that makes sense.
+Alright, I'll give it a think.
+[reply talk 2 thick_skinned]
+Huh. Fair point, {me}.
+Alright, that's kind of interesting.
+Sure, I can chat about it.
+Okay, I'm listening.
+I have some thoughts on that.
+[reply talk 2 cold]
+...Go on.
+Hm. That has some merit.
+Interesting enough.
+Continue.
+I'm following.
+[reply talk 2 receptive]
+That's a good point, {me}.
+I like how you think.
+Tell me more!
+Interesting! I'd like to know more.
+I agree, actually.
+[reply talk 2 any]
+That's interesting, {me}.
+Tell me more.
+I see what you mean.
+Hm, good point.
+Go on.
+[reply talk 3 easily_offended]
+Oh, I love talking about this, {me}!
+You get it! I'm so glad we're talking.
+This is the best conversation I've had all week!
+You always understand me.
+I could talk with you for hours!
+[reply talk 3 thick_skinned]
+Now we're talking, {me}!
+Ha! Finally, someone who gets it.
+Great topic. I have so much to say!
+Okay, you've got me hooked.
+This is fun. Keep going!
+[reply talk 3 cold]
+...You've made me interested.
+Hm. That was a good conversation, {me}.
+You're better company than I thought.
+Fascinating. Truly.
+I enjoyed that.
+[reply talk 3 receptive]
+Wow, {me}, I love this!
+That's exactly what I think too!
+This is wonderful! I could listen forever!
+You make everything so interesting!
+I'm so glad we talked about it!
+[reply talk 3 any]
+I love this topic, {me}!
+That was a great conversation!
+You get it!
+Wonderful!
+Let's talk more!

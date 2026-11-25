@@ -1,0 +1,95 @@
+/* Sims remaster UI kit, the subset our in-game HTML engine understands (docs/ui-redesign/kit/assets/*.css is the full web version).
+   Colours, radii and spacing come ONLY from var(--token); the game fills the tokens from docs/ui-redesign/design-tokens.json (theme night | day).
+   Not available in the game engine: grid, box-shadow, transitions, animations, color-mix, clip-path (use flex and the -a16 / -a8 tint tokens).
+   Sizes are px at 1920x1080. Hit targets >= 48, essential text >= 16, body 18. */
+
+body { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background-color: var(--scrim); color: var(--text); }
+
+/* ---- type ---- */
+.t-display { font-size: 40px; line-height: 44px; font-weight: 600; }
+.t-title { font-size: 28px; line-height: 32px; font-weight: 600; }
+.t-head { font-size: 22px; line-height: 28px; font-weight: 700; }
+.t-body { font-size: 18px; line-height: 26px; font-weight: 500; }
+.t-label { font-size: 16px; line-height: 20px; font-weight: 600; }
+.t-over { font-size: 14px; line-height: 16px; font-weight: 700; color: var(--text-2); text-transform: uppercase; }
+.muted { color: var(--text-2); }
+
+/* ---- icons: <span class="ic s24 i-book"></span>, tinted with the text colour ---- */
+.ic { width: 24px; height: 24px; flex-shrink: 0; }
+.s16 { width: 16px; height: 16px; } .s20 { width: 20px; height: 20px; } .s24 { width: 24px; height: 24px; }
+.s28 { width: 28px; height: 28px; } .s32 { width: 32px; height: 32px; } .s48 { width: 48px; height: 48px; }
+
+/* ---- surfaces ---- */
+.dlg { flex-direction: column; width: 1360px; height: 800px; background-color: var(--panel); border: 3px solid var(--line-strong); border-radius: var(--r-dialog); }
+.head { border-top-left-radius: 21px; border-top-right-radius: 21px; border-bottom-left-radius: 0; border-bottom-right-radius: 0; flex-direction: row; align-items: center; height: 64px; padding-left: var(--sp-5); padding-right: var(--sp-4); gap: 12px; color: var(--on-head);
+  background-image: linear-gradient(90deg, var(--head-a), var(--head-b), var(--head-c)); font-size: 28px; font-weight: 600; }
+.head .sub { font-size: 16px; font-weight: 600; margin-left: 8px; }
+.spacer { flex-grow: 1; }
+.foot { border-top-left-radius: 0; border-top-right-radius: 0; border-bottom-left-radius: 21px; border-bottom-right-radius: 21px; flex-direction: row; align-items: center; justify-content: space-between; height: 56px; padding-left: 28px; padding-right: 28px; background-color: var(--dock); color: var(--text-2); font-size: 16px; font-weight: 600; }
+.card { flex-shrink: 0; background-color: var(--card); border: 2px solid var(--line); border-radius: var(--r-card); padding: var(--sp-3); flex-direction: column; gap: 8px; }
+
+/* ---- controls ---- */
+.ibtn { width: 48px; height: 48px; flex-direction: row; align-items: center; justify-content: center; border-radius: 16px; border: 3px solid var(--icon-btn-rim); color: var(--icon-btn-rim);
+  background-image: linear-gradient(180deg, var(--icon-btn-a), var(--icon-btn-b)); }
+.ibtn:hover { background-image: linear-gradient(180deg, var(--info), var(--icon-btn-b)); }
+.tab { flex-direction: row; align-items: center; gap: 8px; min-height: 48px; padding-left: 20px; padding-right: 20px; border-radius: var(--r-pill); border: 2px solid var(--line);
+  background-color: var(--card); color: var(--text-2); font-size: 18px; font-weight: 600; }
+.tab:hover { background-color: var(--raised); color: var(--text); }
+.tab.on { color: var(--on-accent); border-color: var(--accent-deep); background-image: linear-gradient(180deg, var(--accent), var(--accent-2)); }
+.tab.dock { background-color: var(--dock); color: var(--text); border-color: var(--line); }
+.badge { flex-direction: row; align-items: center; justify-content: center; min-width: 24px; height: 24px; padding-left: 7px; padding-right: 7px; border-radius: 12px; font-size: 14px; font-weight: 800; background-color: var(--raised); color: var(--text); }
+.tab.on .badge { background-color: var(--on-accent); color: var(--accent); }
+.badge.alert { background-color: var(--bad); color: #3A0A06; }
+.chip { flex-direction: row; align-items: center; gap: 6px; min-height: 32px; padding-left: 12px; padding-right: 12px; border-radius: var(--r-chip); border: 2px solid var(--line); background-color: var(--raised); color: var(--text); font-size: 16px; font-weight: 600; }
+.chip.good { color: var(--good-ink); border-color: var(--good); background-color: var(--good-a16); }
+.chip.warn { color: var(--warn-ink); border-color: var(--warn); background-color: var(--warn-a16); }
+.chip.bad { color: var(--bad-ink); border-color: var(--bad); background-color: var(--bad-a16); }
+.chip.info { color: var(--info-ink); border-color: var(--info); background-color: var(--info-a16); }
+.chips { flex-direction: row; flex-wrap: wrap; gap: 8px; }
+.key { flex-direction: row; align-items: center; justify-content: center; min-width: 40px; height: 32px; padding-left: 10px; padding-right: 10px; border-radius: 8px; border: 2px solid var(--line-strong); font-size: 14px; font-weight: 700; color: var(--text-2); }
+
+/* ---- rows, meters ---- */
+.row { flex-direction: row; align-items: center; gap: 12px; min-height: 64px; padding: 8px 14px; border-radius: 14px; background-color: var(--card); border: 2px solid var(--card); font-size: 18px; font-weight: 600; }
+.row:hover { border-color: var(--line-strong); }
+.row.sel { border-color: var(--accent); background-color: var(--raised); }
+.row .sub { font-size: 16px; line-height: 20px; font-weight: 500; color: var(--text-2); }
+.avatar { width: 48px; height: 48px; flex-shrink: 0; border-radius: 24px; border: 3px solid var(--icon-btn-rim); flex-direction: row; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: var(--focus-2); }
+.rel { flex-direction: row; height: 18px; border-radius: var(--r-pill); background-color: var(--track); }
+.rel .fill { background-color: var(--good); height: 14px; margin-top: 2px; border-radius: var(--r-pill); }
+.stat { flex-grow: 1; flex-direction: column; padding: 12px 16px; border-radius: 14px; background-color: var(--card); border: 2px solid var(--line); }
+.stat .n { font-size: 28px; line-height: 32px; font-weight: 700; }
+.stat .l { font-size: 16px; line-height: 20px; font-weight: 600; color: var(--text-2); }
+.notice { flex-direction: row; align-items: center; gap: 14px; padding: 8px 18px; border-radius: 14px; border: 2px solid var(--warn); background-color: var(--warn-a16); color: var(--text); font-size: 18px; font-weight: 600; }
+.lesson { flex-direction: row; gap: 14px; align-items: flex-start; }
+.lesson .k { width: 96px; flex-shrink: 0; font-size: 16px; line-height: 32px; font-weight: 700; color: var(--text-2); }
+.lesson .chips { flex-grow: 1; flex-basis: 0; }
+.news { flex-direction: row; align-items: center; gap: 16px; min-height: 76px; padding: 10px 16px; border-radius: 16px; background-color: var(--card); border: 2px solid var(--line); }
+.news.flag { border-color: var(--bad); background-color: var(--bad-a8); }
+.news .ico { width: 44px; height: 44px; flex-shrink: 0; border-radius: var(--r-pill); flex-direction: row; align-items: center; justify-content: center; background-color: var(--raised); border: 2px solid var(--line-strong); }
+.news .hd { font-size: 19px; line-height: 24px; font-weight: 700; }
+/* switch: a track that always says On or Off in words, knob on the right when on */
+.sw { flex-direction: row; align-items: center; justify-content: space-between; width: 96px; height: 40px; flex-shrink: 0; padding-left: 4px; padding-right: 4px; border-radius: 20px; background-color: var(--track); border: 2px solid var(--line-strong); color: var(--text-2); font-size: 16px; font-weight: 700; }
+.sw.on { background-color: var(--good); border-color: var(--good); color: var(--on-accent); }
+.sw .swt { padding-left: 10px; padding-right: 10px; }
+.sw .knob { width: 28px; height: 28px; border-radius: 14px; background-color: var(--text); }
+.btn { flex-direction: row; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding-left: 20px; padding-right: 20px; border-radius: var(--r-pill); border: 3px solid var(--pill-edge); background-image: linear-gradient(180deg, var(--pill-a), var(--pill-b)); color: var(--pill-text); font-size: 18px; font-weight: 600; }
+
+/* segmented choice: a track with one lit option (the design's .seg) */
+.seg { flex-direction: row; flex-shrink: 0; padding: 4px; gap: 4px; border-radius: var(--r-pill); background-color: var(--track); border: 2px solid var(--line); }
+.seg .opt { flex-direction: row; align-items: center; min-height: 48px; padding-left: 18px; padding-right: 18px; border-radius: 24px; color: var(--text-2); font-size: 16px; font-weight: 600; }
+.seg .opt.on { background-image: linear-gradient(180deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+
+/* options page: view tiles, flat setting rows, divider */
+.s40 { width: 40px; height: 40px; }
+.tile { flex-direction: column; align-items: center; gap: 8px; width: 124px; color: var(--text); font-size: 16px; font-weight: 600; text-align: center; }
+.tile .fr { width: 80px; height: 80px; flex-direction: row; align-items: center; justify-content: center; border-radius: 20px; border: 3px solid var(--text); background-color: var(--card); color: var(--text); }
+.tile:hover .fr { border-color: var(--accent); }
+.tile.on .fr { border-color: var(--accent); background-color: var(--accent-deep); color: var(--icon-btn-rim); }
+.hr { height: 2px; flex-shrink: 0; background-color: var(--line); }
+.orow { flex-direction: row; align-items: center; gap: 16px; min-height: 48px; font-size: 18px; font-weight: 600; }
+.orow .sub { font-size: 16px; line-height: 20px; font-weight: 500; color: var(--text-2); }
+.btn.primary { border-color: var(--accent-deep); background-image: linear-gradient(180deg, var(--accent), var(--accent-2)); color: var(--on-accent); }
+.btn.quit { border-color: var(--bad); background-image: none; background-color: var(--bad-a16); color: var(--bad-ink); }
+
+/* search field: a typed-into box (the page only shows the text; the window feeds the keys) */
+.search { flex-direction: row; align-items: center; gap: 10px; min-height: 48px; padding-left: 14px; padding-right: 14px; border-radius: var(--r-pill); background-color: var(--track); border: 2px solid var(--line-strong); color: var(--text); font-size: 18px; font-weight: 600; }

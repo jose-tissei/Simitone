@@ -56,6 +56,20 @@ static class ConvoLoader
         try { Look(); if (boot != null) boot.GetProperty("Enabled").SetValue(null, !Enabled, null); } catch { }
     }
 
+    // the simplified pie menu (one Talk bubble, romantic actions under Romance, everything else as the game has it) or the game's full menu
+    public static bool SimpleMenu
+    {
+        get
+        {
+            try { Look(); return boot != null && (bool)boot.GetProperty("SimpleMenu").GetValue(null, null); } catch { return false; }
+        }
+    }
+
+    public static void TogglePieMenu()
+    {
+        try { Look(); if (boot != null) boot.GetMethod("SetFullMenu").Invoke(null, new object[] { SimpleMenu, true }); } catch { }
+    }
+
     public static void OpenMemoryMenu()
     {
         try { Look(); if (boot != null) boot.GetMethod("OpenMemoryMenu").Invoke(null, null); } catch { }

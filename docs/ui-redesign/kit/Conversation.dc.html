@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pie menu and speech balloons, Sunny Lot theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.pie{position:absolute;transform:translate(-50%,-50%)}
+.ring{position:absolute;left:855px;top:620px;width:520px;height:270px;transform:translate(-50%,-50%);border-radius:50%;border:3px dashed rgba(255,255,255,.55)}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-day" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#3a5a2a">
+<img alt="" aria-hidden="true" src="./assets/dbc01b4804d2162aa16b52e8843fe78f.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+
+<!-- balloons (cover the originals) -->
+<div class="bln" style="position:absolute;left:700px;top:268px;width:318px;--who:var(--sim-3);--tail:60px"><span class="who">Betty</span>“I've been wondering about that myself, actually.”</div>
+<div class="bln" style="position:absolute;left:812px;top:366px;width:300px;--who:var(--sim-1);--tail:96px"><span class="who">Bob</span>“Okay, spill it. What's been buzzing around?”</div>
+
+<!-- pie menu around Betty -->
+<div class="ring"></div>
+<div class="pie" style="left:855px;top:620px"><span class="avatar" style="width:72px;height:72px;font-size:30px;background:var(--sim-3);border-width:4px;box-shadow:0 0 0 4px var(--accent)">B</span></div>
+<div class="pie" style="left:855px;top:490px"><span class="pie-item on"><span class="ic s24 i-chat"></span>Talk</span></div>
+<div class="pie" style="left:1070px;top:556px"><span class="pie-item"><span class="ic s24 i-hand"></span>Hug…</span></div>
+<div class="pie" style="left:1090px;top:690px"><span class="pie-item"><span class="ic s24 i-note"></span>Dance…</span></div>
+<div class="pie" style="left:855px;top:752px"><span class="pie-item"><span class="ic s24 i-mail"></span>Invite downtown</span></div>
+<div class="pie" style="left:614px;top:690px"><span class="pie-item"><span class="ic s24 i-mail"></span>Invite to Old Town</span></div>
+<div class="pie" style="left:630px;top:556px"><span class="pie-item"><span class="ic s24 i-kiss"></span>Romance…</span></div>
+
+<!-- tooltip for hovered slot -->
+<div class="abs tip" style="left:930px;top:446px;max-width:420px">Talk with Betty. She enjoys jokes today.</div>
+
+<div class="ann" style="left:1160px;top:440px"><span class="ic s16 i-info"></span>Pie: 6 fixed slots on an ellipse, icon + label, tooltip explains</div>
+<div class="ann" style="left:1160px;top:300px"><span class="ic s16 i-info"></span>Balloons: name in identity colour, bigger type, tail to speaker</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

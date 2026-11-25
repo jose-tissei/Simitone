@@ -1,0 +1,74 @@
+<html>
+<body>
+<div class="dlg" style="width: 960px; height: 800px;">
+  <div class="head">
+    <span class="ic s32 i-gear"></span><span>Options</span>
+    <span class="spacer"></span>
+    <div class="ibtn" data-action="close" aria-label="Close"><span class="ic s24 i-close"></span></div>
+  </div>
+
+  <div style="flex-direction: row; gap: 40px; padding: 20px 40px 8px 40px; flex-grow: 1; flex-shrink: 1;">
+    <div style="width: 260px; flex-direction: column; gap: 12px; flex-shrink: 0;">
+      <span class="t-over">Game</span>
+      <div class="btn primary" data-action="save"><span>Save</span></div>
+      <div class="btn" data-action="hood"><span>Neighborhood</span></div>
+      <!--#if hasView--><div class="btn" data-action="reload"><span>Reload list</span></div><!--/if-->
+      <div style="flex-grow: 1;"></div>
+      <div class="hr"></div>
+      <div class="btn quit" data-action="quit"><span>Quit game</span></div>
+      <div style="flex-direction: row; justify-content: center;"><span class="sub muted">Asks to save first.</span></div>
+    </div>
+
+    <div style="flex-grow: 1; flex-direction: column; gap: 8px; flex-shrink: 1;">
+      <!--#if hasView-->
+      <span class="t-over">View</span>
+      <div style="flex-direction: row; gap: 12px; padding-bottom: 4px;">
+        <!--#each tiles-->
+        <div class="tile<!--#if on--> on<!--/if-->" data-action="view-{{id}}"><div class="fr"><span class="ic s40 i-{{icon}}"></span></div><span>{{label}}</span></div>
+        <!--/each-->
+      </div>
+      <div class="hr"></div>
+
+      <span class="t-over">Graphics</span>
+      <div class="orow" data-action="toggle-aa">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Anti-aliasing</span><span class="sub">Smoother edges, costs some speed.</span></div>
+        <!--#if aa--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+      </div>
+      <div class="orow" data-action="toggle-light">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Dynamic lighting</span><span class="sub">Lamps and windows light the room.</span></div>
+        <!--#if light--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+      </div>
+      <div class="hr"></div>
+      <!--/if-->
+
+      <div style="flex-direction: row; align-items: center; gap: 10px;">
+        <span class="t-over">Sims AI</span><div class="chip info"><span class="ic s16 i-bolt"></span><span>Mod</span></div>
+        <span class="spacer"></span>
+        <!--#if layaUp--><div class="chip good"><span class="ic s16 i-check"></span><span>{{layaText}}</span></div><!--#else--><div class="chip warn"><span class="ic s16 i-alert"></span><span>{{layaText}}</span></div><!--/if-->
+      </div>
+      <div class="orow" data-action="toggle-convo">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>AI conversations</span><span class="sub">Sims chat in their own words. Turn off for classic Simlish.</span></div>
+        <!--#if convo--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+      </div>
+      <div class="orow" data-action="toggle-gossip">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Gossip</span><span class="sub">Sims pass on what they saw. It shows up in each Sim's News.</span></div>
+        <!--#if gossip--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+      </div>
+      <div class="orow" data-action="toggle-menu">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Pie menu style</span><span class="sub">How actions appear around a Sim.</span></div>
+        <div class="seg"><div class="opt<!--#if simple--> on<!--/if-->"><span>Simplified</span></div><div class="opt<!--#if simple--><!--#else--> on<!--/if-->"><span>Classic</span></div></div>
+      </div>
+      <div class="orow" data-action="toggle-theme">
+        <div style="flex-direction: column; flex-grow: 1; flex-shrink: 1;"><span>Day theme</span><span class="sub">Light panels instead of dark ones. Balloons and menus stay dark.</span></div>
+        <!--#if day--><div class="sw on"><span class="swt">On</span><div class="knob"></div></div><!--#else--><div class="sw"><div class="knob"></div><span class="swt">Off</span></div><!--/if-->
+      </div>
+    </div>
+  </div>
+
+  <div class="foot">
+    <div style="flex-direction: row; align-items: center; gap: 10px;"><div class="key"><span>Esc</span></div><span>Close</span></div>
+    <span>Changes apply instantly</span>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Components</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.sec{font:700 14px/16px var(--font-ui);letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);margin:0 0 4px}
+.grp{display:flex;flex-direction:column;gap:16px}
+.rw{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.spec{font:500 15px/22px var(--font-ui);color:var(--text-2)}
+.spec b{color:var(--text);font-weight:700}
+.lbl{font:600 16px/20px var(--font-ui);color:var(--text-2);width:130px;flex:none}
+</style>
+</helmet>
+<div class="sims {{themeClass}}" style="width:1920px;height:2000px;padding:64px;background:var(--dock);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:48px;align-content:start">
+
+<!-- ============ COLUMN 1 ============ -->
+<div style="display:flex;flex-direction:column;gap:40px">
+<div class="grp">
+<div class="t-title">02 Components · <span style="color:var(--accent)">{{themeName}}</span></div>
+<div class="spec">Flip the theme in Tweaks. Every class below lives in <b>sims-ui.css</b>; nothing here uses a raw hex.</div>
+</div>
+
+<div class="grp"><div class="sec">Buttons (pill, 56 / 44 tall)</div>
+<div class="rw"><span class="btn primary">Save</span><span class="btn">Cancel</span><span class="btn danger">Quit</span></div>
+<div class="rw"><span class="btn sm primary"><span class="ic s20 i-check"></span>Invite</span><span class="btn sm quiet">Not now</span><span class="btn sm"><span class="ic s20 i-hand"></span>Wave</span></div>
+<div class="rw"><span class="lbl">hover · press</span><span class="btn sm is-hover">Hover</span><span class="btn sm is-press">Pressed</span></div>
+<div class="rw"><span class="lbl">focus · disabled</span><span class="btn sm is-focus">Focus</span><span class="btn sm is-disabled">Disabled</span></div>
+<div class="spec"><b>One primary per surface.</b> Primary is mint, secondary is white pill, destructive is coral and always confirms.</div>
+</div>
+
+<div class="grp"><div class="sec">Icon buttons (Simitone blue, white rim)</div>
+<div class="rw"><span class="ibtn sm"><span class="ic s28 i-people"></span></span><span class="ibtn"><span class="ic s32 i-home"></span></span><span class="ibtn lg"><span class="ic s40 i-hammer"></span></span><span class="ibtn round mint"><span class="ic s32 i-chat"></span></span><span class="ibtn"><span class="ic s32 i-mail"></span><span class="dot">3</span></span></div>
+<div class="spec">48 min (sm), 64 default, 80 hero. Badge dots carry a number, never only a colour.</div>
+</div>
+
+<div class="grp"><div class="sec">Catalogue tiles</div>
+<div class="rw" style="gap:12px;align-items:flex-start">
+<div class="tile on"><span class="fr"><span class="ic s40 i-chair"></span></span>Dining chairs</div>
+<div class="tile"><span class="fr"><span class="ic s40 i-sofa"></span></span>Sofas</div>
+<div class="tile is-hover"><span class="fr"><span class="ic s40 i-bed"></span></span>Beds</div>
+<div class="tile"><span class="fr"><span class="ic s40 i-plus"></span></span>Other</div>
+</div></div>
+
+<div class="grp"><div class="sec">Switches, segments, tabs</div>
+<div class="rw" style="gap:12px"><span class="switch on"></span><b class="t-label">AI conversations: On</b></div>
+<div class="rw" style="gap:12px"><span class="switch"></span><b class="t-label">Dynamic lighting: Off</b></div>
+<div class="seg"><b class="on">Simplified</b><b>Classic</b><b>Radial</b></div>
+<div class="rw" style="gap:8px"><span class="tab on"><span class="ic s20 i-book"></span>Memory</span><span class="tab"><span class="ic s20 i-news"></span>News<span class="badge">10</span></span><span class="tab"><span class="ic s20 i-heart"></span>Bonds</span></div>
+<div class="spec">Every switch is paired with a spoken state (On / Off). Never a lone icon that glows.</div>
+</div>
+</div>
+
+<!-- ============ COLUMN 2 ============ -->
+<div style="display:flex;flex-direction:column;gap:40px;padding-top:6px">
+<div class="grp"><div class="sec">Chips, inputs, hints</div>
+<div class="rw" style="gap:8px"><span class="chip">Neutral</span><span class="chip good"><span class="ic s16 i-check"></span>Works well</span><span class="chip warn"><span class="ic s16 i-alert"></span>Awkward</span><span class="chip bad"><span class="ic s16 i-close"></span>Avoid</span><span class="chip info"><span class="ic s16 i-info"></span>Tip</span></div>
+<div class="input"><span class="ic s24 i-search" style="color:var(--text-2)"></span><span class="ph">Search the catalogue…</span></div>
+<div class="input" style="border-color:var(--accent)"><span style="flex:1">Tell Betty about my day</span><span class="ic s24 i-chat" style="color:var(--accent)"></span></div>
+<div class="rw" style="gap:10px"><span class="key">Esc</span><span class="t-label muted">Close</span><span class="key">Enter</span><span class="t-label muted">Say it</span></div>
+</div>
+
+<div class="grp"><div class="sec">Needs (value + icon + pattern)</div>
+<div class="need"><span class="ic s32 i-food"></span><span class="nm">Hunger</span><span class="val">82</span><div class="track" style="--v:82%"><i></i></div></div>
+<div class="need warn"><span class="ic s32 i-bolt"></span><span class="nm">Energy</span><span class="val">38</span><div class="track" style="--v:38%"><i></i></div></div>
+<div class="need bad"><span class="ic s32 i-alert"></span><span class="nm">Bladder · urgent</span><span class="val">9</span><div class="track" style="--v:9%"><i></i></div></div>
+<div class="spec"><b>Bad</b> uses striped fill, a leading alert icon and a pulse, so it reads without colour. Hover shows a tooltip with the exact number.</div>
+</div>
+
+<div class="grp"><div class="sec">Traits, skills, relationship</div>
+<div class="rw" style="gap:24px"><div><div class="t-label">Neat</div><div class="pips"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div></div>
+<div><div class="t-label">Cooking</div><div class="pips skill"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+<div><div class="rw" style="justify-content:space-between;gap:8px"><b class="t-label">Betty · Acquaintance</b><b class="t-label num" style="color:var(--good-ink)">+52</b></div><div class="rel" style="margin-top:8px"><i style="left:50%;width:26%"></i></div></div>
+<div><div class="rw" style="justify-content:space-between;gap:8px"><b class="t-label">Mystery Man · Rival</b><b class="t-label num" style="color:var(--bad-ink)">−38</b></div><div class="rel" style="margin-top:8px"><i class="neg" style="left:31%;width:19%"></i></div></div>
+</div>
+
+<div class="grp"><div class="sec">Plumbob = mood at a glance</div>
+<div class="rw" style="gap:28px"><div style="text-align:center"><span class="plumbob lg" style="--plumbob:var(--good)"></span><div class="t-label">Happy</div></div><div style="text-align:center"><span class="plumbob lg" style="--plumbob:var(--warn)"></span><div class="t-label">Meh</div></div><div style="text-align:center"><span class="plumbob lg" style="--plumbob:var(--bad)"></span><div class="t-label">Upset</div></div></div>
+</div>
+
+<div class="grp"><div class="sec">List rows</div>
+<div class="row sel" style="--sim:var(--sim-3)"><span class="avatar" style="background:var(--sim-3)">B</span><span style="flex:1">Betty<span class="sub">Acquaintance · 52% · 33 chats</span></span><span class="ic s24 i-right"></span></div>
+<div class="row"><span class="avatar" style="background:var(--sim-2)">M</span><span style="flex:1">Mystery Man<span class="sub">Acquaintance · 50% · 1 chat</span></span><span class="ic s24 i-right"></span></div>
+<div class="spec">Subtitles wrap, never truncate mid-word. Selected row gets the mint border and a plumbob marker.</div>
+</div>
+</div>
+
+<!-- ============ COLUMN 3 ============ -->
+<div style="display:flex;flex-direction:column;gap:40px;padding-top:6px">
+<div class="grp"><div class="sec">World-space (theme independent)</div>
+<div style="position:relative;height:420px;border-radius:20px;overflow:hidden;background:#3a5a2a">
+<img alt="" aria-hidden="true" src="./assets/dbc01b4804d2162aa16b52e8843fe78f.jpg" style="position:absolute;left:-1130px;top:-600px;width:1920px;height:1080px;max-width:none">
+<div class="bln" style="position:absolute;left:24px;top:28px;--who:var(--sim-3);--tail:36px"><span class="who">Betty</span>“Of course I forgive you. Come here.”</div>
+<div class="bln thought" style="position:absolute;right:28px;top:118px;--who:var(--sim-1);max-width:250px"><span class="who">Bob thinks</span>I should bake something.</div>
+<div class="bln shout" style="position:absolute;left:36px;top:236px;--who:var(--sim-1);max-width:230px"><span class="who">Bob</span>Fire! Fire!</div>
+<div class="tip" style="position:absolute;right:28px;bottom:22px">Energy 38 · getting sleepy</div>
+</div>
+<div class="spec">Balloons: dark glass, 4px top bar in the speaker's identity colour <b>plus the name in text</b>, 20/26 type, max 440 wide, tail points at the head.</div>
+</div>
+
+<div class="grp"><div class="sec">Pie menu slots (48 tall, icon + label)</div>
+<div class="rw" style="gap:12px"><span class="pie-item on"><span class="ic s24 i-chat"></span>Talk</span><span class="pie-item"><span class="ic s24 i-hand"></span>Hug…</span><span class="pie-item"><span class="ic s24 i-kiss"></span>Romance…</span><span class="pie-item dis"><span class="ic s24 i-lock"></span>Dance</span></div>
+<div class="spec">Dark blue stays (it reads on any ground). Hover goes mint. A trailing “…” means a submenu. Disabled shows a lock and, on hover, why.</div>
+</div>
+
+<div class="grp"><div class="sec">Toast</div>
+<div class="toast"><span class="em"><span class="ic s28 i-heart"></span></span><span>Betty and Bob became friends.</span></div>
+</div>
+
+<div class="grp"><div class="sec">Dialog (centred card)</div>
+<div class="dlg"><div class="head" style="height:56px;font-size:24px">Delete this save?</div>
+<div class="body" style="font-size:18px;line-height:26px;padding:20px 24px">You will lose Bob's household and everything built on the lot. This cannot be undone.</div>
+<div class="foot" style="padding:0 24px 22px"><span class="btn sm quiet">Keep it</span><span class="btn sm danger">Delete</span></div></div>
+</div>
+</div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["night","day"],"default":"night","section":"Theme"},"$preview":{"width":1920,"height":2000}}'>
+class Component extends DCLogic {
+renderVals() {
+const day = this.props.theme === 'day';
+return { themeClass: day ? 'th-day' : 'th-night', themeName: day ? 'Sunny Lot' : 'Night' };
+}
+}
+</script>
+</body>
+</html>

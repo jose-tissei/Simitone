@@ -6,6 +6,7 @@ using FSO.Common;
 using FSO.Common.Rendering.Framework.Model;
 using FSO.Common.Utils;
 using FSO.SimAntics;
+using Simitone.HtmlUi;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -73,7 +74,7 @@ namespace Simitone.Conversations
                 lines.Add(new Entry { Who = speakerName, Text = "“" + line + "”", Entity = speaker, Vm = vm, Born = clock });
             // the answer appears a moment later, as in a real exchange
             if (!string.IsNullOrWhiteSpace(reply))
-                lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.4 });
+                lines.Add(new Entry { Who = listenerName, Text = "“" + reply + "”", Entity = listener, Vm = vm, Born = clock + 1.5 });
         }
 
         public override void Update(UpdateState state)
@@ -108,9 +109,11 @@ namespace Simitone.Conversations
         public override void Draw(UISpriteBatch batch)
         {
             if (lines.Count == 0) return;
-            var px = TextureGenerator.GetPxWhite(batch.GraphicsDevice);
-            float screenW, screenH;
-            GetScreenSize(batch, out screenW, out screenH);
+            if (painter == null) { painter = new HtmlSurface(this, "balloon.none"); LoadTokens(); }
+            painter.BeginDraw(batch);
+            float scale = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
+            float screenW = batch.GraphicsDevice.Viewport.Width / scale;
+            float screenH = batch.GraphicsDevice.Viewport.Height / scale;
 
             var placed = new List<BalloonLayout.Box>();
             float stripY = screenH - 24;
@@ -118,11 +121,10 @@ namespace Simitone.Conversations
             foreach (var l in lines)
             {
                 if (clock < l.Born) continue;
-                var wrapped = BalloonLayout.Wrap(l.Text, maxTextW, s => text.MeasureString(s).X);
-                float tw = name.MeasureString(l.Who).X;
-                foreach (var w in wrapped) tw = Math.Max(tw, text.MeasureString(w).X);
-                float lh = Math.Max(20f, text.MeasureString("Ag").Y + 2f);
-                float w2 = tw + 24f, h = 28f + wrapped.Count * lh;
+                var wrapped = BalloonLayout.Wrap(l.Text, maxTextW, s => TextW(s, TextSize));
+                float tw = TextW(l.Who, NameSize);
+                foreach (var w in wrapped) tw = Math.Max(tw, TextW(w, TextSize));
+                float lh = 20, w2 = tw + 28, h = 4 + 8 + 20 + wrapped.Count * lh + 8;
 
                 var anchor = Anchor(l);
                 BalloonLayout.Box box;
@@ -140,21 +142,42 @@ namespace Simitone.Conversations
                 placed.Add(box);
                 LastPlacement = over ? "over-heads" : "strip";
 
-                var boxRect = new SimRect(box.X, box.Y, box.W, box.H);
-                FillRoundedRect(batch, boxRect, SimUiTokens.RadiusCamera, SimUiTokens.DialogBg);
-                DrawRoundedBorder(batch, boxRect, SimUiTokens.RadiusCamera, SimUiTokens.InnerBorder, 1);
-                FillRect(batch, px, box.X + 8f, box.Y + 1f, Math.Max(0f, box.W - 16f), 2f, SimUiTokens.Mint);   // inset Sims mint accent
+                // the redesign's balloon: dark glass (ignores the theme), a 4 px bar and the speaker's name in the Sim's identity colour, white text
+                var ident = Token("sim-" + SimMemoryPageData.SimColor(l.Who), new Rgba(255, 217, 90));
+                painter.FillRect(box.X, box.Y, box.W, box.H, BalloonBg, Radius);
+                painter.FillRect(box.X + 6, box.Y, box.W - 12, 4, ident, 2);   // top bar, inset so the corners stay round
                 if (over)
                 {
                     // a small tail pointing down at the Sim
                     float cx = Math.Max(box.X + 14, Math.Min(anchor.Value.X, box.X + box.W - 14));
-                    for (int i = 0; i < 6; i++)
-                        DrawLocalTexture(batch, px, null, new Vector2(cx - (6 - i), box.Y + box.H + i), new Vector2((6 - i) * 2, 1), SimUiTokens.DialogBg);
+                    painter.FillTail(cx, box.Y + box.H - 1, 9, 9, BalloonBg);
                 }
-                DrawLocalString(batch, l.Who, new Vector2(box.X + 12, box.Y + 5), name);
-                float ty = box.Y + 24;
-                foreach (var w in wrapped) { DrawLocalString(batch, w, new Vector2(box.X + 12, ty), text); ty += lh; }
+                painter.DrawText(l.Who, box.X + 14, box.Y + 10, NameSize, true, ident);
+                float ty = box.Y + 32;
+                foreach (var w in wrapped) { painter.DrawText(w, box.X + 14, ty, TextSize, false, BalloonText); ty += lh; }
             }
+        }
+
+        // ---- redesign painting (tokens from Content/ui/design-tokens.json; dark glass in both themes) ----
+        const float TextSize = 20, NameSize = 16, Radius = 14;
+        HtmlSurface painter;
+        Dictionary<string, string> tokens;
+        Rgba BalloonBg, BalloonText;
+
+        float TextW(string s, float size) { float w, h; painter.MeasureText(s, size, false, out w, out h); return w; }
+
+        Rgba Token(string name, Rgba fallback)
+        {
+            string v;
+            return tokens != null && tokens.TryGetValue(name, out v) ? HtmlView.ParseColor(v) : fallback;
+        }
+
+        void LoadTokens()
+        {
+            try { tokens = ThemeTokens.Build(System.IO.File.ReadAllText(System.IO.Path.Combine(Boot.GameDir, "Content", "ui", "design-tokens.json")), "night"); }
+            catch { tokens = null; }
+            BalloonBg = Token("balloon-bg", new Rgba(10, 20, 24, 242));
+            BalloonText = Token("balloon-text", new Rgba(255, 255, 255));
         }
     }
 }

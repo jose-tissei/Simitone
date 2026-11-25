@@ -29,14 +29,14 @@ This fork includes an optional **AI Conversations & Sim Memory** mod (`Tools/Con
 - **Autonomous parallel room conversations:** awake adult Sims in the same room automatically chat with each other **without interrupting their ongoing activities** whenever their Social need drops to `<= 60%`.
 - **Laya-driven social intelligence:** chooses verbal interactions and AI talk subjects based on each Sim's knowledge of the listener, skills (Charisma, Cooking, Mechanical, Creativity, Logic, Body), moods, and past social history.
 - **Per-Sim Social Memory & floating dossier window:** every conversation records what a Sim has learned about each Sim they know — **Daily / Lifetime** relationship, familiarity %, revealed personality traits, observed temperament, career, liked/disliked interests, discovered skills, and discussed topics — accessible from the **Sim Memory** button in the selected Sim's Live-mode panel (right alongside Needs, Career, Personality, Relationships, and Inventory).
-- **Simplified manual pie menu & 100% AI Talk subjects:** clicking another adult Sim shows **Talk** and **Romance** only; Talk presents 3 Laya-ranked AI subjects rather than raw legacy interest labels.
+- **Simplified manual pie menu & 100% AI Talk subjects:** clicking another adult Sim shows one **Talk** bubble and a **Romance** submenu next to the usual interactions (Options: "Pie menu: Simplified / Full"); Talk presents 3 Laya-ranked AI subjects rather than raw legacy interest labels.
 - **Easy toggle:** enable or disable the entire mod anytime via **Options -> AI conversations** (green = on).
 
 See [Tools/Conversations/README.md](Tools/Conversations/README.md) for architecture, Laya bundling, and installation instructions (`pwsh Tools/Install-Conversations.ps1`).
 
 ## Screenshots
 
-### 1. Simplified Manual Pie Menu (Talk & Romance)
+### 1. Simplified Manual Pie Menu (Talk, Romance and the usual interactions)
 ![Simplified Manual Pie Menu](docs/conversations/screenshots/01-pie-menu-talk-romance.jpg)
 
 ### 2. AI Talk Subject Chooser

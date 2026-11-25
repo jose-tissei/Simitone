@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Neighborhood map, Sunny Lot theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.rail{position:absolute;top:0;width:240px;height:1080px;display:flex;flex-direction:column;align-items:center;gap:22px;padding:28px 0}
+.nav{display:flex;flex-direction:column;align-items:center;gap:8px;font:700 18px/22px var(--font-display);color:#04323A;text-align:center;text-shadow:0 1px 0 rgba(255,255,255,.4)}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-day" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#3a5a2a">
+<img alt="" aria-hidden="true" src="./assets/100e9e8b5211874cda60a61aaede36c9.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+
+<div class="rail argyle" style="left:0">
+<div class="nav"><span class="ibtn lg"><span class="ic s40 i-people"></span></span>Households</div>
+<div class="nav"><span class="ibtn"><span class="ic s32 i-save"></span></span>Save</div>
+<div class="nav"><span class="ibtn"><span class="ic s32 i-gear"></span></span>Options</div>
+<div style="flex:1"></div>
+<div class="nav"><span class="ibtn"><span class="ic s32 i-book"></span></span>Town memory</div>
+</div>
+
+<div class="rail argyle" style="right:0">
+<div class="nav"><span class="ibtn lg"><span class="ic s40 i-home"></span></span>Downtown</div>
+<div class="nav"><span class="ibtn lg"><span class="ic s40 i-sun"></span></span>Vacation</div>
+<div class="nav"><span class="ibtn lg"><span class="ic s40 i-star"></span></span>Studio Town</div>
+<div class="nav"><span class="ibtn lg"><span class="ic s40 i-bulb"></span></span>Magic Town</div>
+</div>
+
+<!-- selected lot marker + card -->
+<div class="abs" style="left:1236px;top:132px"><span class="plumbob lg"></span></div>
+<div class="abs panel" style="left:1300px;top:150px;width:330px;padding:18px 20px;display:flex;flex-direction:column;gap:12px;background:var(--panel)">
+<div style="display:flex;align-items:center;gap:12px"><span class="avatar" style="background:var(--sim-1)">B</span><div style="flex:1"><div class="t-title">Bob's lot</div><div class="t-label muted">3 Sims · Residential</div></div></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span class="chip"><span class="ic s16 i-coin"></span>§665</span><span class="chip good"><span class="ic s16 i-heart"></span>Happy household</span></div>
+<div style="display:flex;gap:10px"><span class="btn primary" style="flex:1"><span class="ic s24 i-play"></span>Play</span><span class="btn quiet" style="min-height:56px;padding:0 18px" aria-label="More"><span class="ic s24 i-pencil"></span></span></div>
+</div>
+
+<!-- hover tooltip on another lot -->
+<div class="abs tip" style="left:540px;top:430px">Empty lot · §20,000</div>
+
+<div class="ann" style="left:262px;top:28px"><span class="ic s16 i-info"></span>Side rails are labelled; the map stays untouched in the centre</div>
+<div class="ann" style="left:1010px;top:40px;display:none"></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

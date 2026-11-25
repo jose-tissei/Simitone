@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sim Memory dossier, Night theme</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.cap{font:700 14px/16px var(--font-ui);letter-spacing:.12em;text-transform:uppercase;color:var(--text-2);margin-bottom:10px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.stat{flex:1;padding:12px 16px;border-radius:14px;background:var(--card);border:2px solid var(--line)}
+.stat b{display:block;font:700 28px/32px var(--font-display)}
+.stat span{font:600 16px/20px var(--font-ui);color:var(--text-2)}
+.lesson{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px}
+.lesson > .k{width:96px;flex:none;font:700 16px/32px var(--font-ui);color:var(--text-2)}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-night" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#1a1208">
+<img alt="" aria-hidden="true" src="./assets/b7eba766b8dec22c3b917c554a8bd469.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+<div class="abs" style="left:0;top:0;width:1920px;height:1080px;background:var(--scrim)"></div>
+
+<div class="abs dlg" style="left:280px;top:110px;width:1360px">
+<div class="head"><span class="ic s32 i-book"></span><span>Bob's Sim Memory</span><span class="t-label" style="opacity:.8;font-weight:600;margin-left:8px">What Bob has learned about 2 Sims</span><span style="flex:1"></span>
+<span class="tab" style="background:var(--dock);color:var(--text);min-height:44px"><span class="ic s20 i-news"></span>News<span class="badge">10</span></span>
+<span class="ibtn sm round" aria-label="Close" style="width:44px;height:44px"><span class="ic s24 i-close"></span></span></div>
+
+<div style="padding:20px 28px 0;display:flex;align-items:center;gap:10px"><span class="t-over" style="margin-right:6px">Memory of</span>
+<span class="tab on">Bob<span class="badge">2</span></span><span class="tab">Mystery Man<span class="badge" style="background:var(--raised);color:var(--text)">2</span></span><span class="tab">Betty<span class="badge" style="background:var(--raised);color:var(--text)">2</span></span></div>
+
+<div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;padding:18px 28px 20px;height:610px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="cap" style="margin:0 0 2px">Known Sims</div>
+<div class="row sel"><span class="avatar" style="background:var(--sim-3)">B</span><span style="flex:1">Betty<span class="sub">Acquaintance · 52%<br>33 chats</span></span></div>
+<div class="row"><span class="avatar" style="background:var(--sim-2)">M</span><span style="flex:1">Mystery Man<span class="sub">Acquaintance · 50%<br>1 chat</span></span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+<div style="flex:1"><div class="t-display" style="color:var(--sim-3)">Betty</div>
+<div style="display:flex;align-items:center;gap:12px;margin-top:6px"><b class="t-label">Acquaintance</b><div class="rel" style="flex:1;max-width:340px"><i style="left:50%;width:26%"></i></div><b class="t-label num" style="color:var(--good-ink)">52%</b></div></div>
+<div style="display:flex;gap:12px;width:560px"><div class="stat"><b style="color:var(--good-ink)">+6</b><span>Today</span></div><div class="stat"><b>+2</b><span>Lifetime</span></div><div class="stat" style="flex:1.7"><b style="font-size:22px;line-height:32px"><span style="color:var(--good-ink)">26</span> · <span>4</span> · <span style="color:var(--warn-ink)">3</span></b><span>great · ok · awkward</span></div></div>
+</div>
+
+<div style="display:flex;align-items:center;gap:14px;padding:12px 18px;border-radius:14px;background:color-mix(in srgb,var(--warn) 16%,transparent);border:2px solid var(--warn)"><span class="ic s28 i-alert" style="color:var(--warn-ink)"></span><span class="t-body" style="font-weight:600;font-size:18px">Recent exchanges were tense. Gentle or apologetic approaches work better right now.</span></div>
+
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px">
+<div class="card"><div class="cap">Personality and profile</div>
+<div class="chips"><span class="chip">Outgoing</span><span class="chip">Serious</span><span class="chip">Steady</span><span class="chip">Tidy</span><span class="chip">Easygoing</span><span class="chip">Shy</span><span class="chip">Grumpy</span><span class="chip">Lighthearted</span></div>
+<div style="margin-top:12px;display:flex;align-items:center;gap:10px"><span class="t-label muted">Temperament</span><span class="chip good"><span class="ic s16 i-heart"></span>Warm and receptive</span></div></div>
+<div class="card"><div class="cap">Interests and skills</div>
+<div class="lesson" style="margin-bottom:8px"><span class="k" style="width:76px">Dislikes</span><div class="chips"><span class="chip bad"><span class="ic s16 i-close"></span>Travel and hobbies 0/10</span><span class="chip bad"><span class="ic s16 i-close"></span>Sci-fi and action 0/10</span><span class="chip bad"><span class="ic s16 i-close"></span>Politics and pets 0/10</span></div></div>
+<div class="lesson" style="margin-bottom:0"><span class="k" style="width:76px">Skills</span><div class="chips"><span class="chip info">Charisma</span><span class="chip info">Cooking</span></div></div></div>
+</div>
+
+<div class="card" style="flex:1"><div class="cap">Conversation lessons</div>
+<div class="lesson"><span class="k">Works well</span><div class="chips"><span class="chip good"><span class="ic s16 i-check"></span>Gossip</span><span class="chip good"><span class="ic s16 i-check"></span>Apologize</span><span class="chip good"><span class="ic s16 i-check"></span>Flirt</span><span class="chip good"><span class="ic s16 i-check"></span>Brag</span><span class="chip good"><span class="ic s16 i-check"></span>Joke</span><span class="chip good"><span class="ic s16 i-check"></span>Compliment</span><span class="chip good">Bold tone</span><span class="chip good">Playful tone</span></div></div>
+<div class="lesson"><span class="k">Avoid</span><div class="chips"><span class="chip bad"><span class="ic s16 i-close"></span>Talk</span><span class="chip bad"><span class="ic s16 i-close"></span>Gentle tone</span></div></div>
+<div class="lesson" style="margin-bottom:0"><span class="k">Topics</span><div class="chips"><span class="chip warn"><span class="ic s16 i-alert"></span>The Science of Baking · awkward</span><span class="chip warn"><span class="ic s16 i-alert"></span>Dream Vacation Spots · awkward</span><span class="chip">Night Street Food</span></div></div>
+</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 28px;background:var(--dock)"><span class="t-label muted" style="display:flex;align-items:center;gap:10px"><span class="key">Esc</span>or click outside to close</span><span class="t-label muted" style="display:flex;align-items:center;gap:10px"><span class="key">Tab</span>switch Sim</span></div>
+</div>
+<div class="ann" style="left:310px;top:68px"><span class="ic s16 i-info"></span>Fixes: header overlap, “52%” collision, truncated rows, red-only meaning</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

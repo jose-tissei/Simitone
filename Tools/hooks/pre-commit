@@ -1,8 +1,12 @@
 #!/bin/sh
-# Runs the fast unit tests before any commit that touches Tools/. Enable once per clone:
+# Runs the unit tests and the patcher tests before any commit that touches Tools/. Enable once per clone:
 #   git config core.hooksPath Tools/hooks
-# (The full build + patch tests run in CI on every push; see Tools/ci.ps1.)
+# (The full build + patch tests also run in CI on every push; see Tools/ci.ps1.)
 if git diff --cached --name-only | grep -q '^Tools/'; then
     echo "pre-commit: running Tools/SpriteCards.Tests ..."
     dotnet test Tools/SpriteCards.Tests --nologo -v q || { echo "pre-commit: unit tests failed, commit aborted"; exit 1; }
+    echo "pre-commit: running Tools/Conversations.Tests ..."
+    dotnet test Tools/Conversations.Tests --nologo -v q || { echo "pre-commit: conversation tests failed, commit aborted"; exit 1; }
+    echo "pre-commit: running the patcher tests (skipped with a notice when no unmodified release is found) ..."
+    pwsh -NoProfile -File Tools/Run-PatchTests.ps1 || { echo "pre-commit: patch tests failed, commit aborted"; exit 1; }
 fi

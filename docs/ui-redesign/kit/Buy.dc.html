@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lot, Buy mode: original bar with UX layer</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.mchip{position:absolute;transform:translateX(-50%);padding:3px 14px;border-radius:999px;background:linear-gradient(90deg,#00D98B,#0A8F86);color:#03302A;font:700 16px/22px var(--font-ui);border:2px solid rgba(255,255,255,.85);box-shadow:0 3px 0 rgba(0,0,0,.35);white-space:nowrap}
+.item{width:190px;display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:18px;background:var(--card);border:3px solid var(--line)}
+.item.sel{border-color:var(--accent);background:var(--raised);box-shadow:0 0 0 4px rgba(46,242,176,.3)}
+.item .pv{height:70px;border-radius:12px;display:grid;place-items:center;background:repeating-linear-gradient(45deg,var(--track) 0 10px,color-mix(in srgb,var(--track) 70%,var(--line)) 10px 20px);color:var(--text-2)}
+.item .nm{font:700 18px/22px var(--font-ui)}
+.item .pr{display:flex;justify-content:space-between;align-items:center;font:700 18px/1 var(--font-display)}
+.hint{display:flex;align-items:center;gap:10px;font:600 16px/20px var(--font-ui);color:#EAF8F6}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+</style>
+</helmet>
+<div class="sims th-night" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#1a1208">
+<img alt="" aria-hidden="true" src="./assets/be34d22ce2a0d8c03207eb3ca2609329.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+
+<!-- dial labels (Buy is the active mode in the original ring) -->
+<div class="mchip" style="left:70px;top:758px">Live</div>
+<div class="mchip" style="left:158px;top:782px;background:linear-gradient(#B4FFE6,#00D98B)">Buy</div>
+<div class="mchip" style="left:296px;top:884px">Build</div>
+
+<!-- selected tile highlight on the original bar -->
+<div class="abs" style="left:795px;top:942px;width:88px;height:90px;border-radius:22px;border:4px solid #2EF2B0;box-shadow:0 0 0 4px rgba(46,242,176,.3),0 0 18px rgba(46,242,176,.6)"></div>
+
+<!-- placement hints -->
+<div class="abs glass" style="left:640px;top:596px;padding:12px 22px;display:flex;gap:26px;align-items:center">
+<span class="hint"><span class="key" style="color:#A9C6CB">Click</span>Place</span>
+<span class="hint"><span class="key" style="color:#A9C6CB">R</span>Rotate</span>
+<span class="hint"><span class="key" style="color:#A9C6CB">Shift</span>Place many</span>
+<span class="hint"><span class="key" style="color:#A9C6CB">Esc</span>Cancel</span>
+</div>
+
+<!-- ITEM FLYOUT above the original bar -->
+<div class="abs" style="left:440px;top:660px;width:1440px;height:262px;border-radius:24px 24px 0 0;background:rgba(0,0,0,.9);border-top:4px solid #00D98B;padding:14px 24px 12px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:16px"><span class="t-head">Lounge Chairs</span><span class="t-label muted">5 items · sorted by price</span><span style="flex:1"></span>
+<div class="input" style="width:260px;min-height:44px"><span class="ic s20 i-search" style="color:var(--text-2)"></span><span class="ph">Search…</span></div>
+<span class="ibtn sm" style="width:44px;height:44px" aria-label="Sort"><span class="ic s24 i-sort"></span></span></div>
+<div style="display:flex;gap:16px;flex:1;min-height:0">
+<div style="display:flex;gap:12px;flex:1;overflow:hidden;padding:4px">
+<div class="item"><div class="pv"><span class="ic s40 i-chair"></span></div><div class="nm">Armchair</div><div class="pr"><span>§85</span><span class="chip good" style="min-height:26px;font-size:14px">Comfort +2</span></div></div>
+<div class="item sel"><div class="pv"><span class="ic s40 i-chair"></span></div><div class="nm">Lounge chair</div><div class="pr"><span>§140</span><span class="chip good" style="min-height:26px;font-size:14px">Comfort +5</span></div></div>
+<div class="item"><div class="pv"><span class="ic s40 i-chair"></span></div><div class="nm">Recliner</div><div class="pr"><span>§310</span><span class="chip good" style="min-height:26px;font-size:14px">Comfort +6</span></div></div>
+<div class="item"><div class="pv"><span class="ic s40 i-chair"></span></div><div class="nm">Rocking chair</div><div class="pr"><span>§450</span><span class="chip good" style="min-height:26px;font-size:14px">Comfort +4</span></div></div>
+</div>
+<div style="width:2px;background:var(--line);margin:4px 0"></div>
+<div style="width:300px;display:flex;flex-direction:column;gap:6px;justify-content:center">
+<div class="t-over">Selected</div>
+<div class="t-head">Lounge chair</div>
+<div style="display:flex;gap:8px"><span class="chip good">Comfort +5</span><span class="chip">Room +1</span></div>
+<div style="display:flex;align-items:center;gap:14px"><span class="t-head num">§140</span><span class="t-label muted num">Funds after: §525</span></div>
+</div>
+</div>
+</div>
+
+<div class="ann" style="left:660px;top:556px"><span class="ic s16 i-info"></span>Original bar kept. Added: item flyout with price + stats, selected tile ring, key hints. Prices are sample data.</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

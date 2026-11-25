@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Lot, Live mode: original dial and bar with UX layer</title>
+<script src="./_runtime/react.js"></script>
+<script src="./_runtime/react-dom.js"></script>
+<script src="./_runtime/support.js"></script>
+<link rel="stylesheet" href="./assets/b685f3130e4d02c553cbc0609e05e5a2.css">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Montserrat:wght@500;600;700;800&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.abs{position:absolute}
+.mchip{position:absolute;transform:translateX(-50%);padding:3px 14px;border-radius:999px;background:linear-gradient(90deg,#00D98B,#0A8F86);color:#03302A;font:700 16px/22px var(--font-ui);border:2px solid rgba(255,255,255,.85);box-shadow:0 3px 0 rgba(0,0,0,.35);white-space:nowrap}
+.nb{position:absolute;width:149px;height:20px;border-radius:10px;background:#16241c;overflow:hidden}
+.nb i{display:block;height:100%;background:#00D331;border-radius:10px;box-shadow:inset -2px 0 0 #fff}
+.nb.bad{background:repeating-linear-gradient(135deg,#892F2B 0 6px,#A8403A 6px 12px);animation:nbp 1.2s ease-in-out infinite}
+.nb.bad i{background:#1D9946;box-shadow:none}
+@keyframes nbp{50%{box-shadow:0 0 0 4px rgba(255,111,97,.55)}}
+.nv{position:absolute;width:44px;text-align:right;font:700 16px/22px var(--font-ui);color:#BFD6D9;font-variant-numeric:tabular-nums}
+.rl{position:absolute;left:420px;display:flex;align-items:center;gap:10px;height:40px;padding:0 18px;border-radius:999px;background:rgba(0,0,0,.9);color:#fff;font:700 18px/1 var(--font-ui);border:2px solid rgba(255,255,255,.2);transform:translateY(-50%)}
+.rl.on{background:linear-gradient(#B4FFE6,#00D98B);color:#03302A;border-color:#fff}
+.ann{position:absolute;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:#FFE23A;color:#2A2200;font:800 14px/1 var(--font-ui);box-shadow:0 3px 0 #B8960A}
+@media (prefers-reduced-motion: reduce){.nb.bad{animation:none}}
+</style>
+</helmet>
+<div class="sims th-night" style="position:relative;width:1920px;height:1080px;overflow:hidden;background:#1a1208">
+<img alt="" aria-hidden="true" src="./assets/b7eba766b8dec22c3b917c554a8bd469.jpg" style="position:absolute;left:0;top:0;width:1920px;height:1080px;max-width:none">
+
+<!-- toast (new feature surface) -->
+<div class="abs toast" style="left:560px;top:28px;width:800px;background:rgba(16,32,41,.96)">
+<span class="em"><span class="ic s28 i-chat"></span></span>
+<span style="flex:1">Betty wants to chat about <b style="color:var(--accent)">night street food</b></span>
+<span class="btn sm primary">Join</span><span class="btn sm quiet">Later</span>
+</div>
+
+<!-- DIAL: labels for the three mode buttons -->
+<div class="mchip" style="left:70px;top:758px">Live</div>
+<div class="mchip" style="left:158px;top:782px">Buy</div>
+<div class="mchip" style="left:296px;top:884px">Build</div>
+
+<!-- TOOLTIP on Options (…) -->
+<div class="abs tip" style="left:222px;top:884px;padding:6px 12px">Options</div>
+<div class="abs" style="left:268px;top:918px;width:0;height:0;border:8px solid transparent;border-top:12px solid rgba(10,20,24,.95);border-bottom:0"></div>
+
+<!-- OPEN TAB RAIL (original art, shortened) with labels -->
+<div class="abs" style="left:332px;top:500px;width:76px;height:437px;border-radius:22px 22px 0 0;overflow:hidden"><img alt="" src="./assets/7c174979cb566c8bb3445bba52dfa841.png" style="display:block;width:76px;height:437px"></div>
+<div class="rl" style="top:545px"><span class="ic s20 i-book"></span>Memory<span class="badge">10</span></div>
+<div class="rl" style="top:615px"><span class="ic s20 i-gift"></span>Inventory</div>
+<div class="rl" style="top:685px"><span class="ic s20 i-people"></span>Relationships</div>
+<div class="rl" style="top:755px"><span class="ic s20 i-thought"></span>Personality</div>
+<div class="rl" style="top:825px"><span class="ic s20 i-job"></span>Career</div>
+<div class="rl on" style="top:895px"><span class="ic s20 i-smile"></span>Needs</div>
+
+<!-- tab tile caption -->
+<div class="abs" style="left:322px;top:1041px;width:96px;text-align:center;font:700 16px/20px var(--font-ui);color:#fff">Needs</div>
+
+<!-- NEEDS: bars with exact values -->
+<div class="nb" style="left:459px;top:973px"><i style="width:92%"></i></div><div class="nv" style="left:564px;top:944px">92</div>
+<div class="nb" style="left:639px;top:973px"><i style="width:88%"></i></div><div class="nv" style="left:744px;top:944px">88</div>
+<div class="nb" style="left:819px;top:973px"><i style="width:85%"></i></div><div class="nv" style="left:924px;top:944px">85</div>
+<div class="nb bad" style="left:999px;top:973px"><i style="width:14%"></i></div><div class="nv" style="left:1104px;top:944px;color:#FF8A7E">14</div>
+<span class="ic s20 i-alert abs" style="left:1084px;top:945px;color:#FF8A7E"></span>
+<div class="nb" style="left:459px;top:1033px"><i style="width:71%"></i></div><div class="nv" style="left:564px;top:1004px">71</div>
+<div class="nb" style="left:639px;top:1033px"><i style="width:76%"></i></div><div class="nv" style="left:744px;top:1004px">76</div>
+<div class="nb" style="left:819px;top:1033px"><i style="width:90%"></i></div><div class="nv" style="left:924px;top:1004px">90</div>
+<div class="nv" style="left:1104px;top:1004px;color:#FFC145">34</div>
+<span class="ic s20 i-alert abs" style="left:1072px;top:1005px;color:#FFC145"></span>
+
+<!-- Room tooltip -->
+<div class="abs tip" style="left:1000px;top:872px;max-width:380px">Room 34 · dim and cramped. A window or lamp would help.</div>
+<div class="abs" style="left:1130px;top:922px;width:0;height:0;border:8px solid transparent;border-top:12px solid rgba(10,20,24,.95);border-bottom:0"></div>
+
+<div class="ann" style="left:20px;top:716px"><span class="ic s16 i-info"></span>Original dial kept. Added: mode labels + tooltips</div>
+<div class="ann" style="left:440px;top:836px"><span class="ic s16 i-info"></span>Original bars kept. Added: exact value, striped + “!” when low</div>
+<div class="ann" style="left:430px;top:448px"><span class="ic s16 i-info"></span>Original tab rail: now labelled, shorter, Memory shows unread</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1920,"height":1080}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

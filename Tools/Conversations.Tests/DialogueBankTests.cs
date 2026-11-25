@@ -116,7 +116,7 @@ public class MissTrackingTests
     [Fact]
     public void FallbackUseIsRecordedAsAToDoList()
     {
-        var b = DialogueBank.Parse("{\"speaker\":{\"hug\":{\"0\":[\"Hi {name}\"]}},\"reply\":{}}");
+        var b = DialogueBank.Parse("{\"speaker\":{\"hug\":{\"0\":[\"Hi {name}.\"]}},\"reply\":{}}");
         b.SpeakerLine("hug", Tone.Gentle, new Random(1));      // present: no miss
         b.SpeakerLine("hug", Tone.Bold, new Random(1));        // missing
         b.ReplyLine("kiss", 3, Temperament.Cold, new Random(1)); // missing

@@ -1,0 +1,26 @@
+{
+  "speakerName": "Bob", "showNews": false, "newsCount": 10, "headIcon": "book",
+  "title": "Bob's Sim Memory", "subtitle": "What Bob has learned about 2 Sims",
+  "switchLabel": "News", "switchIcon": "news",
+  "speakers": [ { "name": "Bob", "count": 2, "active": true }, { "name": "Mystery Man", "count": 2, "active": false }, { "name": "Betty", "count": 2, "active": false } ],
+  "known": [
+    { "name": "Betty", "letter": "B", "sim": 3, "line1": "Acquaintance · 52%", "line2": "33 chats", "selected": true },
+    { "name": "Mystery Man", "letter": "M", "sim": 2, "line1": "Acquaintance · 50%", "line2": "1 chat", "selected": false }
+  ],
+  "card": {
+    "name": "Betty", "sim": 3, "familiarity": "Acquaintance", "percent": 52, "relRest": 24, "relFill": 26,
+    "today": "+6", "todayGood": true, "lifetime": "+2", "great": 26, "ok": 4, "awkward": 3, "tense": true,
+    "traits": ["Outgoing", "Serious", "Steady", "Tidy", "Easygoing", "Shy", "Grumpy", "Lighthearted"], "hasTraits": true,
+    "temperament": "Warm and receptive", "career": "",
+    "likes": [], "neutral": [], "dislikes": ["Travel and hobbies 0/10", "Sci-fi and action 0/10", "Politics and pets 0/10"], "noInterests": false,
+    "skills": ["Charisma", "Cooking"],
+    "works": ["Gossip", "Apologize", "Flirt", "Brag", "Joke", "Compliment", "Bold tone", "Playful tone"],
+    "avoid": ["Talk", "Gentle tone"],
+    "topics": [ { "title": "The Science of Baking", "outcome": "awkward", "awkward": true }, { "title": "Dream Vacation Spots", "outcome": "awkward", "awkward": true }, { "title": "Night Street Food", "outcome": "okay", "awkward": false } ]
+  },
+  "news": [
+    { "text": "Lena and maybe Omar got romantic today", "flagged": false, "icon": "heart", "chips": [ { "label": "Not sure", "cls": "warn", "icon": "alert" }, { "label": "Heard from Bob", "cls": "", "icon": "chat" } ] },
+    { "text": "Ann gave maybe Hank a gift today", "flagged": true, "icon": "gift", "chips": [ { "label": "Not sure", "cls": "warn", "icon": "alert" }, { "label": "Told Bob", "cls": "", "icon": "chat" }, { "label": "Differs from what really happened", "cls": "bad", "icon": "close" } ] }
+  ],
+  "newsEmpty": false, "search": "", "searchEmpty": true, "noMatches": false, "newsNoMatch": false, "filters": [{"key":"all","label":"All","on":true},{"key":"saw","label":"Saw it","on":false},{"key":"heard","label":"Heard","on":false},{"key":"mismatch","label":"Mismatch","on":false}], "newsMore": "", "newsFooter": "2 stories", "newsHint": "Newest first. Certainty shows how sure Bob is."
+}

@@ -1,0 +1,361 @@
+{
+  "name": "sims-remaster-ui",
+  "version": "1.0.0",
+  "unit": "px at 1920x1080; multiply every size by UIScale (1.0, 1.25, 1.5)",
+  "fonts": {
+    "display": {
+      "family": "Fredoka",
+      "weights": [
+        500,
+        600,
+        700
+      ],
+      "fallback": "Montserrat 700",
+      "license": "OFL"
+    },
+    "ui": {
+      "family": "Montserrat",
+      "weights": [
+        500,
+        600,
+        700,
+        800
+      ],
+      "license": "OFL"
+    }
+  },
+  "type": {
+    "display": {
+      "font": "display",
+      "size": 40,
+      "line": 44,
+      "weight": 600
+    },
+    "title": {
+      "font": "display",
+      "size": 28,
+      "line": 32,
+      "weight": 600
+    },
+    "head": {
+      "font": "ui",
+      "size": 22,
+      "line": 28,
+      "weight": 700
+    },
+    "body": {
+      "font": "ui",
+      "size": 18,
+      "line": 26,
+      "weight": 500
+    },
+    "label": {
+      "font": "ui",
+      "size": 16,
+      "line": 20,
+      "weight": 600
+    },
+    "caption": {
+      "font": "ui",
+      "size": 14,
+      "line": 18,
+      "weight": 600,
+      "note": "non-essential text only"
+    },
+    "overline": {
+      "font": "ui",
+      "size": 14,
+      "line": 16,
+      "weight": 700,
+      "tracking": "0.12em",
+      "case": "upper"
+    },
+    "button": {
+      "font": "display",
+      "size": 22,
+      "weight": 600
+    },
+    "balloon": {
+      "font": "ui",
+      "size": 20,
+      "line": 26,
+      "weight": 600
+    },
+    "minEssentialSize": 16
+  },
+  "spacing": {
+    "1": 4,
+    "2": 8,
+    "3": 12,
+    "4": 16,
+    "5": 24,
+    "6": 32,
+    "7": 48,
+    "8": 64
+  },
+  "radius": {
+    "chip": 10,
+    "card": 16,
+    "panel": 24,
+    "dialog": 28,
+    "iconButton": 20,
+    "pill": 999
+  },
+  "size": {
+    "minHit": 48,
+    "button": 56,
+    "buttonSmall": 44,
+    "iconButtonSm": 48,
+    "iconButton": 64,
+    "iconButtonLg": 80,
+    "tileFrame": 80,
+    "switch": [
+      68,
+      36
+    ],
+    "needBar": 16,
+    "safeMargin": 32,
+    "panel": {
+      "S": 640,
+      "M": 960,
+      "L": 1360,
+      "maxHeight": 800
+    },
+    "toastWidth": 800,
+    "mapRail": 240,
+    "originalDial": [
+      310,
+      295
+    ],
+    "originalBarHeight": 145,
+    "note": "Dial and bottom bar keep the original art; only overlays (labels, values, tooltips, flyouts) use these tokens."
+  },
+  "motion": {
+    "easeBounce": "cubic-bezier(.34,1.56,.64,1)",
+    "easeOut": "cubic-bezier(.2,.8,.2,1)",
+    "fast": 120,
+    "base": 180,
+    "slow": 320,
+    "press": {
+      "translateY": 3,
+      "scale": 0.96
+    },
+    "hover": {
+      "translateY": -2,
+      "rotateDeg": -1.2
+    },
+    "plumbobBobMs": 2400,
+    "tooltipDelayMs": 300,
+    "toastMs": 6000,
+    "reduceMotion": "disable bob, pulse, wobble, bounce"
+  },
+  "elevation": {
+    "plasticButton": "5px hard offset in darker tone of fill + 10px soft blur 28%",
+    "lift": "0 14px 30px rgba(0,0,0,.5) night, 0 12px 26px rgba(10,70,80,.28) day",
+    "floatGlass": "rgba(10,20,24,.90 to .95), theme independent"
+  },
+  "themes": {
+    "night": {
+      "label": "Simitone Night (default)",
+      "surface": {
+        "dock": "#0A1418",
+        "panel": "#102029",
+        "card": "#172C37",
+        "raised": "#203A48",
+        "track": "#07131A",
+        "line": "#2C4857",
+        "lineStrong": "#4A6C7E",
+        "scrim": "rgba(4,10,13,0.64)"
+      },
+      "text": {
+        "primary": "#EAF8F6",
+        "secondary": "#A9C6CB",
+        "disabled": "#6F8C93",
+        "onAccent": "#03302A"
+      },
+      "accent": {
+        "accent": "#2EF2B0",
+        "accent2": "#00D98B",
+        "deep": "#067A63",
+        "headA": "#00D98B",
+        "headB": "#0A8F86",
+        "headC": "#0A5F63",
+        "onHead": "#03302A"
+      },
+      "status": {
+        "good": "#35E27A",
+        "warn": "#FFC145",
+        "bad": "#FF6F61",
+        "info": "#5CB6FF",
+        "goodInk": "#35E27A",
+        "warnInk": "#FFC145",
+        "badInk": "#FF8A7E",
+        "infoInk": "#7CC4FF"
+      },
+      "data": {
+        "trait": "#25D9E8",
+        "skill": "#8C9BFF",
+        "plumbob": "#37F29A"
+      },
+      "focus": {
+        "ring": "#FFE23A",
+        "gap": "#04161B"
+      }
+    },
+    "day": {
+      "label": "Sunny Lot (classic daylight)",
+      "surface": {
+        "dock": "#CFF1EA",
+        "panel": "#E7F9F5",
+        "card": "#FFFFFF",
+        "raised": "#F3FFFC",
+        "track": "#BFE3DD",
+        "line": "#A6D8D1",
+        "lineStrong": "#4DAAA4",
+        "scrim": "rgba(8,56,66,0.38)"
+      },
+      "text": {
+        "primary": "#0B3640",
+        "secondary": "#3D6670",
+        "disabled": "#7A9DA2",
+        "onAccent": "#03302A"
+      },
+      "accent": {
+        "accent": "#16D9A0",
+        "accent2": "#00B67A",
+        "deep": "#066A55",
+        "headA": "#2BE0B0",
+        "headB": "#12A8A4",
+        "headC": "#1590B0",
+        "onHead": "#04323A"
+      },
+      "status": {
+        "good": "#22C55E",
+        "warn": "#F5A700",
+        "bad": "#F0503F",
+        "info": "#2F8CE0",
+        "goodInk": "#0B7A3F",
+        "warnInk": "#8A5A00",
+        "badInk": "#B3261E",
+        "infoInk": "#1B5FAE"
+      },
+      "data": {
+        "trait": "#12B8C8",
+        "skill": "#5B6CFF",
+        "plumbob": "#12C97A"
+      },
+      "focus": {
+        "ring": "#FFE23A",
+        "gap": "#0B3640"
+      }
+    }
+  },
+  "shared": {
+    "pill": {
+      "a": "#FFFFFF",
+      "b": "#CDE4F1",
+      "edge": "#7FA2B6",
+      "text": "#0B3A57"
+    },
+    "iconButton": {
+      "a": "#58B0F2",
+      "b": "#1D5CA6",
+      "edge": "#0F3B73",
+      "rim": "#FFFFFF"
+    },
+    "pie": {
+      "a": "#2658C8",
+      "b": "#123A8F",
+      "edge": "#0A2561",
+      "rim": "#FFFFFF"
+    },
+    "balloon": {
+      "bg": "rgba(10,20,24,0.95)",
+      "text": "#FFFFFF",
+      "topBar": 4
+    },
+    "simIdentity": [
+      "#FFD95A",
+      "#7CE8FF",
+      "#FF9EC4",
+      "#B7FF7A",
+      "#C6A6FF",
+      "#FFB27A"
+    ],
+    "needStates": {
+      "good": "solid fill + 10 segments",
+      "warn": "solid amber + value in warn ink",
+      "bad": "diagonal stripe fill + alert icon + pulse + value in bad ink"
+    }
+  },
+  "iconSheet": {
+    "file": "icons.svg (render to icons.png at 3072x3072 for 2x)",
+    "grid": "8 x 8 cells, 48 units each, 2 px stroke on 24 grid",
+    "order": [
+      "save",
+      "home",
+      "quit",
+      "eye",
+      "cube",
+      "grid",
+      "chat",
+      "text",
+      "bulb",
+      "pie",
+      "gear",
+      "close",
+      "search",
+      "plus",
+      "minus",
+      "play",
+      "ff",
+      "fff",
+      "pause",
+      "heart",
+      "people",
+      "person",
+      "star",
+      "gift",
+      "thought",
+      "job",
+      "mask",
+      "left",
+      "right",
+      "check",
+      "alert",
+      "coin",
+      "rotate",
+      "layers",
+      "hammer",
+      "sofa",
+      "bed",
+      "chair",
+      "wall",
+      "brush",
+      "floor",
+      "roof",
+      "book",
+      "news",
+      "hand",
+      "note",
+      "kiss",
+      "mail",
+      "food",
+      "bolt",
+      "drop",
+      "sun",
+      "moon",
+      "wc",
+      "smile",
+      "diamond",
+      "lock",
+      "trash",
+      "pencil",
+      "filter",
+      "sort",
+      "clock",
+      "cart",
+      "info"
+    ]
+  }
+}

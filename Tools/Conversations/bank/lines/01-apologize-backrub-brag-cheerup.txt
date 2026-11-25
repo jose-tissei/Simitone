@@ -1,0 +1,361 @@
+# Hand-written lines. Sections: [speaker <interaction> gentle|playful|bold] and [reply <interaction> <quality 1-3> <temperament>].
+# {name} = the Sim being spoken to, {me} = the Sim who spoke first, {topic} = Talk subject. Plain ASCII, one sentence-like line each, end with . ! or ?
+# Reply quality: 1 = it went badly for the speaker, 2 = so-so, 3 = it went great.
+
+[speaker apologize gentle]
+I'm so sorry, {name}. I never meant to hurt you.
+I owe you an apology, {name}, and I mean it.
+I've been thinking about it, and I was wrong.
+Please forgive me, {name}. I feel terrible.
+I hate that things got tense between us.
+Can we start over? I'm truly sorry.
+[speaker apologize playful]
+I come in peace, {name}, wearing my very sorry face.
+Okay, I messed up. Can we pretend it never happened?
+My bad, {name}! Let me make it up to you.
+I was a goofball and I know it. Forgive me?
+Sorry! I'll even do the dishes. Okay, maybe one dish.
+Please don't write me off, {name}. I'm sorry, truly.
+[speaker apologize bold]
+I was out of line, {name}, and I'm owning it.
+I was wrong. There, I said it. I'm sorry.
+No excuses, {name}. I'm sorry.
+I handled that badly, and I'm sorry for it.
+Let's clear the air. I was in the wrong.
+I'm not great at this, but I am sorry.
+[reply apologize 1 easily_offended]
+I'm still too hurt to talk about it, {me}.
+Please stop. Hearing it again only makes it worse.
+I can't just forget it that quickly.
+Sorry doesn't undo it, {me}.
+I need some time away from you.
+[reply apologize 1 thick_skinned]
+Nice try, {me}, but I'm not buying it.
+Save it. I'm not that easy.
+You can apologize all day. I'm not moved.
+I'm fine, but I'm not forgiving you either.
+Come back when you mean it.
+[reply apologize 1 cold]
+Not interested.
+I've heard it. It changes nothing.
+Don't bother, {me}.
+Noted. Now leave it.
+Words are cheap.
+[reply apologize 1 receptive]
+I want to forgive you, {me}, but I'm not there yet.
+I hear you. I just need more time.
+Thank you for trying. It still stings.
+I appreciate it, but it's not enough today.
+Give me a little while, okay?
+[reply apologize 1 any]
+I'm not ready to forgive you yet.
+That doesn't fix it, {me}.
+I hear you, but I need time.
+Maybe another day.
+It's not that simple.
+[reply apologize 3 easily_offended]
+Thank you, {me}. I needed to hear that.
+Okay. I was really upset, but I feel better now.
+I'm still a little shaky, but I forgive you.
+That means a lot. Please don't do it again.
+Thanks for saying it. I feel lighter.
+[reply apologize 3 thick_skinned]
+Fine, you're forgiven. No big deal.
+Alright, alright. We're good.
+Apology accepted. Let's move on.
+I wasn't even that mad. We're good.
+Forget it, {me}. It's already behind us.
+[reply apologize 3 cold]
+Fine. It's forgotten.
+Apology accepted.
+Alright. Don't repeat it.
+That will do.
+We're good, {me}. For now.
+[reply apologize 3 receptive]
+Thank you, {me}. That means so much.
+Of course I forgive you. Come here.
+I appreciate you saying that. We're okay.
+I'm just glad we talked it out.
+Thank you for being honest with me.
+[reply apologize 3 any]
+Thank you. I forgive you.
+Apology accepted, {me}.
+It's okay. We're good.
+I appreciate that. Let's move on.
+Thanks for saying it.
+
+[speaker backrub gentle]
+You look tense, {name}. May I rub your shoulders?
+Let me help you relax a little, {name}.
+Sit down for a minute. I'll work on those knots.
+You work so hard. Let me take the edge off.
+Just close your eyes and breathe, {name}.
+Would a back rub help right now?
+[speaker backrub playful]
+Step right up, {name}, the shoulder clinic is open!
+Your shoulders are tighter than a drum. Let me fix that.
+Free back rub, today only. Interested?
+I have magic hands, {name}. Want proof?
+Turn around, {name}. Doctor Rub is in.
+Those knots don't stand a chance against me.
+[speaker backrub bold]
+Sit. You're tense, and I'm fixing it.
+Turn around, {name}. I'm doing your shoulders.
+You need this. Don't argue.
+Hold still, {name}. I know what I'm doing.
+Those knots are coming out, one way or another.
+I'm giving you a back rub. Relax.
+[reply backrub 1 easily_offended]
+Please don't touch me right now.
+That makes me really uncomfortable, {me}.
+I'd rather you keep your hands to yourself.
+Ow, no, that hurts. Please stop.
+I think I need some space.
+[reply backrub 1 thick_skinned]
+Eh, I'm fine, {me}. Really.
+Not my thing, thanks.
+You press too hard. Let's skip it.
+I'll pass on the rubdown.
+Nah. Go bother someone else.
+[reply backrub 1 cold]
+No.
+I didn't ask for that.
+Keep your hands off.
+Not interested, {me}.
+Don't.
+[reply backrub 1 receptive]
+That's kind of you, {me}, but not right now.
+Sorry, I'm too restless to enjoy it.
+Maybe later? I can't relax at the moment.
+Thanks, but my shoulders are fine.
+I appreciate it, just not today.
+[reply backrub 1 any]
+No thanks, {me}.
+I'd rather not.
+Maybe some other time.
+That's not helping.
+Please stop.
+[reply backrub 3 easily_offended]
+Oh, that actually feels wonderful.
+Okay, that is lovely. Don't stop.
+I didn't expect to relax so much.
+That's the first time I've felt calm all day.
+Thank you, {me}. I really needed that.
+[reply backrub 3 thick_skinned]
+Not bad, {me}. Not bad at all.
+Right there, yeah. Good hands.
+Alright, I admit it. That's great.
+You found the spot. Keep going.
+Okay, you win. That's fantastic.
+[reply backrub 3 cold]
+Hm. That's actually good.
+Acceptable. Keep going.
+Fine. That helps.
+...Right there.
+I suppose you have talent.
+[reply backrub 3 receptive]
+Ahh, that feels amazing, {me}.
+Mmm, you're so good at this.
+That's heavenly. Thank you!
+I could stay like this all day.
+You have the best hands.
+[reply backrub 3 any]
+That feels great, {me}.
+Mmm, that's the spot.
+Thank you. I needed that.
+Don't stop.
+Wow, I feel so much better.
+
+[speaker brag gentle]
+I'm quite proud of how my week has gone, {name}.
+I have some good news, {name}. May I share it?
+I worked hard on my skills lately, and it paid off.
+I don't like to boast, but I'm really pleased with myself.
+Something nice happened today, and I wanted to tell you.
+I finally got the hang of something difficult.
+[speaker brag playful]
+Guess who just got better at everything? This Sim!
+Behold, {name}, the most talented Sim on the lot!
+I'm kind of amazing. Just saying.
+Ask me how I did. Go on, ask!
+Today I was a genius. Tomorrow too, probably.
+Pretty sure I'm the best at this. No pressure.
+[speaker brag bold]
+I'm better at this than anyone you know, {name}.
+Nobody on this street can match my skills.
+Let me tell you how great I am.
+I've earned every bit of my success, and it shows.
+Facts: I'm the best, and the proof is everywhere.
+Watch and learn, {name}. This is how it's done.
+[reply brag 1 easily_offended]
+Must you always talk about yourself?
+That's unkind to the rest of us, {me}.
+I'm tired of hearing how great you are.
+Why are you rubbing it in?
+It makes me feel small, {me}.
+[reply brag 1 thick_skinned]
+Big whoop, {me}.
+Yeah, yeah. You're a legend.
+Impressive. If I cared.
+Is the speech almost over?
+I've heard better bragging from a pigeon.
+[reply brag 1 cold]
+Spare me.
+I don't care.
+Congratulations. Moving on.
+Is that all?
+Not impressed, {me}.
+[reply brag 1 receptive]
+That's nice, {me}, but you do go on a bit.
+Good for you, I suppose.
+I'm happy for you, but it's a lot.
+Hm. I'd rather hear about something else.
+Well done, though I've lost the thread.
+[reply brag 1 any]
+That's nice, {me}. I guess.
+Okay. If you say so.
+Good for you.
+Is that so?
+I've heard enough.
+[reply brag 3 easily_offended]
+Wow, {me}, I'm really impressed.
+That's wonderful. You must be so pleased.
+I wish I could do that. Well done!
+You really worked for it, didn't you?
+Good for you. I mean that.
+[reply brag 3 thick_skinned]
+Okay, I'll admit it. Pretty good.
+Not bad, {me}. Not bad at all.
+Huh. You actually earned it.
+Alright, I'm a little jealous.
+Fine, you're good. Don't let it go to your head.
+[reply brag 3 cold]
+Hm. That is impressive.
+...Fine. I'm impressed.
+That's solid work.
+Well. I did not expect that.
+Credit where it's due, {me}.
+[reply brag 3 receptive]
+That's fantastic, {me}! I'm so happy for you!
+Amazing! Tell me everything!
+You deserve it. I'm so proud of you.
+Wow, that's incredible! Congratulations!
+I love hearing about your wins!
+[reply brag 3 any]
+Congratulations, {me}!
+That's great news!
+Wow, well done!
+I'm impressed.
+Nice work!
+
+[speaker cheerup gentle]
+You seem a little down, {name}. Want to talk?
+I'm here for you, {name}, whatever you need.
+It's okay to have a rough day. I'm with you.
+Come sit with me for a while, {name}.
+Whatever it is, we'll get through it together.
+You don't have to smile. I'll just stay close.
+[speaker cheerup playful]
+Why the long face, {name}? Let's fix that!
+Hey, grumpy! Smile and I'll find you a snack.
+Rain clouds are overrated. Come play with me!
+I demand that you smile. It's an order.
+Let's do something silly and forget the bad stuff.
+Cheer up, {name}! The world has cake in it.
+[speaker cheerup bold]
+Enough sulking, {name}. Let's turn this day around.
+Stand up, shake it off, and let's move on.
+You're stronger than this. Snap out of it.
+It's not the end of the world. Let's go.
+I'm not letting you stay down, {name}.
+Chin up. You've handled worse than this.
+[reply cheerup 1 easily_offended]
+Please don't tell me how to feel, {me}.
+You wouldn't understand.
+That just makes me feel worse.
+I'd like to be alone right now.
+Stop, you're making it worse.
+[reply cheerup 1 thick_skinned]
+I'm not sad, {me}. I'm just done.
+Cheering up is overrated.
+Nice effort. It didn't work.
+Maybe I like being grumpy.
+I'll cheer up when I feel like it.
+[reply cheerup 1 cold]
+Leave me alone.
+Not helping.
+I didn't ask.
+Go away, {me}.
+Save it.
+[reply cheerup 1 receptive]
+I appreciate it, {me}, but I can't shake it right now.
+Thank you, but I'm too low to lift.
+I know you mean well. I just can't.
+Sorry. Maybe later.
+It means a lot that you tried.
+[reply cheerup 1 any]
+That's not helping.
+I just want to be alone.
+Thanks, but no.
+Not today, {me}.
+I can't right now.
+[reply cheerup 2 easily_offended]
+...Okay. A little. Thank you.
+I'm still sniffling, but it helps.
+That was kind of you, {me}.
+I'm not fine yet, but I'm trying.
+Thanks for staying with me.
+[reply cheerup 2 thick_skinned]
+Eh, I feel a bit better.
+Alright. You made a dent.
+Fine, I'll stop grumbling. Mostly.
+Not bad. I'll live.
+Okay, that helped a tiny bit.
+[reply cheerup 2 cold]
+...Slightly better.
+Fine. It helped.
+I suppose that was something.
+Hm. I'll manage.
+Don't make a big deal of it.
+[reply cheerup 2 receptive]
+That helped a little, {me}. Thank you.
+I think I'm starting to feel better.
+It's nice to know you care.
+Thanks. I needed someone to talk to.
+I'm not fully there, but it's better.
+[reply cheerup 2 any]
+That helped a little.
+Thanks, {me}. I feel a bit better.
+Okay, I'll try to cheer up.
+I appreciate it.
+Slowly getting there.
+[reply cheerup 3 easily_offended]
+Oh, {me}, thank you. I feel so much better!
+You always know what to say.
+I was a mess, and you fixed it.
+I feel lighter already. Thank you.
+That's exactly what I needed.
+[reply cheerup 3 thick_skinned]
+Ha! Alright, you got me. I'm cheerful again.
+Okay, okay, I'm smiling. Happy?
+You win. Bad mood gone.
+Fine, that worked. Don't gloat.
+Alright, I'm back. Thanks.
+[reply cheerup 3 cold]
+...That actually worked.
+Fine. I'm better.
+Hm. Thank you, {me}.
+I did not expect that to help.
+I'll admit it. I feel better.
+[reply cheerup 3 receptive]
+Thank you so much, {me}! I feel wonderful now!
+You're the best, you know that?
+I was down, but now I'm smiling again!
+You really turned my day around!
+That was just what I needed. Thank you!
+[reply cheerup 3 any]
+Thank you, I feel so much better!
+That worked, {me}. Thanks!
+I'm smiling again.
+You turned my day around.
+Much better now. Thanks!

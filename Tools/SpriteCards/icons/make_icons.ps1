@@ -55,6 +55,12 @@ New-Icon 'opt_light.png' { param($g, $pen)
     $g.DrawLine($pen, (P 27 43), (P 38 43)); $g.DrawLine($pen, (P 28 50), (P 37 50))
     foreach ($a in -60, -30, 0, 30, 60) { $r = [math]::PI * ($a - 90) / 180; $g.DrawLine($pen, (P (32.5 + 19 * [math]::Cos($r)) (26 + 19 * [math]::Sin($r))), (P (32.5 + 25 * [math]::Cos($r)) (26 + 25 * [math]::Sin($r)))) } }
 
+# pie menu: a circle cut into four wedges
+New-Icon 'opt_pie.png' { param($g, $pen)
+    $g.DrawEllipse($pen, 9, 9, 47, 47)
+    $g.DrawLine($pen, (P 32.5 9), (P 32.5 56)); $g.DrawLine($pen, (P 9 32.5), (P 56 32.5))
+    $g.FillPie([System.Drawing.Brushes]::White, 9, 9, 47, 47, -90, 90) }
+
 # Sim memory: dossier / profile journal card in the Live Sim panel
 New-Icon 'live_memory.png' { param($g, $pen)
     $g.DrawRectangle($pen, 11, 10, 43, 45)

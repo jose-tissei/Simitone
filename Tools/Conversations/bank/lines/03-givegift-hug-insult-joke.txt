@@ -1,0 +1,357 @@
+[speaker givegift gentle]
+I got you something small, {name}. I hope you like it.
+This made me think of you, {name}.
+A little gift, just because.
+I wanted to give you something nice.
+I thought of you when I saw this.
+Please accept this. It comes from the heart.
+[speaker givegift playful]
+Surprise! I come bearing gifts!
+Ta-da! Guess what I got you, {name}!
+Close your eyes and hold out your hands!
+It's not much, but it's wrapped really well.
+Who loves you? I do, and I brought a present!
+Open it! Don't shake it. Okay, shake it a little.
+[speaker givegift bold]
+Take it, {name}. You deserve it.
+I picked this out for you. Don't argue.
+This gift is for you. No excuses.
+I know what you like. This is it.
+Here, {name}. I want you to have this.
+Accept this gift. I insist.
+[reply givegift 1 easily_offended]
+Oh... I don't think I can accept this.
+Is this some kind of joke, {me}?
+I feel awkward taking this.
+You shouldn't have, really.
+It's not what I wanted, honestly.
+[reply givegift 1 thick_skinned]
+Eh. I'd rather have cash.
+Not my style, {me}.
+You can keep it.
+Cute. I'll never use it.
+Is there a receipt?
+[reply givegift 1 cold]
+I don't want it.
+Keep it.
+Not interested, {me}.
+No thanks.
+I have no use for this.
+[reply givegift 1 receptive]
+That's thoughtful, {me}, but it isn't quite for me.
+Thank you for thinking of me, but I can't take this.
+It's a kind gesture, though not what I need.
+Aw, I'm sorry, but this isn't really me.
+The thought counts, even if the gift misses.
+[reply givegift 1 any]
+No thanks, {me}.
+It's not for me.
+I can't accept this.
+Thanks, but no.
+Oh. Um. Thanks.
+[reply givegift 3 easily_offended]
+You remembered! That's so thoughtful, {me}!
+I love it! I'm almost in tears!
+This is perfect. Thank you so much!
+No one has ever given me anything this nice.
+I'm so touched, {me}.
+[reply givegift 3 thick_skinned]
+Hey, nice! I like it, {me}.
+Not bad! You've got good taste.
+Alright, I'm keeping this one.
+Ha! Perfect. Thanks.
+You nailed it.
+[reply givegift 3 cold]
+...Thank you. This is good.
+Hm. You did well, {me}.
+I appreciate it.
+This is... actually nice.
+Noted. I'll keep it.
+[reply givegift 3 receptive]
+Oh, {me}, I love it! Thank you so much!
+It's perfect! You're so thoughtful!
+I'm so happy! I'll treasure it!
+You always know just what I want!
+Thank you! This is the best gift!
+[reply givegift 3 any]
+I love it, {me}!
+Thank you so much!
+How thoughtful!
+This is perfect!
+What a lovely gift!
+
+[speaker hug gentle]
+I could really use a hug, {name}.
+Come here. You look like you need one.
+May I give you a hug?
+I'm just so glad to see you, {name}.
+Let me hold you for a moment.
+A hug can fix a lot of things.
+[speaker hug playful]
+Incoming hug, {name}! Brace yourself!
+Come here, you! Group hug for two!
+Hugs are free today. Get yours!
+I'm a hugger, {name}. No escape!
+Bear hug time!
+Hug alert! Get over here!
+[speaker hug bold]
+Come here, {name}. You're getting a hug.
+I'm hugging you. Deal with it.
+Don't argue, {name}. Just hug me.
+Hold still. This hug is happening.
+I want a hug, so I'm taking one.
+Get over here and hug me.
+[reply hug 1 easily_offended]
+Please don't, {me}. I'm not in the mood.
+I don't like being touched right now.
+Not now. Please give me some space.
+That's too close. Back off, please.
+I'm not comfortable with this.
+[reply hug 1 thick_skinned]
+Nope, not a hugger, {me}.
+Handshake, maybe. Hugs, no.
+Ew, no. Personal space!
+Not today, {me}.
+I'll pass.
+[reply hug 1 cold]
+Don't touch me.
+No hugs.
+Step back, {me}.
+Not interested.
+Stop.
+[reply hug 1 receptive]
+Aw, not right now, {me}. I'm sorry.
+I'd hug you, but I'm a mess today.
+Maybe later, okay?
+Sorry, I just can't.
+I wish I could, {me}.
+[reply hug 1 any]
+Not now, {me}.
+No hugs today.
+Please, no.
+I'd rather not.
+Not in the mood.
+[reply hug 2 easily_offended]
+Oh... okay. That's fine, I guess.
+A little awkward, but thank you.
+I wasn't ready, {me}, but it's okay.
+Alright, but only a quick one.
+Thanks. I think I needed that.
+[reply hug 2 thick_skinned]
+Fine, one quick one.
+Okay, that wasn't terrible.
+Alright, enough, {me}.
+Hm, you're warm. Fine.
+Okay, okay. Let go now.
+[reply hug 2 cold]
+...Fine. Briefly.
+That's enough, {me}.
+Hm. Alright.
+Acceptable. Now step back.
+One second only.
+[reply hug 2 receptive]
+Aw, thanks, {me}. That's nice.
+That's a good hug.
+Mmm. I needed that.
+You're sweet.
+It's good to feel close.
+[reply hug 2 any]
+That's nice, {me}.
+Okay, thanks.
+A hug does feel good.
+Alright.
+Thanks.
+[reply hug 3 easily_offended]
+Oh, {me}, I really needed that. Thank you.
+I feel so safe right now.
+I'm going to cry. Happy tears.
+Thank you for always being there.
+That's the best hug ever.
+[reply hug 3 thick_skinned]
+Ha! Okay, that was a great hug.
+Alright, {me}, you win. Hug again?
+Not bad. I'm in.
+You hug like a champ.
+Okay, I admit it. That felt great.
+[reply hug 3 cold]
+...Thank you. I needed that.
+Hm. That was nice.
+I did not expect to like that.
+Stay a moment longer.
+...You're warm. Don't tell anyone.
+[reply hug 3 receptive]
+Oh, {me}! I love your hugs!
+This is wonderful. Don't let go!
+I feel so much better now!
+You give the best hugs!
+Aw, {me}, I'm so happy right now!
+[reply hug 3 any]
+I love hugs, {me}!
+That was wonderful!
+Thank you, I needed that!
+Don't let go!
+You're the best!
+
+[speaker insult gentle]
+With all due respect, {name}, you're not as clever as you think.
+Bless your heart, {name}. You really try.
+I'd tell you what I think, but I'd be rude.
+That look is brave, {name}. Very brave.
+I mean this kindly, but you're a bit much.
+No offense, but you're not my favorite person.
+[speaker insult playful]
+Nice outfit, {name}. Did you lose a bet?
+You're about as sharp as a spoon, {name}.
+Is that your face, or is it still loading?
+Wow, {name}, what a brilliant idea. For someone else.
+You have a gift, {name}. Mostly for being annoying.
+I've met doorknobs with more charisma.
+[speaker insult bold]
+You're a disappointment, {name}.
+Stay out of my way. You're not worth my time.
+You're annoying, {name}, and everyone knows it.
+I have no respect for you.
+You bore me, {name}. Go away.
+I'm tired of pretending I like you.
+[reply insult 2 easily_offended]
+That really hurts, {me}.
+How could you say that to me?
+I'm going to cry. You're so mean.
+That was cruel. I won't forget it.
+I don't deserve this, {me}.
+[reply insult 2 thick_skinned]
+Ha, is that all you've got, {me}?
+Whatever. I've heard worse.
+Cute. Try harder.
+Your words bounce right off me.
+Say it again. I wasn't listening.
+[reply insult 2 cold]
+...Noted.
+Is that supposed to hurt?
+I'm unmoved.
+Are you finished?
+How dull.
+[reply insult 2 receptive]
+Ouch, {me}. That was harsh.
+Wow. Did I do something to you?
+I'd prefer you didn't say that.
+That wasn't nice, {me}.
+I'm hurt, but I'm listening.
+[reply insult 2 any]
+That was rude, {me}.
+Wow. Just wow.
+Ouch.
+Excuse me?
+How dare you.
+
+[speaker joke gentle]
+What do you call a sleeping bull? A bulldozer.
+Why did the cookie go to the doctor? It felt crummy.
+What do you call cheese that isn't yours? Nacho cheese.
+Why did the scarecrow win a prize? He was outstanding in his field.
+I told my plants a joke. They said it was a bit corny.
+What do you call a bear with no teeth? A gummy bear.
+[speaker joke playful]
+Why don't eggs tell jokes? They would crack each other up.
+I'm reading a book about anti-gravity. It's impossible to put down.
+What did the ocean say to the beach? Nothing, it just waved.
+Why can't you trust stairs? They're always up to something.
+Why did the bicycle fall over? It was two tired.
+I used to hate facial hair, but then it grew on me.
+[speaker joke bold]
+Prepare to laugh, {name}. I never miss.
+I'm hilarious, and I'm about to prove it.
+Why did the math book look sad? It had too many problems.
+What do you call a fake noodle? An impasta.
+I only know two jokes, {name}, and this is the good one.
+Laugh now, {name}. The punchline is coming.
+[reply joke 1 easily_offended]
+That wasn't funny, {me}.
+I don't get why that's a joke.
+Please. Not another one.
+It felt a bit mean, honestly.
+I'm not laughing, {me}.
+[reply joke 1 thick_skinned]
+Groan. Terrible, {me}.
+I've heard that one a hundred times.
+Ha. Ha. Not funny.
+Hard pass on the comedy career.
+Did you pay for that joke?
+[reply joke 1 cold]
+...No.
+Not funny.
+Silence is my review.
+I'm not laughing.
+Next.
+[reply joke 1 receptive]
+Ha... almost, {me}. Almost.
+I wanted to laugh, but it didn't land.
+Cute attempt, {me}.
+Hm, I don't think I got it.
+Nice try. Maybe a different joke?
+[reply joke 1 any]
+That wasn't funny, {me}.
+Hm. Okay.
+I don't get it.
+Ha. Sure.
+Try another.
+[reply joke 2 easily_offended]
+Heh. That was kind of funny, I guess.
+Okay, I smiled a little.
+Hm, that's cute, {me}.
+Alright, that one made me chuckle.
+Fine, I laughed, a bit.
+[reply joke 2 thick_skinned]
+Heh, not bad.
+Okay, that got a smirk.
+Alright, {me}, that was decent.
+Ha. I'll allow it.
+Fine, that was half funny.
+[reply joke 2 cold]
+...Heh.
+A smirk. That's all you get.
+Mild amusement detected.
+Hm. Passable.
+That wasn't terrible.
+[reply joke 2 receptive]
+Ha ha! That was cute, {me}!
+Hee hee, I like that one.
+Okay, that's pretty good.
+You made me smile!
+That was fun, {me}.
+[reply joke 2 any]
+Ha, not bad, {me}.
+That was kind of funny.
+Okay, I smiled.
+Heh.
+A decent joke.
+[reply joke 3 easily_offended]
+Ha ha ha! Oh my, {me}, that's hilarious!
+I can't stop laughing!
+That was so funny! I needed that.
+Stop, you're making me cry laughing.
+Oh, that was perfect!
+[reply joke 3 thick_skinned]
+Ha! Alright, you got me!
+That's a good one, {me}.
+Hahaha! Say it again!
+Okay, that was great.
+You're funnier than you look.
+[reply joke 3 cold]
+...Ha. Alright. That was funny.
+I laughed. Out loud. Mark the date.
+Hm. Very good, {me}.
+I didn't expect to laugh.
+Okay. You win.
+[reply joke 3 receptive]
+Hahaha! That's the best one yet, {me}!
+Oh my gosh, I'm crying!
+You're so funny! Tell another!
+I'm laughing so hard!
+You always make me laugh!
+[reply joke 3 any]
+Hahaha! Great one, {me}!
+That was hilarious!
+You crack me up!
+Oh, that's good!
+I love it!
