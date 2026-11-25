@@ -86,11 +86,14 @@ namespace Simitone.Conversations
                 bool hasParent = Prop(current, "Parent") != null;
 
                 painter.BeginDraw(batch);
+                screenW = batch.GraphicsDevice.Viewport.Width; screenH = batch.GraphicsDevice.Viewport.Height;
                 if (buttons.Count == 0) { LastState = "new slots=0"; return; }
                 var first = buttons[0] as UIButton;
                 if (first == null) { LastState = "native (unexpected button)"; return; }
                 if (!ReferenceEquals(first, laidOut) || buttons.Count != laidCount) { Arrange(buttons, hasParent); laidOut = first; laidCount = buttons.Count; }
+                originY = pie.Y;
                 DrawOrbit(pie.X, pie.Y, hasParent);
+                hoverCaption = null;
                 int drawn = 0;
                 for (int i = 0; i < buttons.Count; i++)
                 {
@@ -101,6 +104,7 @@ namespace Simitone.Conversations
                     DrawSlot(pie.X + b.X, pie.Y + b.Y, b.Width, b.Size.Y, cap, back);
                     drawn++;
                 }
+                if (hoverCaption != null) DrawTooltip(hoverCaption, TargetName(pie), hoverX, hoverY, hoverW, hoverH);
                 LastState = "new slots=" + drawn;
             }
             catch (Exception e) { LastState = "error " + e.Message; }
@@ -161,6 +165,33 @@ namespace Simitone.Conversations
             }
         }
 
+        float originY;
+        float screenW = 1920, screenH = 1080;
+        string hoverCaption; float hoverX, hoverY, hoverW, hoverH;
+
+        // name of the Sim under the pie ("" for objects)
+        static string TargetName(UIElement pie)
+        {
+            var obj = Prop(pie, "m_Obj");
+            if (obj == null || obj.GetType().Name.IndexOf("Avatar", StringComparison.OrdinalIgnoreCase) < 0) return "";
+            return Str(obj, "Name");
+        }
+
+        // the design's tooltip: dark glass, 16 px text, under the hovered slot and kept 32 px inside the screen
+        void DrawTooltip(string caption, string who, float sx, float sy, float sw, float sh)
+        {
+            string text = PieStyle.Tooltip(caption, who);
+            if (string.IsNullOrEmpty(text)) return;
+            float tw, th; painter.MeasureText(text, 16, false, out tw, out th);
+            float w = tw + 28, h = th + 16;
+            float sc = Math.Max(0.5f, FSOEnvironment.DPIScaleFactor);
+            float vw = screenW / sc, vh = screenH / sc;
+            float x = Math.Max(32, Math.Min(sx + sw / 2 - w / 2, vw - 32 - w)), y = sy + sh / 2 < originY ? Math.Max(32, sy - h - 14) : Math.Min(sy + sh + 14, vh - 32 - h);   // above slots in the top half, below the others, so it stays out of the ring
+            painter.FillRect(x - 2, y - 2, w + 4, h + 4, new Rgba(255, 255, 255, 36), 14);
+            painter.FillRect(x, y, w, h, Token("balloon-bg", new Rgba(10, 20, 24, 242)), 12);
+            painter.DrawText(text, x + 14, y + 8, 16, false, Token("text", new Rgba(234, 248, 246)));
+        }
+
         void DrawSlot(float nx, float ny, float nw, float nh, string caption, bool back)
         {
             bool sub = !back && PieStyle.IsSubmenu(caption);
@@ -177,6 +208,7 @@ namespace Simitone.Conversations
             var lip = Token("pie-edge", new Rgba(10, 37, 97));
             var ink = white;
             float lipH = 4, lift = 0;
+            if (hover) { hoverCaption = back ? null : caption; hoverX = x; hoverY = y; hoverW = w; hoverH = h; }
             if (hover) { fa = new Rgba(180, 255, 230); fb = Token("accent-2", new Rgba(0, 217, 139)); ink = Token("on-accent", new Rgba(3, 48, 42)); lipH = 7; lift = 3; }   // mint "on" slot: lifted, so its lip shows more instead of the design's 1.5 degree tilt (which looks jagged here)
             y -= lift;
             // the design's slot: soft drop shadow, a hard lip under the pill, a 3 px white border, then the blue (or mint) face

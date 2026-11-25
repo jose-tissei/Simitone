@@ -194,6 +194,16 @@ namespace Conversations.Tests
             Assert.Equal(-cx[1], cx[5], 3); Assert.Equal(cy[1], cy[5], 3);   // left and right mirror each other
         }
 
+        [Fact]
+        public void PieStyle_TooltipsNameTheTargetAndSkipUnknownVerbs()
+        {
+            Assert.Equal("Start a conversation with Betty.", PieStyle.Tooltip("Talk...", "Betty"));
+            Assert.Null(PieStyle.Tooltip("Talk...", ""));                       // a Sim verb on an object: nothing to say
+            Assert.Equal("Walk to this spot.", PieStyle.Tooltip("Go Here", ""));
+            Assert.Equal("More choices: Zzz.", PieStyle.Tooltip("Zzz...", "Bob"));
+            Assert.Null(PieStyle.Tooltip("Zzz", "Bob"));
+        }
+
         static string FindPage(string name)
         {
             for (var d = new DirectoryInfo(AppContext.BaseDirectory); d != null; d = d.Parent)

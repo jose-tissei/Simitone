@@ -80,6 +80,38 @@ namespace Simitone.Conversations
             return Math.Abs(x1 - x2) < (w1 + w2) / 2 + margin && Math.Abs(y1 - y2) < (h1 + h2) / 2 + margin;
         }
 
+        // one-line explanation for the tooltip next to the hovered slot; {who} is the Sim being clicked ("" for objects). null = no tooltip.
+        static readonly string[][] Tips =
+        {
+            new[] { "talk", "Start a conversation with {who}.", null },
+            new[] { "dance", "Dance with {who}.", "Dance." },
+            new[] { "entertain", "Joke, brag or put on a show for {who}.", null },
+            new[] { "romance", "Flirt, kiss or get close with {who}.", null },
+            new[] { "hug", "Offer {who} a hug or some comfort.", null },
+            new[] { "tickle", "Tickle {who} for a laugh.", null },
+            new[] { "study", "Practice to raise a skill.", "Practice to raise a skill." },
+            new[] { "read a book", "Read for fun or to learn.", "Read for fun or to learn." },
+            new[] { "go here", "Walk to this spot.", "Walk to this spot." },
+            new[] { "wash", "Clean up at the sink.", "Clean up at the sink." },
+            new[] { "sleep", "Rest to refill energy.", "Rest to refill energy." },
+            new[] { "shower", "Freshen up.", "Freshen up." },
+            new[] { "toilet", "Relieve yourself.", "Relieve yourself." },
+        };
+
+        public static string Tooltip(string caption, string who)
+        {
+            var key = CleanLabel(caption).ToLowerInvariant();
+            bool hasWho = !string.IsNullOrWhiteSpace(who);
+            foreach (var t in Tips)
+                if (key.Contains(t[0]))
+                {
+                    var text = hasWho ? t[1] : t[2];
+                    return text == null ? null : text.Replace("{who}", who ?? "").Replace("  ", " ");
+                }
+            if (IsSubmenu(caption)) return "More choices: " + ShortLabel(caption) + ".";
+            return null;
+        }
+
         // slot width: icon, gaps and text, never narrower than the native button it covers (so the native one is fully hidden)
         public static float SlotWidth(float textWidth, float iconSize, float nativeWidth, bool submenu)
         {
