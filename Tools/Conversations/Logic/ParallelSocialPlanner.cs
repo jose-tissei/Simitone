@@ -38,8 +38,8 @@ namespace Simitone.Conversations
     // and resolves authentic Sims-style outcomes and motive/relationship deltas.
     public static class ParallelSocialPlanner
     {
-        // Social motive ranges -100..+100; 60% of the bar is +20.
-        public const short SocialTriggerThreshold = 20;
+        // Social motive ranges -100..+100; 75% of the bar is +50 (a Sim starts chatting once the bar drops below that).
+        public const short SocialTriggerThreshold = 50;
         public const double MaxOutdoorTileDistance = 8.0;
 
         public const string InteractionQuestion = "Which verbal social interaction should this Sim choose next in this conversation?";
@@ -277,15 +277,15 @@ namespace Simitone.Conversations
             if (candidates == null || candidates.Count == 0) return AiSubjectBank.Builtin().All[0];
             AiSubject best = candidates[0];
             double bestScore = double.NegativeInfinity;
-            double noiseScale = (1.0 - a.Accuracy) * 0.65;
+            double noiseScale = (1.0 - a.Accuracy) * 0.35;
             var spInt = speaker.Interests != null && speaker.Interests.Length >= 8 ? speaker.Interests : new short[8];
             var lsInt = listener.Interests != null && listener.Interests.Length >= 8 ? listener.Interests : new short[8];
 
             foreach (var s in candidates)
             {
                 double h = (spInt[s.Interest] / 1000.0) * 0.30;
-                bool knowsInt = a.Knowledge >= 0.50 || memory.HasLearnedInterest(speaker, listener, s.Interest);
-                if (knowsInt) h += (lsInt[s.Interest] / 1000.0) * 0.45 * Math.Max(0.5, a.Knowledge);
+                bool knowsInt = a.Knowledge >= 0.35 || memory.HasLearnedInterest(speaker, listener, s.Interest);
+                if (knowsInt) h += (lsInt[s.Interest] / 1000.0) * 0.60 * Math.Max(0.6, a.Knowledge);
                 h += SocialIntelligence.SubjectSkillBonus(s, speaker, listener, a.Knowledge, memory);
                 h += memory.SubjectAdjustment(speaker, listener, s.Id);
 
@@ -363,7 +363,7 @@ namespace Simitone.Conversations
             else if (interaction == "tease") score += (trueTemper == Temperament.ThickSkinned ? 25.0 : -35.0);
 
             if (score >= 42.0) return 3;
-            if (score >= -8.0) return 2;
+            if (score >= -20.0) return 2;
             return 1;
         }
 

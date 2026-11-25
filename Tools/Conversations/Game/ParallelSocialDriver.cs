@@ -10,13 +10,13 @@ namespace Simitone.Conversations
 {
     // Autonomous parallel room-conversation driver.
     // Hooked at VM.InternalTick via Boot.OnTick(VM). Scans Sims in the same room without touching VMThread.Queue,
-    // triggers when Social <= 60% (<= 20 on -100..+100), runs Laya interaction & AI topic planning off the game thread,
+    // triggers when Social <= 75% (<= 50 on -100..+100), runs Laya interaction & AI topic planning off the game thread,
     // and drains completed plans on the VM tick to show speech balloons and update Social, STR/LTR, and SocialMemory.
     public static class ParallelSocialDriver
     {
-        const int ScanIntervalTicks = 45;         // ~1.5 s of game time between room scans
-        const int SimCooldownTicks = 300;         // ~10 s of game time per Sim between parallel exchanges
-        const int PairCooldownTicks = 360;        // ~12 s of game time per pair
+        const int ScanIntervalTicks = 30;         // ~1 s of game time between room scans
+        const int SimCooldownTicks = 150;         // ~5 s of game time per Sim between parallel exchanges
+        const int PairCooldownTicks = 180;        // ~6 s of game time per pair
 
         class CompletedExchange
         {

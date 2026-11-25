@@ -92,11 +92,15 @@ namespace Simitone.Conversations
 
         // The dialog is for the Sim the player is controlling. (Queue priorities cannot tell: the social script runs as a pushed
         // interaction with a low priority even when the player asked for it.)
-        public static bool PlayerControls(VMEntity speaker)
+        // And only when the player asked for this: the Sim being played also chats on its own (free will), and then no window should appear.
+        // An action the player started runs at user-driven priority (50); one the Sim chose itself runs at 2 or less.
+        public static bool PlayerControls(VMEntity speaker, VMThread thread = null)
         {
             if (Boot.TreatAsAutonomous) return false;
             try
             {
+                var q = (thread ?? (speaker as VMAvatar)?.Thread)?.Queue;
+                if (q != null && q.Count > 0 && q[0].Priority < 40) return false;
                 var screen = FSO.Client.UI.Framework.UIScreen.Current;
                 var lot = screen?.GetType().GetProperty("LotControl")?.GetValue(screen, null);
                 var active = lot?.GetType().GetProperty("ActiveEntity")?.GetValue(lot, null);
@@ -139,8 +143,9 @@ namespace Simitone.Conversations
                 };
                 for (int i = 0; i < 3; i++) p.SpeakerLines[i] = DialogueBank.Fill(p.SpeakerLines[i], ps.Name, pl.Name, pl.JobTitle);
 
+                Boot.Log("social step: " + key + " " + ps.Name + " -> " + pl.Name + " window=" + PlayerControls(speaker, thread) + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
                 if (Boot.AutoTone >= 0) p.Tone = (Tone)Math.Min(2, Boot.AutoTone);
-                else if (PlayerControls(speaker))
+                else if (PlayerControls(speaker, thread))
                 {
                     ShowDialog(ctx, p, key);
                     pending.Add(thread, p);

@@ -116,9 +116,10 @@ namespace Simitone.Conversations
                     Listener = rl,
                     SpeakerProfile = ps,
                     ListenerProfile = pl,
-                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker),
+                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker, thread),
                 };
 
+                Boot.Log("talk step: " + ps.Name + " -> " + pl.Name + " window=" + p.PlayerControlled + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
                 if (Boot.Laya.Available)
                 {
                     // Rank AI subjects via Laya on a worker thread (never blocks a frame)

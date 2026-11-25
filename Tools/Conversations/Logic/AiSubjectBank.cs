@@ -82,8 +82,8 @@ namespace Simitone.Conversations
             {
                 double score = 0.0;
                 score += (spInt[s.Interest] / 1000.0) * 0.45;
-                bool knowsInterest = knowledge >= 0.55 || (memory != null && memory.HasLearnedInterest(speaker, listener, s.Interest));
-                if (knowsInterest) score += (lsInt[s.Interest] / 1000.0) * 0.40 * Math.Max(0.5, knowledge);
+                bool knowsInterest = knowledge >= 0.35 || (memory != null && memory.HasLearnedInterest(speaker, listener, s.Interest));
+                if (knowsInterest) score += (lsInt[s.Interest] / 1000.0) * 0.55 * Math.Max(0.6, knowledge);
 
                 if (s.Skill != SkillKind.None)
                 {
@@ -121,7 +121,7 @@ namespace Simitone.Conversations
             speaker = speaker ?? new RawSim();
             listener = listener ?? new RawSim();
             rng = rng ?? new Random();
-            double knowledge = Math.Max(0.2, Math.Min(1.0, (speaker.LtrToTarget + 20) / 120.0));
+            double knowledge = Math.Max(0.4, Math.Min(1.0, (speaker.LtrToTarget + 20) / 120.0));
             var candidates = SelectCandidates(speaker, listener, knowledge, memory, Math.Min(6, subjects.Count), rng);
             if (candidates.Count <= 3) return candidates;
 
