@@ -102,3 +102,16 @@ Built and checked in the running game (house 5, `simtool interact` + `convo talk
 
 - Pie: tooltips now cover about 40 verbs (Sim-to-Sim actions and common object verbs), unit-tested; the head at the center has the design's white + mint ring (the head itself is the game's render, so the pink letter disc of the mock-up is not reproduced). Checked in the game (screenshot `pie-menu-night.png`).
 - Badge: hidden when the Live panel is closed or a modal is open (it used to float alone over the empty rail position).
+## Hood rails, HUD, Buy/Build: spike findings (2026-11-26, not built)
+
+Checked against the design boards (`Hood`, `Hud`, `Buy`) and the running game; nothing here is implemented.
+- **Hood side rails (labels, lot card):** the native rails pack icons 110 px apart (95 px icons), so a 16 px label under each does not fit without moving native controls. Options: labels shown on hover beside the icon (cheap, overlay, needs the mouse position and the fixed button rects), or replace the rails with our own buttons that call the same native handlers (bigger, riskier). The lot card (name, Sims, funds, Play) maps to the native house-selection popup, which would need the same replace-and-forward approach as the pie.
+- **HUD (value readout on needs bars, tooltips on every control):** the bars are native art; a value readout is an overlay reading `VMAvatar.GetMotiveData` and the bar rectangles. The rectangles are not exposed in a stable way (fixed art positions per resolution); needs a look at the needs panel controls before estimating.
+- **Buy/Build flyout (cards with price + stat chips, funds after, search/sort):** a new window fed from the object catalog, with the native bar kept. Largest of the three: needs the catalog data path, item selection hand-off to the native placement code, and search/sort. Spike first.
+- **Contained dialog card for the native dialogs:** only the mod's own dialogs are converted. The rest (`UIAlert`: help hints, event pop-ups, save prompts) is the game's and would be a skin of that one control.
+
+## Merge state (2026-11-26)
+
+- `fork/master` has everything above (Talk sheet, tab badge, depth/bold, pie ring and tooltips, day-theme fix, test tooling, Save-Guard).
+- The Laya branch's own worktree was not touched. The merged build (Laya branch + master) is commit `021274a`, pushed as branch `merged-laya-and-ui` on the fork, and installed in `the-sims-play` ("Simitone (Modded)"): 459 unit tests pass, the new Options page opened from the real Options button there. The Talk sheet, badge and day theme were verified in `the-sims-run` (master), not in the modded install (it has no test hook, and Bob is away at work at night in that save, so there is no second Sim to talk to).
+- Conflicts resolved by hand: `Boot.cs` (the law-enforcement drivers' tick list plus `TabBadge.Ensure()`), `ConvoPieMenu.cs` (the career pie menus plus `MarkAsked`).
