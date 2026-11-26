@@ -36,7 +36,7 @@ for (const [g, o] of Object.entries(tokens.themes.night)) if (o && typeof o === 
 for (const k of Object.keys(tokens.shared.pill)) knownVars.add("pill-" + kebab(k));
 for (const k of Object.keys(tokens.shared.iconButton)) knownVars.add("icon-btn-" + kebab(k));
 for (const k of Object.keys(tokens.shared.pie)) knownVars.add("pie-" + kebab(k));
-for (let i = 1; i <= 6; i++) knownVars.add("sim-" + i);
+for (let i = 1; i <= 6; i++) { knownVars.add("sim-" + i); knownVars.add("sim-ink-" + i); }   // sim-ink-N: the identity colour as text (deeper in the day theme)
 for (const k of Object.keys(tokens.spacing)) knownVars.add("sp-" + k);
 for (const k of Object.keys(tokens.radius)) knownVars.add("r-" + kebab(k));
 for (const s of ["good", "warn", "bad", "info"]) { knownVars.add(s + "-a16"); knownVars.add(s + "-a8"); }
@@ -121,7 +121,7 @@ function checkFile(file) {
       else if (!allowedLiteral.has(hex)) add("ERROR", "unknown-colour", rel, `${hex} is not in design-tokens.json`, `${where} { ${prop} }`);
     }
     for (const v of val.replace(/\{\{[^}]*\}\}/g, "1").matchAll(/var\(\s*--([\w-]+)/g)) if (!knownVars.has(v[1])) add("ERROR", "unknown-token", rel, `var(--${v[1]}) is not a design token`, `${where} { ${prop} }`);
-    if (/color-mix|grid|backdrop-filter|clip-path/.test(prop + " " + val) || prop === "box-shadow" || prop.startsWith("transition") || prop.startsWith("animation"))
+    if (/color-mix|grid|backdrop-filter|clip-path/.test(prop + " " + val) || (prop === "box-shadow" && /inset/.test(val)) || prop.startsWith("transition") || prop.startsWith("animation"))
       add("INFO", "engine-support", rel, `${prop}: ${val.slice(0, 40)} is not drawn by the in-game HTML engine (fine for web mock-ups)`, where);
     if (prop === "font-family" && !/Fredoka|Montserrat/i.test(val)) add("ERROR", "font", rel, `font-family ${val}: only Fredoka (display) and Montserrat (ui)`, where);
     if (prop === "border-radius") for (const r of val.split(/\s+/)) { const n = px(r); if (n !== null && !radii.has(n) && n < 100) add("WARN", "radius", rel, `radius ${n}px is not in the token scale (${[...radii].sort((a, b) => a - b).join(", ")})`, where); }

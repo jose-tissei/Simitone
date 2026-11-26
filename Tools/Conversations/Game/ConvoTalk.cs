@@ -116,9 +116,10 @@ namespace Simitone.Conversations
                     Listener = rl,
                     SpeakerProfile = ps,
                     ListenerProfile = pl,
-                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker),
+                    PlayerControlled = ConvoPrimitive.PlayerControls(speaker, listener),
                 };
 
+                Boot.Log("talk step: " + ps.Name + " -> " + pl.Name + " window=" + p.PlayerControlled + " priority=" + (thread.Queue != null && thread.Queue.Count > 0 ? thread.Queue[0].Priority.ToString() : "-"));
                 if (Boot.Laya.Available)
                 {
                     // Rank AI subjects via Laya on a worker thread (never blocks a frame)
@@ -158,7 +159,7 @@ namespace Simitone.Conversations
                 if (!p.PlayerControlled && Boot.AutoTone < 0)
                 {
                     pending.Remove(thread);
-                    Finish(ctx, p, subjects[0]);
+                    Finish(ctx, p, BestForListener(p, subjects));
                     return VMPrimitiveExitCode.RETURN_TRUE;
                 }
                 if (Boot.AutoTone >= 0)
@@ -167,7 +168,8 @@ namespace Simitone.Conversations
                     Finish(ctx, p, subjects[Math.Min(subjects.Count - 1, Boot.AutoTone)]);
                     return VMPrimitiveExitCode.RETURN_TRUE;
                 }
-                ConvoPrimitive.ShowChoice(ctx, "Talk", "Choose an AI conversation subject with " + p.ListenerProfile.Name + ":", subjects.Select(s => s.Title).ToArray());
+                if (!ConvoPrimitive.ShowSheet(ctx, SheetFor(p, subjects)))
+                    ConvoPrimitive.ShowChoice(ctx, "Talk", "Choose an AI conversation subject with " + p.ListenerProfile.Name + ":", subjects.Select(s => s.Title).ToArray());
                 p.DialogShown = true;
                 return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
             }
@@ -177,12 +179,43 @@ namespace Simitone.Conversations
             if (!dr.Responded && dr.WaitTime <= dr.Timeout) return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
             thread.BlockingState = null;
             pending.Remove(thread);
+            if (dr.Responded && dr.ResponseCode == TalkSheetMenu.NeverMind) return VMPrimitiveExitCode.RETURN_FALSE;   // "Never mind": the routine fails, the Sim does not start the chat
             var chosen = subjects[dr.Responded ? Math.Min(subjects.Count - 1, (int)dr.ResponseCode) : 0];
-            Finish(ctx, p, chosen);
+            string toneKey, words;
+            TalkSheetPageData.DecodeReply(dr.Responded ? dr.ResponseText : "", out toneKey, out words);
+            Finish(ctx, p, chosen, dr.Responded ? (Tone?)(Tone)TalkSheetPageData.ToneIndex(toneKey) : null, words);
             return VMPrimitiveExitCode.RETURN_TRUE;   // the routine's job (choosing a topic) is done
         }
 
-        static void Finish(VMStackFrame ctx, Pending p, AiSubject s)
+        // a Sim chatting on its own brings up the offered subject the listener is likeliest to enjoy
+        static AiSubject BestForListener(Pending p, List<AiSubject> subjects)
+        {
+            double know = Math.Max(0.4, Math.Min(1.0, (p.Speaker.LtrToTarget + 20) / 120.0));
+            return subjects.OrderByDescending(s => AiSubjectBank.ListenerTaste(p.Listener, s, know) + (p.Speaker.Interests[s.Interest] / 1000.0) * 0.2 + rng.NextDouble() * 0.3).First();   // the jitter keeps the same topic from coming up every time
+        }
+
+        // the sheet's three rows: the offered subjects, each with why it is on offer, and the tone the Sim would pick (or what worked before)
+        static TalkSheetRequest SheetFor(Pending p, List<AiSubject> subjects)
+        {
+            double know = Math.Max(0.4, Math.Min(1.0, (p.Speaker.LtrToTarget + 20) / 120.0));
+            var adj = new[] { Tone.Gentle, Tone.Playful, Tone.Bold }.Select(t => Boot.Memory.ToneAdjustment(p.Speaker, p.Listener, t)).ToArray();
+            var best = TalkSheetPageData.BestTone(adj);
+            var r = new TalkSheetRequest
+            {
+                SpeakerName = p.SpeakerProfile.Name, ListenerName = p.ListenerProfile.Name,
+                Prompt = "What should " + p.SpeakerProfile.Name + " talk about?",
+                Tone = best ?? (p.Speaker.Playful > 650 ? "playful" : (p.Speaker.Outgoing > 650 && p.Speaker.Nice < 400 ? "bold" : "gentle")),
+                ToneAdj = adj,
+            };
+            foreach (var s in subjects)
+            {
+                bool knows = know >= 0.55 || Boot.Memory.HasLearnedInterest(p.Speaker, p.Listener, s.Interest);
+                r.Rows.Add(new TalkRow { Title = s.Title, Why = TalkSheetPageData.Why(p.ListenerProfile.Name, knows, TopicLogic.Liking(p.Listener.Interests[s.Interest])) });
+            }
+            return r;
+        }
+
+        static void Finish(VMStackFrame ctx, Pending p, AiSubject s, Tone? chosenTone = null, string words = null)
         {
             var social = ctx.StackObject;
             social.SetAttribute(2, (short)s.Interest);   // maps the AI subject to the game's interest slot (0..7)
@@ -192,8 +225,9 @@ namespace Simitone.Conversations
             int quality = liking == 2 ? 3 : (liking == 1 ? 2 : 1);
             if (s.Skill != SkillKind.None && p.Listener.SkillValue(s.Skill) >= 400 && p.Speaker.SkillValue(s.Skill) >= 300)
                 quality = Math.Min(3, quality + 1);
-            var tone = p.Speaker.Playful > 650 ? Tone.Playful : (p.Speaker.Outgoing > 650 && p.Speaker.Nice < 400 ? Tone.Bold : s.ToneHint);
-            var line = DialogueBank.Fill(Boot.Bank.SpeakerLine("talk", tone, rng), p.SpeakerProfile.Name, p.ListenerProfile.Name, p.ListenerProfile.JobTitle, s.Title);
+            var tone = chosenTone ?? (p.Speaker.Playful > 650 ? Tone.Playful : (p.Speaker.Outgoing > 650 && p.Speaker.Nice < 400 ? Tone.Bold : s.ToneHint));
+            var line = !string.IsNullOrEmpty(words) ? words   // the player's own words are what the Sim says
+                : DialogueBank.Fill(Boot.Bank.SpeakerLine("talk", tone, rng), p.SpeakerProfile.Name, p.ListenerProfile.Name, p.ListenerProfile.JobTitle, s.Title);
             var reply = DialogueBank.Fill(Boot.Bank.ReplyLine("talk", quality, temper, rng), p.SpeakerProfile.Name, p.ListenerProfile.Name, p.ListenerProfile.JobTitle, s.Title);
 
             Boot.Memory.Record(p.Speaker, p.Listener, "talk", tone, s.Id, quality, s.Interest, s.Skill, s.Title, temper);

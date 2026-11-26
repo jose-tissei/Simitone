@@ -9,14 +9,14 @@ Sources: `docs/ui-redesign/UI-GUIDE.md` (section 3 screen map), `Tools/HtmlUi/RE
 | ID | Component | Where it lives today | How it is drawn | Guide screen | Status |
 |---|---|---|---|---|---|
 | UI-01 | Sim Memory dossier + News | `Game/SimMemoryMenu.cs`, `Logic/SimMemoryPageData.cs`, `ui/sim_memory.html` | HtmlSurface | Sim Memory modal L | **Done** |
-| UI-02 | Tone dialog (3 lines to say) | `Game/ConvoPrimitive.cs` `ShowDialog` / `ShowChoice` | The engine's native Yes/No/Cancel `VMDialogInfo` (title, message text, 3 buttons) | Talk sheet (tone + lines) | To do |
-| UI-03 | Talk subject dialog (3 AI subjects) | `Game/ConvoTalk.cs` line 170, same `ShowChoice` | Native dialog, subjects as button text | Talk sheet (subjects with "why", free text, tone, memory hint) | To do |
-| UI-04 | Speech balloons (two lines over the Sims) | `Game/ConvoOverlay.cs` | Hand-drawn rectangles and text, follows the Sim each frame | Not in the guide's map; needs the tokens, 16 px text, tail | To do |
-| UI-05 | Pie menu "Talk" / "Romance" bubbles | `Game/ConvoPieMenu.cs` (filter only), `Logic/PieMenuLogic.cs` | The game's native pie menu; we only change which entries show | Pie menu (6-8 slots on an ellipse, icon + label, "..." for submenus) | To do, blocked by engine (see gaps) |
-| UI-06 | Memory tab in the Live panel and Sim switcher | `Boot.OpenLiveMemoryTab` (reflection into `MainPanel.Switcher`, tab 5) | Native tab rail | Labelled tab rail with unread badge on Memory | To do, native |
-| UI-07 | Parallel-chat feedback (autonomous Sims talking) | `Game/ParallelSocialDriver.cs` | Reuses the balloons (UI-04) | Same as UI-04 | Follows UI-04 |
+| UI-02 | Tone dialog (3 lines to say) | `Game/TalkSheetMenu.cs` (lines variant), `ConvoPrimitive.ShowSheet` | HtmlSurface sheet; answers the VM's dialog with `VMNetDialogResponseCmd` | Talk sheet (tone + lines) | **Done** (2026-11-26), native dialog is the fallback |
+| UI-03 | Talk subject dialog (3 AI subjects) | `Game/TalkSheetMenu.cs`, `Logic/TalkSheetPageData.cs`, `ui/talk_sheet.html` | HtmlSurface sheet: subjects with "why", free text, tone with advice, memory hint, keys 1-3 / Enter / Esc | Talk sheet | **Done** (2026-11-26); typed words become the line, Laya picks the row they are about |
+| UI-04 | Speech balloons (two lines over the Sims) | `Game/ConvoOverlay.cs` | HtmlSurface painter, tokens, tail | Not in the guide's map; needs the tokens, 16 px text, tail | **Done** (96a7faf) |
+| UI-05 | Pie menu "Talk" / "Romance" bubbles | `Game/ConvoPieMenu.cs` (filter only), `Logic/PieMenuLogic.cs` | The game's native pie menu; we only change which entries show | Pie menu (6-8 slots on an ellipse, icon + label, "..." for submenus) | **Done** as an overlay (orbit, border/lip/shadow, hover, tooltip for ~13 verbs, submenu, back) |
+| UI-06 | Memory tab in the Live panel and Sim switcher | `Boot.OpenLiveMemoryTab` (reflection into `MainPanel.Switcher`, tab 5) | Native tab rail | Labelled tab rail with unread badge on Memory | **Badge done** (2026-11-26); rail labels still native |
+| UI-07 | Parallel-chat feedback (autonomous Sims talking) | `Game/ParallelSocialDriver.cs` | Reuses the balloons (UI-04) | Same as UI-04 | **Done** with UI-04 |
 | UI-08 | Gossip news (what a Sim just heard) | `Game/GossipDirector.cs`, `Logic/Gossip/*` | No UI of its own: shows in News (UI-01) and balloons | Optional toast | Decision needed |
-| UI-09 | AI settings (Laya on/off, tone/auto/menu mode, gossip, render options) | Only console commands in `Boot.cs` (`convo on|off|menu full|simple|parallel`) and `Render/Logic/RenderSettings.cs` | No in-game UI found | Options panel, group "Sims AI" (switches with On/Off) | To do, new screen |
+| UI-09 | AI settings (Laya on/off, tone/auto/menu mode, gossip, render options) | Only console commands in `Boot.cs` (`convo on|off|menu full|simple|parallel`) and `Render/Logic/RenderSettings.cs` | No in-game UI found | Options panel, group "Sims AI" (switches with On/Off) | **Done**: full page (Game, View tiles, Graphics, Sims AI), opened by the Options button (0342d18) |
 
 Not AI-owned, and the guide says keep as-is: bottom-left dial and bar, needs bars (only a value readout is asked for), Buy/Build bar, neighbourhood side buttons. Out of this feature.
 
@@ -72,3 +72,33 @@ Not AI-owned, and the guide says keep as-is: bottom-left dial and bar, needs bar
 ## Not verified
 
 Gap 1 and gap 3 are read from our own code only; I have not read how the game client builds the dialog window or the pie menu. UI-09: I found no in-game settings UI in `Conversations` or `Render`, only commands; if one exists elsewhere in the native game it is not mapped here.
+
+## Status (2026-11-25)
+
+**Done and verified in the running game (screenshots in `docs/ui-redesign/screenshots/`):** UI-01 Sim Memory (now household-only "Memory of", Known Sims search, News filter and "Show more"), UI-04 balloons, UI-07, UI-09 full Options page reached from the game's Options button, UI-05 pie menu, theme setting (night/day), engine-wide smoothing (anti-aliased rounded corners, rings, tails, round dots, area-averaged icons, 8x multisampled Sim head, rounded gradient headers) with a unit test that new UI never draws shapes by hand. `ui-redesign-check`: 2 pages, 0 errors.
+
+**Not done:**
+- ~~UI-02 and UI-03 Talk sheet~~: done 2026-11-26 (see Status below).
+- UI-06 tab rail badge/labels: native, untouched.
+- UI-08 gossip toast: decision pending; News covers it for now.
+- Guide screens never started: Buy/Build flyout, Hood side rails, HUD overlays (needs value readout, tooltips), contained dialog card for native dialogs.
+- Gap 5 fonts/bold: no Fredoka/Montserrat, regular weight; no shadows/gloss on cards, buttons, chips (only the pie has depth). This is why the in-game pages look flatter than the mock-ups.
+- Gap 7 installer does not run Deploy-HtmlUi (done by hand or by `Tools/Dev-Iterate.ps1`).
+
+**Not verified:** day theme in the game after the smoothing work (preview only); the new Options buttons Save / Neighborhood / Quit / anti-aliasing / lighting were not clicked in the game; page is 960x800 while the design differs; tooltips cover ~13 pie verbs only; round avatar disc in the pie is missing; UIR-02 screenshots exist for Memory, Options, balloons and pie only.
+
+**Merge state:** all of the above is on `fork/master` (1f93abb). The Laya branch (`laya-autonomous-sim-social`) does not contain it yet; the modded install (`the-sims-play`) runs an older merged build.
+## Talk sheet (2026-11-26)
+
+Built and checked in the running game (house 5, `simtool interact` + `convo talksheet`): `Game/TalkSheetMenu.cs`, `Logic/TalkSheetPageData.cs` (16 unit tests), `ui/talk_sheet.html`, screenshots `talk-sheet-night.png` and `talk-sheet-lines-night.png`.
+- The simulation stays blocked on the thread's `VMDialogResult` exactly as with the native dialog; the sheet answers with the same `VMNetDialogResponseCmd` (code = row 0..2, `ResponseText` = `<tone>|<words>`). `ConvoPrimitive.ShowSheet` falls back to the native `ShowChoice` when the page is missing (UIR-03). `autodialog` in the test hook leaves the sheet alone.
+- Talk: three subject rows with a reason chip (what the speaker knows of the listener's taste, or "New topic"), a free-text field, tone (Gentle/Playful/Bold) with "works well" advice from SocialMemory, a memory hint with "Open memory", keys 1-3 / Enter / Esc. Verified: pick row 2 + tone Bold + own words -> `decision: talk about <row 2> ... "<own words>"`; Esc ("Never mind") closes it, the clock resumes, no conversation is recorded and the Sim is idle.
+- Three lines (Hug etc.): same sheet without tone, text or memory; picking a row answers at once. Verified: picking line 2 -> `decision: hug Playful ... "<line 2>"`.
+- Free text: Laya (`ScoreChoices`) reads which offered topic the words are about (kept row if no clear match, 0.5); the words are what the Sim says. Not verified in the game: Laya reassigning the row (offline classification only exercised through the unit-level logic), keyboard typing with a real keyboard (tested through the hook's text path), day theme of the sheet beyond one screenshot, and the sheet under the pie / other modals.
+## Tab rail badge (2026-11-26)
+
+`Game/TabBadge.cs` (+ `Logic/TabBadgeLogic.cs`, 7 tests): an overlay kept on top of the screen finds the Memory button through the game's `UICategorySwitcher` (CatSwitchButtons / MainButton, by reflection) and draws the count of News stories of the Sim being played that the News tab has not shown yet: on the Memory button in the open rail, on the rail's main button otherwise. Checked in the game: "8" over the Memory tab; after the News tab showed the stories, `convo badge` -> "no unread". `simtool convo badge` reports what it is doing. Not done: the rail's text labels (native control); "seen" counts live in memory only, so every session starts with all stories unread.
+## Pie and badge follow-ups (2026-11-26)
+
+- Pie: tooltips now cover about 40 verbs (Sim-to-Sim actions and common object verbs), unit-tested; the head at the center has the design's white + mint ring (the head itself is the game's render, so the pink letter disc of the mock-up is not reproduced). Checked in the game (screenshot `pie-menu-night.png`).
+- Badge: hidden when the Live panel is closed or a modal is open (it used to float alone over the empty rail position).

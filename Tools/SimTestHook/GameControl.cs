@@ -16,11 +16,12 @@ public static class GameControl
 {
     static readonly Queue<Action> jobs = new Queue<Action>();
 
-    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "persona", "setrel", "motives", "focus", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname" };
+    public static readonly HashSet<string> Verbs = new HashSet<string> { "sims", "menu", "interact", "rel", "dialog", "answer", "speed", "global", "time", "objs", "attr", "persona", "setrel", "motives", "focus", "convo", "aa", "render", "gotolot", "families", "playhouse", "lotinfo", "alerts", "dismiss", "camera", "lotname", "state", "autodialog" };
 
     // called on the game thread, once per frame
     public static void Drain()
     {
+        AutoTick();
         while (true)
         {
             Action a;
@@ -63,7 +64,7 @@ public static class GameControl
 
     static string Execute(string[] p)
     {
-        var vm = (p[0] == "convo" || p[0] == "lotname" || p[0] == "families" || p[0] == "playhouse" || p[0] == "alerts" || p[0] == "dismiss") ? null : GetVM();   // convo commands also work on the neighbourhood map
+        var vm = (p[0] == "state" || p[0] == "autodialog" || p[0] == "convo" || p[0] == "lotname" || p[0] == "families" || p[0] == "playhouse" || p[0] == "alerts" || p[0] == "dismiss") ? null : GetVM();   // convo commands also work on the neighbourhood map
         switch (p[0])
         {
             case "sims": return Sims(vm);
@@ -158,9 +159,16 @@ public static class GameControl
                 var down = screen.GetType().GetField("Downtown")?.GetValue(screen);
                 return "ok objects=" + objects + " sims=" + avatars + " downtown=" + down + " size=" + vm.Context.Architecture.Width + "x" + vm.Context.Architecture.Height + " hour=" + vm.Context.Clock.Hours;
             }
+            case "state": return State();
+            case "autodialog":
+                // autodialog on [speed] | off: answers every dialog the game puts up (help hints, event pop-ups) and keeps the speed; a dialog the VM waits on
+                // freezes the simulation for good otherwise, and closing it on screen does not answer it
+                AutoDialog = p.Length > 1 && p[1] == "on"; AutoSpeed = p.Length > 2 ? int.Parse(p[2]) : 0;
+                return "ok autodialog=" + AutoDialog + " speed=" + AutoSpeed;
             case "alerts":
             case "dismiss":
             {
+                if (p[0] == "dismiss") { int n = CloseAlerts(); bool ans = AnswerWaiting(); return "ok closed " + n + (ans ? " and answered the dialog the game was waiting on" : ""); }
                 // alerts: the text of every alert box on screen ("title: message"); dismiss: closes them (what pressing OK does)
                 var any = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
                 var facade = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Client.GameFacade", false)).First(x => x != null);
@@ -283,6 +291,102 @@ public static class GameControl
         return "err unknown";
     }
 
+    public static bool AutoDialog; public static int AutoSpeed; static int autoFrame;
+
+    // once every few frames, on the game thread
+    static void AutoTick()
+    {
+        if (!AutoDialog || ++autoFrame % 6 != 0) return;
+        try
+        {
+            CloseAlerts();
+            if (!SheetOpen()) AnswerWaiting();   // the mod's own Talk sheet is a dialog the VM waits on too: leave it to the test
+            var vm = GetVM();
+            if (AutoSpeed > 0 && vm.SpeedMultiplier <= 0 && vm.GlobalBlockingDialog == null) { vm.SpeedMultiplier = AutoSpeed; vm.LastSpeedMultiplier = 0; }
+        }
+        catch { }
+    }
+
+    static bool SheetOpen()
+    {
+        var t = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("Simitone.Conversations.TalkSheetMenu", false)).FirstOrDefault(x => x != null);
+        var v = t == null ? null : t.GetProperty("IsOpen")?.GetValue(null, null);
+        return v is bool && (bool)v;
+    }
+
+    // answers the dialog the simulation is waiting on (the first choice)
+    static bool AnswerWaiting()
+    {
+        try
+        {
+            var vm = GetVM();
+            var owner = vm.GlobalBlockingDialog;
+            if (owner == null || !(owner.Thread.BlockingState is VMDialogResult)) return false;
+            vm.SendCommand(new VMNetDialogResponseCmd { ResponseCode = 0, ResponseText = "" });
+            return true;
+        }
+        catch { return false; }
+    }
+
+    // closes the alert boxes shown on screen (what pressing OK does to the box)
+    static int CloseAlerts()
+    {
+        var any = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Static;
+        var facade = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Client.GameFacade", false)).First(x => x != null);
+        var screens = (facade.GetField("Screens", any)?.GetValue(null)) ?? facade.GetProperty("Screens", any)?.GetValue(null, null);
+        var toClose = new List<object>();
+        foreach (var f in screens.GetType().GetFields(any))
+        {
+            var en = f.GetValue(screens) as System.Collections.IEnumerable;
+            if (en == null || f.FieldType == typeof(string)) continue;
+            foreach (var item in en)
+            {
+                var dlg = item?.GetType().GetField("Dialog")?.GetValue(item) ?? item;
+                if (dlg?.GetType().GetField("m_Options", any)?.GetValue(dlg) != null) toClose.Add(dlg);
+            }
+        }
+        var uiScreen = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("FSO.Client.UI.Framework.UIScreen", false)).First(x => x != null);
+        foreach (var d in toClose) uiScreen.GetMethod("RemoveDialog").Invoke(null, new object[] { d });
+        return toClose.Count;
+    }
+
+    static string J(string s) { return "\"" + (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", " ").Replace("\n", " ") + "\""; }
+
+    // one line of JSON with everything worth knowing about the game right now
+    static string State()
+    {
+        var sb = new System.Text.StringBuilder("ok {");
+        var screen = FSO.Client.UI.Framework.UIScreen.Current;
+        sb.Append("\"screen\":" + J(screen == null ? null : screen.GetType().Name));
+        VM vm = null; try { vm = GetVM(); } catch { }
+        sb.Append(",\"lot\":" + (vm != null ? "true" : "false") + ",\"autodialog\":" + (AutoDialog ? "true" : "false"));
+        if (vm != null)
+        {
+            var clk = vm.Context.Clock;
+            sb.Append(",\"time\":" + J(clk.Hours.ToString("00") + ":" + clk.Minutes.ToString("00")) + ",\"day\":" + clk.DayOfMonth + ",\"speed\":" + vm.SpeedMultiplier);
+            var owner = vm.GlobalBlockingDialog;
+            sb.Append(",\"blockedBy\":" + (owner == null ? "null" : J(owner.Name + (owner.Thread.BlockingState is VMDialogResult ? " (waiting for an answer)" : ""))));
+            var w = vm.Context.World;
+            var active = vm.GetObjectById(vm.GetGlobalValue(3));
+            sb.Append(",\"camera\":{\"x\":" + w.State.CenterTile.X.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"y\":" + w.State.CenterTile.Y.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",\"worldVisible\":" + (w.Visible ? "true" : "false") + "}");
+            sb.Append(",\"sims\":[");
+            bool first = true;
+            foreach (var a in Avatars(vm))
+            {
+                if (!first) sb.Append(","); first = false;
+                bool away = a.Position == FSO.LotView.Model.LotTilePos.OUT_OF_WORLD;
+                var q = a.Thread?.Queue;
+                sb.Append("{\"id\":" + a.ObjectID + ",\"name\":" + J(a.Name) + ",\"active\":" + (ReferenceEquals(a, active) ? "true" : "false") + ",\"away\":" + (away ? "true" : "false") +
+                          ",\"pos\":" + (away ? "null" : "[" + a.Position.TileX + "," + a.Position.TileY + "," + a.Position.Level + "]") +
+                          ",\"age\":" + a.GetPersonData(VMPersonDataVariable.PersonsAge) +
+                          ",\"queue\":" + (q == null ? 0 : q.Count) + ",\"action\":" + J(q != null && q.Count > 0 ? q[0].Name : null) + ",\"priority\":" + (q != null && q.Count > 0 ? q[0].Priority : 0) +
+                          ",\"social\":" + a.GetMotiveData(VMMotive.Social) + ",\"mood\":" + a.GetMotiveData(VMMotive.Mood) + ",\"energy\":" + a.GetMotiveData(VMMotive.Energy) + ",\"hunger\":" + a.GetMotiveData(VMMotive.Hunger) + "}");
+            }
+            sb.Append("]");
+        }
+        return sb.Append("}").ToString();
+    }
+
     static IEnumerable<VMAvatar> Avatars(VM vm) { return vm.Entities.OfType<VMAvatar>(); }
 
     static string Label(VMAvatar a)
@@ -327,13 +431,16 @@ public static class GameControl
     static string Interact(VM vm, VMAvatar actor, VMAvatar target, string name)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new Exception("interaction name required (see 'menu')");
+        // a trailing "auto" queues the action the way a Sim's own free will does (autonomous priority) instead of as the player's click
+        bool auto = name.EndsWith(" auto", StringComparison.OrdinalIgnoreCase);
+        if (auto) name = name.Substring(0, name.Length - 5);
         var items = PieMenu(vm, actor, target);
         var exact = items.Where(i => string.Equals(Norm(i.Name), Norm(name), StringComparison.OrdinalIgnoreCase)).ToList();
         var found = exact.Count > 0 ? exact : items.Where(i => Norm(i.Name).IndexOf(Norm(name), StringComparison.OrdinalIgnoreCase) >= 0).ToList();
         if (found.Count == 0) throw new Exception("no interaction '" + name + "' available from " + actor.Name + " to " + target.Name);
         if (found.Count > 1) throw new Exception("'" + name + "' is ambiguous: " + string.Join(", ", found.Select(i => Norm(i.Name))));
         var act = found[0];
-        vm.SendCommand(new VMNetInteractionCmd
+        var cmd = new VMNetInteractionCmd
         {
             Interaction = act.ID,
             ActorUID = actor.PersistID,
@@ -341,7 +448,16 @@ public static class GameControl
             CalleeID = target.ObjectID,
             Param0 = act.Param0,
             Global = act.Global
-        });
+        };
+        if (auto)
+        {
+            var cp = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("Simitone.Conversations.ConvoPrimitive", false)).FirstOrDefault(x => x != null);
+            cp?.GetMethod("ClearAsked")?.Invoke(null, new object[] { actor, target });   // the menu lookup above is not a player click
+            cmd.Execute(vm, actor);
+            foreach (var q in actor.Thread.Queue) if (q.Callee == target) q.Priority = (short)FSO.SimAntics.Engine.VMQueuePriority.Autonomous;
+            return "ok queued " + Norm(act.Name) + " as an autonomous action (" + actor.Name + " -> " + target.Name + ")";
+        }
+        vm.SendCommand(cmd);
         return "ok queued " + Norm(act.Name) + " (" + actor.Name + " -> " + target.Name + ")";
     }
 

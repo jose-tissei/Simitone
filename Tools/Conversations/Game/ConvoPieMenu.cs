@@ -14,6 +14,7 @@ namespace Simitone.Conversations
         {
             try
             {
+                if (caller is VMAvatar && target is VMAvatar) ConvoPrimitive.MarkAsked(caller, target);   // the player pointed at this Sim: a conversation that follows is theirs
                 if (Boot.Enabled && BeatPatrolDriver.IsActiveOn(vm))
                 {
                     var patrolMenu = BeatPatrolDriver.TryBuildPieMenu(target, vm, caller);

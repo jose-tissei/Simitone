@@ -47,8 +47,8 @@ public class ParallelSocialPlannerTests
     }
 
     [Theory]
-    [InlineData(-100, true)] [InlineData(0, true)] [InlineData(20, true)] [InlineData(21, false)] [InlineData(60, false)] [InlineData(100, false)]
-    public void TriggersWhenSocialIsSixtyPercentOrUnder(int social, bool expected)
+    [InlineData(-100, true)] [InlineData(0, true)] [InlineData(50, true)] [InlineData(51, false)] [InlineData(80, false)] [InlineData(100, false)]
+    public void TriggersWhenSocialIsSeventyFivePercentOrUnder(int social, bool expected)
     {
         Assert.Equal(expected, ParallelSocialPlanner.ShouldTriggerSocial((short)social));
     }

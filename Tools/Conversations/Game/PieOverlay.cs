@@ -95,6 +95,7 @@ namespace Simitone.Conversations
                 if (!ReferenceEquals(first, laidOut) || buttons.Count != laidCount) { Arrange(buttons, hasParent); laidOut = first; laidCount = buttons.Count; }
                 originY = pie.Y;
                 DrawOrbit(pie.X, pie.Y, hasParent);
+                DrawHeadRing(pie.X, pie.Y);
                 hoverCaption = null;
                 int drawn = 0;
                 for (int i = 0; i < buttons.Count; i++)
@@ -167,6 +168,14 @@ namespace Simitone.Conversations
                 if (!back) k++;
                 b.X = x - b.Width / 2; b.Y = y - b.Size.Y / 2;
             }
+        }
+
+        // the design puts the Sim at the middle of the orbit in a disc with a white border and a mint ring; the head is the game's own render, so only the rings are drawn
+        const float HeadRing = 42, HeadRingDy = -10;   // the head render sits a little above the pie origin
+        void DrawHeadRing(float cx, float cy)
+        {
+            painter.StrokeRect(cx - HeadRing - 3, cy - HeadRing - 3, 2 * (HeadRing + 3), 2 * (HeadRing + 3), new Rgba(46, 242, 176), 3, HeadRing + 3);
+            painter.StrokeRect(cx - HeadRing, cy - HeadRing, 2 * HeadRing, 2 * HeadRing, new Rgba(255, 255, 255), 3, HeadRing);
         }
 
         // the design's dashed ellipse through the slots

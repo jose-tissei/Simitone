@@ -356,10 +356,18 @@ namespace Simitone.Conversations
             return s;
         }
 
+        static float BoldOffset(float size) { return size >= 26 ? 1.2f : (size >= 18 ? 0.9f : 0.6f); }
+
         public void DrawText(string text, float x, float y, float size, bool bold, Rgba color)
         {
             var st = Style(size, color);
-            if (!rotating) { owner.DrawLocalString(batch, text, new Vector2(x, y), st); return; }
+            if (!rotating)
+            {
+                owner.DrawLocalString(batch, text, new Vector2(x, y), st);
+                // the game ships one weight of the font: bold is the same text drawn twice, a fraction of a pixel apart (thicker stems)
+                if (bold) owner.DrawLocalString(batch, text, new Vector2(x + BoldOffset(size), y), st);
+                return;
+            }
             for (int i = 0; i < text.Length; i++)
             {
                 if (text[i] == ' ') continue;
@@ -371,7 +379,7 @@ namespace Simitone.Conversations
         public void MeasureText(string text, float size, bool bold, out float w, out float h)
         {
             var m = Style(size, new Rgba(255, 255, 255)).MeasureString(text);
-            w = m.X; h = m.Y;
+            w = m.X + (bold ? BoldOffset(size) : 0); h = m.Y;
         }
 
         int iconCell, iconW; Color[] iconPixels;

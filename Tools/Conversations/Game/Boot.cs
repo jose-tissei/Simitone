@@ -163,6 +163,8 @@ namespace Simitone.Conversations
             catch (Exception e) { Log("dispatch tick error: " + e.GetType().Name + ": " + e.Message); }
             try { PieOverlay.Ensure(); }
             catch (Exception e) { Log("pie overlay error: " + e.GetType().Name + ": " + e.Message); }
+            try { TabBadge.Ensure(); }
+            catch (Exception e) { Log("tab badge error: " + e.GetType().Name + ": " + e.Message); }
         }
 
         public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
@@ -271,6 +273,8 @@ namespace Simitone.Conversations
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " " + ParallelSocialDriver.Diagnostics() + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
                 case "htmlui": return a.Length > 1 && a[1] == "close" ? HtmlPanel.Close() : a.Length > 1 && a[1] == "status" ? HtmlPanel.Status() : HtmlPanel.Open(a.Length > 1 ? a[1] : "memory.html");
+                case "badge": return "badge=" + TabBadge.LastState;
+                case "talksheet": return TalkSheetMenu.Command(a.Skip(1).ToArray());
                 case "memory-ui":
                 {
                     var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "open";

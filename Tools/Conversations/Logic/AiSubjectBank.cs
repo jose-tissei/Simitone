@@ -82,8 +82,8 @@ namespace Simitone.Conversations
             {
                 double score = 0.0;
                 score += (spInt[s.Interest] / 1000.0) * 0.45;
-                bool knowsInterest = knowledge >= 0.55 || (memory != null && memory.HasLearnedInterest(speaker, listener, s.Interest));
-                if (knowsInterest) score += (lsInt[s.Interest] / 1000.0) * 0.40 * Math.Max(0.5, knowledge);
+                bool knowsInterest = knowledge >= 0.35 || (memory != null && memory.HasLearnedInterest(speaker, listener, s.Interest));
+                if (knowsInterest) score += (lsInt[s.Interest] / 1000.0) * 0.55 * Math.Max(0.6, knowledge);
 
                 if (s.Skill != SkillKind.None)
                 {
@@ -115,13 +115,20 @@ namespace Simitone.Conversations
             return picks;
         }
 
+        // how much the listener is expected to enjoy a subject (0..0.8): Laya knows names, not tastes, so without this a topic the listener dislikes can come first
+        public static double ListenerTaste(RawSim listener, AiSubject s, double knowledge)
+        {
+            var lsInt = listener.Interests != null && listener.Interests.Length >= 8 ? listener.Interests : new short[8];
+            return (lsInt[s.Interest] / 1000.0) * 0.8 * Math.Max(0.5, knowledge);
+        }
+
         // Picks 3 distinct AI subjects to show in the manual Talk dialog, using Laya ranking when available.
         public List<AiSubject> OfferForManualTalk(RawSim speaker, RawSim listener, LayaClient laya, SocialMemory memory, Random rng)
         {
             speaker = speaker ?? new RawSim();
             listener = listener ?? new RawSim();
             rng = rng ?? new Random();
-            double knowledge = Math.Max(0.2, Math.Min(1.0, (speaker.LtrToTarget + 20) / 120.0));
+            double knowledge = Math.Max(0.4, Math.Min(1.0, (speaker.LtrToTarget + 20) / 120.0));
             var candidates = SelectCandidates(speaker, listener, knowledge, memory, Math.Min(6, subjects.Count), rng);
             if (candidates.Count <= 3) return candidates;
 
@@ -140,7 +147,7 @@ namespace Simitone.Conversations
                 if (probs != null && probs.Count > 0)
                 {
                     candidates = candidates
-                        .OrderByDescending(c => (probs.ContainsKey(c.Id) ? probs[c.Id] : 0.0) + (memory != null ? memory.SubjectAdjustment(speaker, listener, c.Id) * 0.5 : 0.0))
+                        .OrderByDescending(c => (probs.ContainsKey(c.Id) ? probs[c.Id] : 0.0) + (memory != null ? memory.SubjectAdjustment(speaker, listener, c.Id) * 0.5 : 0.0) + ListenerTaste(listener, c, knowledge))
                         .ToList();
                 }
             }

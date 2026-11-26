@@ -20,9 +20,22 @@ namespace Simitone.Conversations
             public string Title { get { return Interests[Interest]; } }
         }
 
+        // The game stores a Sim's interests on a 0..1000 scale in theory, but the Sims of a saved family come with 0..10 (what the personality panel shows).
+        // Read as 0..1000 every such Sim "dislikes" everything (9 < 200), which is why chats kept ending badly: scale those up.
+        public static short[] Normalize(short[] interests)
+        {
+            if (interests == null || interests.Length == 0) return interests;
+            short max = 0;
+            foreach (var v in interests) if (v > max) max = v;
+            if (max > 10) return interests;
+            var scaled = new short[interests.Length];
+            for (int i = 0; i < interests.Length; i++) scaled[i] = (short)(interests[i] * 100);
+            return scaled;
+        }
+
         // interest 0..1000: how the listener feels about a subject
-        // the game's own rule (script `SHD do I like topic?`) is "interest above 600"; below 300 the listener is bored by it
-        public static int Liking(short interest) { return interest > 600 ? 2 : (interest >= 300 ? 1 : 0); }   // 2 likes, 1 neutral, 0 dislikes
+        // the game's own rule (script `SHD do I like topic?`) is "interest above 600"; below 200 the listener is bored by it (the line used to be 300: it made too many chats end badly)
+        public static int Liking(short interest) { return interest > 600 ? 2 : (interest >= 200 ? 1 : 0); }   // 2 likes, 1 neutral, 0 dislikes
 
         // Up to three subjects: one the speaker is keen on, one the listener is keen on, one other.
         // Deterministic for a given rng so tests can pin it.

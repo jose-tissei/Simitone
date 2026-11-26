@@ -6,12 +6,23 @@ using Xunit;
 public class TopicLogicTests
 {
     [Theory]
-    [InlineData(0, 0)] [InlineData(299, 0)] [InlineData(300, 1)] [InlineData(599, 1)] [InlineData(600, 1)] [InlineData(601, 2)] [InlineData(1000, 2)]
+    [InlineData(0, 0)] [InlineData(199, 0)] [InlineData(200, 1)] [InlineData(300, 1)] [InlineData(599, 1)] [InlineData(600, 1)] [InlineData(601, 2)] [InlineData(1000, 2)]
     public void Liking(int interest, int expected) { Assert.Equal(expected, TopicLogic.Liking((short)interest)); }
 
     [Theory]
     [InlineData(100, 1)] [InlineData(450, 2)] [InlineData(800, 3)]
     public void OutcomeFollowsTheListenersInterest(int interest, int outcome) { Assert.Equal(outcome, TopicLogic.OutcomeFor((short)interest)); }
+
+    [Fact]
+    public void InterestsOnTheTenPointScaleAreScaledUp()
+    {
+        var n = TopicLogic.Normalize(new short[] { 9, 0, 10, 5, 2, 7, 1, 8 });
+        Assert.Equal(new short[] { 900, 0, 1000, 500, 200, 700, 100, 800 }, n);
+        Assert.Equal(2, TopicLogic.Liking(n[0]));   // 9 of 10 is liked
+        Assert.Equal(0, TopicLogic.Liking(n[6]));   // 1 of 10 is not
+        var big = new short[] { 900, 0, 10, 5, 2, 7, 1, 8 };
+        Assert.Same(big, TopicLogic.Normalize(big));   // already 0..1000: untouched
+    }
 
     [Fact]
     public void OffersThreeDistinctSubjects()

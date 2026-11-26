@@ -573,7 +573,9 @@ namespace Simitone.Conversations
         {
             int speakerId = SpeakerNeighborId();
             var vmNow = ParallelSocialDriver.CurrentVm;
-            return speakerId > 0 && vmNow != null ? GossipView.NewsOf(Boot.Gossip, speakerId, GossipDirector.Today(vmNow)) : new List<NewsEntry>();
+            var news = speakerId > 0 && vmNow != null ? GossipView.NewsOf(Boot.Gossip, speakerId, GossipDirector.Today(vmNow)) : new List<NewsEntry>();
+            if (showNews) TabBadge.MarkSeen(speakerId, news.Count);   // the News tab is showing these stories: the badge on the Memory tab counts only newer ones
+            return news;
         }
 
         void DrawHtml(UISpriteBatch batch)
