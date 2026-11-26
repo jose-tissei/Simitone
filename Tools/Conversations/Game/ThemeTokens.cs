@@ -32,7 +32,12 @@ namespace Simitone.Conversations
             foreach (JProperty kv in ((JObject)root["shared"]["pie"]).Properties()) map["pie-" + Kebab(kv.Name)] = (string)kv.Value;
             foreach (JProperty kv in ((JObject)root["shared"]["balloon"]).Properties()) map["balloon-" + Kebab(kv.Name)] = kv.Value.Type == JTokenType.Integer ? ((int)kv.Value) + "px" : (string)kv.Value;
             int i = 1;
-            foreach (var c in root["shared"]["simIdentity"]) map["sim-" + (i++)] = (string)c;
+            foreach (var c in root["shared"]["simIdentity"])
+            {
+                map["sim-" + i] = (string)c;
+                map["sim-ink-" + i] = theme == "day" ? Darken((string)c, 0.5) : (string)c;   // the same colour as text: the pastel identity colours are made for dark panels, on a light card they need to be deeper
+                i++;
+            }
             foreach (JProperty kv in ((JObject)root["spacing"]).Properties()) map["sp-" + kv.Name] = ((int)kv.Value) + "px";
             foreach (JProperty kv in ((JObject)root["radius"]).Properties()) map["r-" + Kebab(kv.Name)] = ((int)kv.Value) + "px";
             // translucent tints of the status colours (CSS color-mix is not available in the game's CSS engine)
@@ -48,6 +53,14 @@ namespace Simitone.Conversations
         {
             hex = hex.TrimStart('#');
             return "rgba(" + Convert.ToInt32(hex.Substring(0, 2), 16) + "," + Convert.ToInt32(hex.Substring(2, 2), 16) + "," + Convert.ToInt32(hex.Substring(4, 2), 16) + "," + a.ToString(System.Globalization.CultureInfo.InvariantCulture) + ")";
+        }
+
+        // "#RRGGBB" scaled towards black
+        static string Darken(string hex, double f)
+        {
+            if (hex == null || hex.Length != 7 || hex[0] != '#') return hex;
+            int r = Convert.ToInt32(hex.Substring(1, 2), 16), g = Convert.ToInt32(hex.Substring(3, 2), 16), b = Convert.ToInt32(hex.Substring(5, 2), 16);
+            return "#" + ((int)(r * f)).ToString("X2") + ((int)(g * f)).ToString("X2") + ((int)(b * f)).ToString("X2");
         }
 
         static string Kebab(string s)

@@ -22,4 +22,6 @@ if ($Force -or -not (Test-Path $dll) -or $newest.LastWriteTime -gt (Get-Item $dl
     # the installer rebuilds this tracked binary; it is not part of the change
     git -C $repo checkout -- Tools/Render/out/Render.dll 2>$null
 } else { Write-Host "installed build is current" }
+# the player's saves and settings are snapshotted once; restore with Tools\Save-Guard.ps1 -Restore (the Options Save button writes the real save)
+& pwsh -NoProfile -File (Join-Path $repo 'Tools\Save-Guard.ps1') -Snapshot | Out-Null
 if (-not $NoBoot) { & $tool boot $House $Speed }

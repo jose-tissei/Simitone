@@ -279,5 +279,15 @@ namespace Conversations.Tests
             Assert.Equal(SimMemoryPageData.SimColor("Betty"), SimMemoryPageData.SimColor("betty"));
             Assert.InRange(SimMemoryPageData.SimColor("Mystery Man"), 1, 6);
         }
+
+        [Fact]
+        public void SimIdentityInkIsDeeperInTheDayTheme()
+        {
+        var json = System.IO.File.ReadAllText(System.IO.Path.GetFullPath(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(FindPage("sims-ui.css")), "..", "..", "..", "docs", "ui-redesign", "design-tokens.json")));
+        var night = ThemeTokens.Build(json, "night"); var day = ThemeTokens.Build(json, "day");
+        Assert.Equal(night["sim-2"], night["sim-ink-2"]);          // night: the pastel colour as designed
+        Assert.NotEqual(day["sim-2"], day["sim-ink-2"]);           // day: deeper, readable on a light card
+        Assert.Equal("#7CE8FF", day["sim-2"]);                      // the disc colour itself is unchanged
+    }
     }
 }
