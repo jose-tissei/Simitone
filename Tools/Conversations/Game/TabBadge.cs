@@ -85,6 +85,13 @@ namespace Simitone.Conversations
             unread = TabBadgeLogic.Unread(GossipView.NewsOf(Boot.Gossip, id, GossipDirector.Today(vm)).Count, SeenOf(id));
         }
 
+        // a control is on screen only when it and everything above it is visible (a closed Live panel hides the whole rail)
+        static bool Shown(UIElement e)
+        {
+            for (UIElement c = e; c != null && !(c is UIScreen); c = c.Parent as UIElement) if (!c.Visible) return false;
+            return true;
+        }
+
         // where a control sits on the screen: its own position plus its parents' (they are not scaled)
         static Vector2 Absolute(UIElement e)
         {
@@ -117,8 +124,8 @@ namespace Simitone.Conversations
                 if (painter == null) { painter = new HtmlSurface(this, "badge.none"); LoadTokens(); }
                 painter.BeginDraw(batch);
                 var expanded = (float)Prop(sw, "CategoryExpand") > 0.9f;
-                if (expanded && expandIdx >= 0) { var b = (UIElement)btns[expandIdx]; if (b.Visible) { Paint(Absolute(b) + new Vector2(44, -2)); LastState = "badge on the Memory tab"; } }
-                else if (active != MemoryCategory) { Paint(Absolute(main) + new Vector2(44, -2)); LastState = "badge on the rail button"; }
+                if (expanded && expandIdx >= 0) { var b = (UIElement)btns[expandIdx]; if (Shown(b)) { Paint(Absolute(b) + new Vector2(44, -2)); LastState = "badge on the Memory tab"; } }
+                else if (active != MemoryCategory && Shown(main)) { Paint(Absolute(main) + new Vector2(44, -2)); LastState = "badge on the rail button"; }
             }
             catch (Exception e) { LastState = "error: " + e.Message; }
         }

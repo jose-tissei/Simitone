@@ -98,3 +98,7 @@ Built and checked in the running game (house 5, `simtool interact` + `convo talk
 ## Tab rail badge (2026-11-26)
 
 `Game/TabBadge.cs` (+ `Logic/TabBadgeLogic.cs`, 7 tests): an overlay kept on top of the screen finds the Memory button through the game's `UICategorySwitcher` (CatSwitchButtons / MainButton, by reflection) and draws the count of News stories of the Sim being played that the News tab has not shown yet: on the Memory button in the open rail, on the rail's main button otherwise. Checked in the game: "8" over the Memory tab; after the News tab showed the stories, `convo badge` -> "no unread". `simtool convo badge` reports what it is doing. Not done: the rail's text labels (native control); "seen" counts live in memory only, so every session starts with all stories unread.
+## Pie and badge follow-ups (2026-11-26)
+
+- Pie: tooltips now cover about 40 verbs (Sim-to-Sim actions and common object verbs), unit-tested; the head at the center has the design's white + mint ring (the head itself is the game's render, so the pink letter disc of the mock-up is not reproduced). Checked in the game (screenshot `pie-menu-night.png`).
+- Badge: hidden when the Live panel is closed or a modal is open (it used to float alone over the empty rail position).

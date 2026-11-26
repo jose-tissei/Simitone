@@ -216,6 +216,12 @@ namespace Conversations.Tests
             Assert.Equal("Start a conversation with Betty.", PieStyle.Tooltip("Talk...", "Betty"));
             Assert.Null(PieStyle.Tooltip("Talk...", ""));                       // a Sim verb on an object: nothing to say
             Assert.Equal("Walk to this spot.", PieStyle.Tooltip("Go Here", ""));
+            Assert.Equal("Kiss Betty.", PieStyle.Tooltip("Kiss - Peck", "Betty"));
+            Assert.Equal("Ask Betty to come over.", PieStyle.Tooltip("Invite", "Betty"));
+            Assert.Equal("Invite Betty downtown.", PieStyle.Tooltip("Invite Downtown", "Betty"));
+            Assert.Equal("Take a seat.", PieStyle.Tooltip("Sit", ""));
+            Assert.Equal("Play chess to build Logic.", PieStyle.Tooltip("Play Chess", ""));
+            Assert.Null(PieStyle.Tooltip("Kiss", ""));                           // a Sim verb with no Sim: nothing to say
             Assert.Equal("More choices: Zzz.", PieStyle.Tooltip("Zzz...", "Bob"));
             Assert.Null(PieStyle.Tooltip("Zzz", "Bob"));
         }
