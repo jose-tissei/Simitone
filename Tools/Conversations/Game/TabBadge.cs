@@ -68,6 +68,15 @@ namespace Simitone.Conversations
             return Prop(main, "Switcher");
         }
 
+        // the rail also exists in Buy, Build and Options mode, where the Memory tab is not part of it
+        static bool InLiveMode()
+        {
+            var frontend = Prop(UIScreen.Current, "Frontend");
+            var panel = Prop(frontend, "MainPanel") ?? Prop(UIScreen.Current, "MainPanel");
+            var mode = Prop(panel, "Mode");
+            return mode == null || Convert.ToInt32(mode) == 0;
+        }
+
         static VMAvatar ActiveAvatar()
         {
             var screen = UIScreen.Current;
@@ -113,6 +122,7 @@ namespace Simitone.Conversations
                 var btns = Prop(sw, "CatSwitchButtons") as System.Collections.IList;
                 var main = Prop(sw, "MainButton") as UIElement;
                 if (cats == null || btns == null || main == null) { LastState = "rail not ready"; return; }
+                if (!InLiveMode()) { LastState = "not in Live mode"; return; }
                 int active = (int)Prop(sw, "ActiveCategory");
                 int expandIdx = -1;
                 for (int i = 0, k = 0; i < cats.Count; i++)

@@ -10,7 +10,7 @@ for ($i = 1; $i -le $Rounds; $i++) {
     & $s until 4 'open=True' convo memory-ui status *> $null; if ($LASTEXITCODE) { $row += ' MEMORY-NOT-OPEN'; $fail++ } else { $row += ' memory-open' }
     & $s key esc | Out-Null
     & $s until 4 'open=False' convo memory-ui status *> $null; if ($LASTEXITCODE) { $row += ' MEMORY-STUCK'; $fail++ } else { $row += ' closed' }
-    & $s convo options | Out-Null
+    & $s click 277 971 | Out-Null   # the real Options button, no reset in between (a second click used to do nothing)
     & $s until 4 'inCurrentScreen=True' convo options diag *> $null; if ($LASTEXITCODE) { $row += ' OPTIONS-NOT-OPEN'; $fail++ } else { $row += ' options-open' }
     $d1 = (& $s convo options diag) -replace '.*draws=(\d+).*', '$1'; Start-Sleep -Milliseconds 400; $d2 = (& $s convo options diag) -replace '.*draws=(\d+).*', '$1'
     if ([int]$d2 -le [int]$d1) { $row += ' OPTIONS-NOT-DRAWN'; $fail++ }

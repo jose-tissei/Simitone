@@ -81,6 +81,32 @@ namespace Simitone.Conversations
         public static void BackToNeighborhood() { OnScreen("ReturnToNeighbourhood"); }
         public static void Quit() { OnScreen("CloseAttempt"); }
 
+        // The Options button only fires when the bottom panel CHANGES to Options mode. After the page is closed the panel would stay in
+        // Options mode (and the game stays paused), so the next click on the button did nothing: back to Live mode when the page closes.
+        public static void BackToLiveMode()
+        {
+            Try(() =>
+            {
+                var screen = UIScreen.Current;
+                var frontend = Member(screen, "Frontend");
+                var main = Member(frontend, "MainPanel") ?? Member(screen, "MainPanel");
+                if (main == null) return null;
+                var modeField = main.GetType().GetField("Mode");
+                var setMode = main.GetType().GetMethod("SetMode");
+                if (modeField == null || setMode == null) return null;
+                var live = Enum.ToObject(modeField.FieldType, 0);
+                if (!Equals(modeField.GetValue(main), live)) setMode.Invoke(main, new[] { live });
+                return null;
+            });
+        }
+
+        static object Member(object o, string name)
+        {
+            if (o == null) return null;
+            var p = o.GetType().GetProperty(name, Any); if (p != null) return p.GetValue(o, null);
+            var f = o.GetType().GetField(name, Any); return f != null ? f.GetValue(o) : null;
+        }
+
         static void OnScreen(string method)
         {
             Try(() =>
