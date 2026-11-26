@@ -242,6 +242,7 @@ namespace Simitone.Conversations
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " " + ParallelSocialDriver.Diagnostics() + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
                 case "htmlui": return a.Length > 1 && a[1] == "close" ? HtmlPanel.Close() : a.Length > 1 && a[1] == "status" ? HtmlPanel.Status() : HtmlPanel.Open(a.Length > 1 ? a[1] : "memory.html");
+                case "talksheet": return TalkSheetMenu.Command(a.Skip(1).ToArray());
                 case "memory-ui":
                 {
                     var sub = a.Length > 1 ? a[1].ToLowerInvariant() : "open";

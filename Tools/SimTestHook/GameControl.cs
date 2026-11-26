@@ -300,11 +300,18 @@ public static class GameControl
         try
         {
             CloseAlerts();
-            AnswerWaiting();
+            if (!SheetOpen()) AnswerWaiting();   // the mod's own Talk sheet is a dialog the VM waits on too: leave it to the test
             var vm = GetVM();
             if (AutoSpeed > 0 && vm.SpeedMultiplier <= 0 && vm.GlobalBlockingDialog == null) { vm.SpeedMultiplier = AutoSpeed; vm.LastSpeedMultiplier = 0; }
         }
         catch { }
+    }
+
+    static bool SheetOpen()
+    {
+        var t = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetType("Simitone.Conversations.TalkSheetMenu", false)).FirstOrDefault(x => x != null);
+        var v = t == null ? null : t.GetProperty("IsOpen")?.GetValue(null, null);
+        return v is bool && (bool)v;
     }
 
     // answers the dialog the simulation is waiting on (the first choice)

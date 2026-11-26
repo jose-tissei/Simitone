@@ -195,7 +195,7 @@ namespace Simitone.Conversations
                 if (dr == null) { pending.Remove(thread); return VMPrimitiveExitCode.GOTO_FALSE; }   // something else ended the wait
                 if (!dr.Responded && dr.WaitTime <= dr.Timeout) return VMPrimitiveExitCode.CONTINUE_NEXT_TICK;
                 thread.BlockingState = null;
-                p.Tone = dr.Responded ? (Tone)Math.Min(2, (int)dr.ResponseCode) : Tone.Gentle;
+                p.Tone = dr.Responded && dr.ResponseCode != TalkSheetMenu.NeverMind ? (Tone)Math.Min(2, (int)dr.ResponseCode) : Tone.Gentle;
                 pending.Remove(thread);
             }
 
@@ -300,8 +300,28 @@ namespace Simitone.Conversations
         }
 
         // ---- the three-way dialog, using the engine's own blocking-dialog path (so the clock stops and a click answers it) ----
+        // The Talk sheet in place of the engine dialog; the simulation stays blocked on the thread's VMDialogResult as ShowChoice does.
+        // False when the sheet cannot be shown: the caller then uses ShowChoice.
+        public static bool ShowSheet(VMStackFrame ctx, TalkSheetRequest r)
+        {
+            var vm = ctx.VM;
+            r.Vm = vm; r.Speaker = ctx.Caller;
+            if (!TalkSheetMenu.Open(r)) return false;
+            ctx.Thread.BlockingState = new VMDialogResult { Type = VMDialogType.YesNoCancel, HasDisplayed = true };
+            if (vm.TS1)
+            {
+                vm.GlobalBlockingDialog = ctx.Caller;
+                vm.LastSpeedMultiplier = vm.SpeedMultiplier;
+                vm.SpeedMultiplier = -2;
+            }
+            return true;
+        }
+
         static void ShowDialog(VMStackFrame ctx, Pending p, string key)
         {
+            var sheet = new TalkSheetRequest { SpeakerName = p.Speaker.Name, ListenerName = p.Listener.Name, Prompt = Pretty(key), Lines = true };
+            for (int i = 0; i < 3; i++) sheet.Rows.Add(new TalkRow { Title = p.SpeakerLines[i], Why = Names.ToneLabels[i] });
+            if (ShowSheet(ctx, sheet)) return;
             ShowChoice(ctx, Pretty(key),
                 "What do you say to " + p.Listener.Name + "?\n\n" +
                 Names.Label(Tone.Gentle) + ": \"" + p.SpeakerLines[0] + "\"\n" +

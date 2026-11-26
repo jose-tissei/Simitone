@@ -1,0 +1,57 @@
+<html>
+<body>
+<div class="dlg" style="width: 960px; height: {{height}}px;">
+  <div class="head">
+    <div class="avatar" style="background-color: var(--sim-1); width: 40px; height: 40px; border-radius: 20px;">{{letter}}</div>
+    <span>{{title}}</span>
+    <span class="spacer"></span>
+    <div class="ibtn" data-action="close" aria-label="Close"><span class="ic s24 i-close"></span></div>
+  </div>
+
+  <div style="flex-direction: column; gap: 14px; padding: 20px 40px 8px 40px; flex-grow: 1; flex-shrink: 1;">
+    <span class="t-body">{{prompt}}</span>
+
+    <!--#each rows-->
+    <div class="srow<!--#if on--> on<!--/if-->" data-action="pick-{{#}}">
+      <div class="dot"><span>{{num}}</span></div>
+      <span>{{title}}</span>
+      <span class="spacer"></span>
+      <!--#if hasWhy--><div class="chip"><span>{{why}}</span></div><!--/if-->
+    </div>
+    <!--/each-->
+
+    <!--#if showText-->
+    <div class="search" data-action="focus-text">
+      <span class="ic s20 i-pencil"></span>
+      <!--#if textEmpty--><span class="muted">Or say something in your own words...</span><!--#else--><span>{{text}}</span><!--/if-->
+    </div>
+
+    <div style="flex-direction: row; align-items: center; gap: 16px;">
+      <span class="t-over">Tone</span>
+      <div class="seg"><!--#each tones--><div class="opt<!--#if on--> on<!--/if-->" data-action="tone-{{key}}"><span>{{label}}</span></div><!--/each--></div>
+      <span class="spacer"></span>
+      <!--#if hasAdvice--><!--#if advicePositive--><div class="chip good"><span class="ic s16 i-check"></span><span>{{advice}}</span></div><!--#else--><div class="chip warn"><span class="ic s16 i-alert"></span><span>{{advice}}</span></div><!--/if--><!--/if-->
+    </div>
+    <!--/if-->
+
+    <!--#if hasHint-->
+    <div class="card" style="flex-direction: row; align-items: center; gap: 16px;">
+      <span class="ic s24 i-bulb"></span>
+      <span class="t-body" style="flex-shrink: 1; flex-grow: 1;">{{hint}}</span>
+      <!--#if canOpenMemory--><div class="btn" data-action="memory"><span>Open memory</span></div><!--/if-->
+    </div>
+    <!--/if-->
+  </div>
+
+  <div class="foot">
+    <div style="flex-direction: row; align-items: center; gap: 10px;">
+      <div class="key"><span>1</span></div><div class="key"><span>2</span></div><div class="key"><span>3</span></div><span>{{pickLabel}}</span><div class="key"><span>Esc</span></div><span>never mind</span>
+    </div>
+    <div style="flex-direction: row; align-items: center; gap: 14px;">
+      <div class="btn" data-action="never"><span>Never mind</span></div>
+      <div class="btn primary" data-action="say"><span>{{sayLabel}}</span></div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

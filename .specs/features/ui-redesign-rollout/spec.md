@@ -9,8 +9,8 @@ Sources: `docs/ui-redesign/UI-GUIDE.md` (section 3 screen map), `Tools/HtmlUi/RE
 | ID | Component | Where it lives today | How it is drawn | Guide screen | Status |
 |---|---|---|---|---|---|
 | UI-01 | Sim Memory dossier + News | `Game/SimMemoryMenu.cs`, `Logic/SimMemoryPageData.cs`, `ui/sim_memory.html` | HtmlSurface | Sim Memory modal L | **Done** |
-| UI-02 | Tone dialog (3 lines to say) | `Game/ConvoPrimitive.cs` `ShowDialog` / `ShowChoice` | The engine's native Yes/No/Cancel `VMDialogInfo` (title, message text, 3 buttons) | Talk sheet (tone + lines) | To do |
-| UI-03 | Talk subject dialog (3 AI subjects) | `Game/ConvoTalk.cs` line 170, same `ShowChoice` | Native dialog, subjects as button text | Talk sheet (subjects with "why", free text, tone, memory hint) | To do |
+| UI-02 | Tone dialog (3 lines to say) | `Game/TalkSheetMenu.cs` (lines variant), `ConvoPrimitive.ShowSheet` | HtmlSurface sheet; answers the VM's dialog with `VMNetDialogResponseCmd` | Talk sheet (tone + lines) | **Done** (2026-11-26), native dialog is the fallback |
+| UI-03 | Talk subject dialog (3 AI subjects) | `Game/TalkSheetMenu.cs`, `Logic/TalkSheetPageData.cs`, `ui/talk_sheet.html` | HtmlSurface sheet: subjects with "why", free text, tone with advice, memory hint, keys 1-3 / Enter / Esc | Talk sheet | **Done** (2026-11-26); typed words become the line, Laya picks the row they are about |
 | UI-04 | Speech balloons (two lines over the Sims) | `Game/ConvoOverlay.cs` | HtmlSurface painter, tokens, tail | Not in the guide's map; needs the tokens, 16 px text, tail | **Done** (96a7faf) |
 | UI-05 | Pie menu "Talk" / "Romance" bubbles | `Game/ConvoPieMenu.cs` (filter only), `Logic/PieMenuLogic.cs` | The game's native pie menu; we only change which entries show | Pie menu (6-8 slots on an ellipse, icon + label, "..." for submenus) | **Done** as an overlay (orbit, border/lip/shadow, hover, tooltip for ~13 verbs, submenu, back) |
 | UI-06 | Memory tab in the Live panel and Sim switcher | `Boot.OpenLiveMemoryTab` (reflection into `MainPanel.Switcher`, tab 5) | Native tab rail | Labelled tab rail with unread badge on Memory | To do, native |
@@ -78,7 +78,7 @@ Gap 1 and gap 3 are read from our own code only; I have not read how the game cl
 **Done and verified in the running game (screenshots in `docs/ui-redesign/screenshots/`):** UI-01 Sim Memory (now household-only "Memory of", Known Sims search, News filter and "Show more"), UI-04 balloons, UI-07, UI-09 full Options page reached from the game's Options button, UI-05 pie menu, theme setting (night/day), engine-wide smoothing (anti-aliased rounded corners, rings, tails, round dots, area-averaged icons, 8x multisampled Sim head, rounded gradient headers) with a unit test that new UI never draws shapes by hand. `ui-redesign-check`: 2 pages, 0 errors.
 
 **Not done:**
-- UI-02 and UI-03 Talk sheet: the Talk topic and tone choices are still the engine's native dialog (seen in the game on 2026-11-25). Spike says it is replaceable with no IL patch (see Spike results). Free text and Laya classification (UIR-06) not specified yet. Highest value, riskiest.
+- ~~UI-02 and UI-03 Talk sheet~~: done 2026-11-26 (see Status below).
 - UI-06 tab rail badge/labels: native, untouched.
 - UI-08 gossip toast: decision pending; News covers it for now.
 - Guide screens never started: Buy/Build flyout, Hood side rails, HUD overlays (needs value readout, tooltips), contained dialog card for native dialogs.
@@ -88,3 +88,10 @@ Gap 1 and gap 3 are read from our own code only; I have not read how the game cl
 **Not verified:** day theme in the game after the smoothing work (preview only); the new Options buttons Save / Neighborhood / Quit / anti-aliasing / lighting were not clicked in the game; page is 960x800 while the design differs; tooltips cover ~13 pie verbs only; round avatar disc in the pie is missing; UIR-02 screenshots exist for Memory, Options, balloons and pie only.
 
 **Merge state:** all of the above is on `fork/master` (1f93abb). The Laya branch (`laya-autonomous-sim-social`) does not contain it yet; the modded install (`the-sims-play`) runs an older merged build.
+## Talk sheet (2026-11-26)
+
+Built and checked in the running game (house 5, `simtool interact` + `convo talksheet`): `Game/TalkSheetMenu.cs`, `Logic/TalkSheetPageData.cs` (16 unit tests), `ui/talk_sheet.html`, screenshots `talk-sheet-night.png` and `talk-sheet-lines-night.png`.
+- The simulation stays blocked on the thread's `VMDialogResult` exactly as with the native dialog; the sheet answers with the same `VMNetDialogResponseCmd` (code = row 0..2, `ResponseText` = `<tone>|<words>`). `ConvoPrimitive.ShowSheet` falls back to the native `ShowChoice` when the page is missing (UIR-03). `autodialog` in the test hook leaves the sheet alone.
+- Talk: three subject rows with a reason chip (what the speaker knows of the listener's taste, or "New topic"), a free-text field, tone (Gentle/Playful/Bold) with "works well" advice from SocialMemory, a memory hint with "Open memory", keys 1-3 / Enter / Esc. Verified: pick row 2 + tone Bold + own words -> `decision: talk about <row 2> ... "<own words>"`; Esc ("Never mind") closes it, the clock resumes, no conversation is recorded and the Sim is idle.
+- Three lines (Hug etc.): same sheet without tone, text or memory; picking a row answers at once. Verified: picking line 2 -> `decision: hug Playful ... "<line 2>"`.
+- Free text: Laya (`ScoreChoices`) reads which offered topic the words are about (kept row if no clear match, 0.5); the words are what the Sim says. Not verified in the game: Laya reassigning the row (offline classification only exercised through the unit-level logic), keyboard typing with a real keyboard (tested through the hook's text path), day theme of the sheet beyond one screenshot, and the sheet under the pie / other modals.
