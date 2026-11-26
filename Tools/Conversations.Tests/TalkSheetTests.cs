@@ -73,4 +73,11 @@ public class TalkSheetTests
         Assert.Equal("Joke", d["title"]); Assert.Equal("What do you say to Betty?", d["prompt"]);
         Assert.False((bool)d["showTone"]); Assert.False((bool)d["showText"]); Assert.False((bool)d["canOpenMemory"]); Assert.False((bool)d["hasHint"]);
     }
+
+    [Theory]
+    [InlineData(13, 0, 13)] [InlineData(13, 13, 0)] [InlineData(5, 9, 0)] [InlineData(0, 0, 0)] [InlineData(14, 13, 1)]
+    public void BadgeCountsOnlyStoriesNotShownYet(int total, int shown, int expected) { Assert.Equal(expected, TabBadgeLogic.Unread(total, shown)); }
+
+    [Fact]
+    public void BadgeLabelCapsAtNinetyNinePlus() { Assert.Equal("7", TabBadgeLogic.Label(7)); Assert.Equal("99+", TabBadgeLogic.Label(100)); }
 }

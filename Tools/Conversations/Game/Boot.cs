@@ -149,6 +149,7 @@ namespace Simitone.Conversations
             try { ParallelSocialDriver.OnTick(vm); }
             catch (Exception e) { Log("parallel tick error: " + e.GetType().Name + ": " + e.Message); }
             PieOverlay.Ensure();
+            TabBadge.Ensure();
         }
 
         public static List<VMPieMenuInteraction> FilterPieMenu(List<VMPieMenuInteraction> raw, VMEntity target, VM vm, VMEntity caller)
@@ -242,6 +243,7 @@ namespace Simitone.Conversations
                 case "parallel": return "count=" + ParallelSocialDriver.TotalExchanges + " " + ParallelSocialDriver.Diagnostics() + " last=[" + ParallelSocialDriver.LastParallelDecision + "]";
                 case "memory": return "pairs=" + Memory.PairCount + " [" + Memory.Summary() + "]";
                 case "htmlui": return a.Length > 1 && a[1] == "close" ? HtmlPanel.Close() : a.Length > 1 && a[1] == "status" ? HtmlPanel.Status() : HtmlPanel.Open(a.Length > 1 ? a[1] : "memory.html");
+                case "badge": return "badge=" + TabBadge.LastState;
                 case "talksheet": return TalkSheetMenu.Command(a.Skip(1).ToArray());
                 case "memory-ui":
                 {
