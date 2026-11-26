@@ -40,3 +40,14 @@ S1 = root cause. S2/S3/S5 rejected as the cause (pie and badge recovered with S1
 - Real clicks on the Options button, 5 cycles: shown, drawn (draws counter rising), Esc closes, reopens.
 - `Tools\Soak-Menus.ps1`: 4 rounds of Memory tab (real Switcher path) + Options open/close, then the pie still drawn by the overlay ("new slots=1") and the badge back. Re-run it after any UI change.
 - Not verified: a screen swap (lot -> neighbourhood -> lot) with a page open; the Memory tab via a real mouse click (the rail icon positions need a hit-test; the Select(5) path was exercised through the hook).
+
+## Second cause, found while verifying in "Simitone (Modded)" (2026-11-26)
+After the Options page closed, the bottom panel stayed in Options mode (and the game stayed paused). The Options button only fires when the mode CHANGES, so the next click did nothing.
+My earlier soak clicked the Live button between cycles and so hid it. Fix: `GameBridge.BackToLiveMode()` on Options close. The soak now clicks the Options button repeatedly with no reset.
+The badge also showed on the Options-mode rail; it now only draws in Live mode.
+
+## Verification results (all four open items)
+- Neighbourhood round trip with Memory open: Memory reopened and drew afterwards; save file hash unchanged (answered "No"). Caveat: the neighbourhood is the same TS1GameScreen object, so this is not a swap to a different screen object.
+- Real click on the Memory rail icon (the NEWS icon at the top of the rail, not the masks, which are Needs): 4/4 opened, Esc closed.
+- Soak against the old code (7076ce4 + diagnostics only): FAILED with 7 problems (OPTIONS-STUCK, MEMORY-STUCK, OPTIONS-NOT-DRAWN, pie "idle (modal open)"); against the fix: OK.
+- Modded install (house 7, real clicks): Options opened on click 1, but clicks 2 and 3 did nothing = the second cause above.

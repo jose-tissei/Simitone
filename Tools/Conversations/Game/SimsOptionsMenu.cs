@@ -46,6 +46,7 @@ namespace Simitone.Conversations
         public static string Close()
         {
             ModalHost.Detach(instance);
+            GameBridge.BackToLiveMode();
             return "closed";
         }
 
