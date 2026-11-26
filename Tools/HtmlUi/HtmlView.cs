@@ -24,6 +24,7 @@ namespace Simitone.HtmlUi
         public bool Bold, Upper, HasGradient, GradHorizontal;
         public bool Clip;              // overflow hidden/auto/scroll: children that do not fully fit inside are not drawn (the painters have no scissor)
         public Rgba GradA, GradB;
+        public Rgba ShadowColor; public float ShadowX, ShadowY, ShadowBlur;   // box-shadow (the first, outer one): a hard lip when the blur is 0, else a few soft layers
         public int Icon = -1;          // cell of the icon sheet, -1 when this is not an icon
         public float X, Y, W, H;       // absolute, in view space
     }
@@ -191,11 +192,46 @@ namespace Simitone.HtmlUi
                 return;
             }
             bool border = b.BorderWidth > 0 && b.BorderColor.Visible;
+            if (b.ShadowColor.Visible) PaintShadow(p, b);
             if (b.HasGradient) p.FillGradientCorners(b.X, b.Y, b.W, b.H, b.GradA, b.GradB, b.GradHorizontal, b.Radius, b.RadiusBottom);
             else if (b.Background.Visible) p.FillRectCorners(b.X, b.Y, b.W, b.H, b.Background, b.Radius, b.RadiusBottom);
             if (border) p.StrokeRect(b.X, b.Y, b.W, b.H, b.BorderColor, b.BorderWidth, b.Radius);
             if (b.Icon >= 0) p.DrawIcon(b.Icon, b.X, b.Y, Math.Min(b.W, b.H), b.Color);
             foreach (var c in b.Children) { if (b.Clip && !Fits(b, c)) continue; PaintBox(p, c); }
+        }
+
+        static void PaintShadow(IPainter p, Box b)
+        {
+            if (b.ShadowBlur <= 0) { p.FillRectCorners(b.X + b.ShadowX, b.Y + b.ShadowY, b.W, b.H, b.ShadowColor, b.Radius, b.RadiusBottom); return; }
+            // no blur in the engine: stacked, growing translucent layers (each layer adds its alpha where they overlap, so the core is darkest)
+            const int layers = 5;
+            var c = b.ShadowColor; c.A = (byte)Math.Max(1, c.A * 2 / (layers + 1));
+            for (int i = layers; i >= 1; i--)
+            {
+                float g = b.ShadowBlur * i / layers * 0.5f;
+                p.FillRectCorners(b.X + b.ShadowX - g, b.Y + b.ShadowY - g, b.W + 2 * g, b.H + 2 * g, c, b.Radius + g, b.RadiusBottom + g);
+            }
+        }
+
+        // "0 4px 0 #0a7", "0 12px 36px rgba(0, 0, 0, .45)": offset x, offset y, blur, colour; only the first outer shadow is used
+        static void ParseShadow(Box b, string css)
+        {
+            if (string.IsNullOrWhiteSpace(css) || css.Trim() == "none") return;
+            var first = new System.Text.StringBuilder(); int depth = 0;
+            foreach (char ch in css) { if (ch == '(') depth++; else if (ch == ')') depth--; if (ch == ',' && depth == 0) break; first.Append(ch); }
+            var parts = new List<string>(); var cur = new System.Text.StringBuilder(); depth = 0;
+            foreach (char ch in first.ToString().Trim())
+            {
+                if (ch == '(') depth++; else if (ch == ')') depth--;
+                if (ch == ' ' && depth == 0) { if (cur.Length > 0) parts.Add(cur.ToString()); cur.Clear(); } else cur.Append(ch);
+            }
+            if (cur.Length > 0) parts.Add(cur.ToString());
+            if (parts.Count == 0 || parts.Contains("inset")) return;
+            var nums = new List<float>(); string colour = null;
+            foreach (var t in parts) { float v; if (float.TryParse(t.Replace("px", ""), NumberStyles.Float, CultureInfo.InvariantCulture, out v)) nums.Add(v); else colour = t; }
+            if (colour == null || nums.Count < 2) return;
+            b.ShadowX = nums[0]; b.ShadowY = nums[1]; b.ShadowBlur = nums.Count > 2 ? nums[2] : 0;
+            b.ShadowColor = Color(colour, new Rgba(0, 0, 0, 0));
         }
 
         // ---- CSS to Yoga ----
@@ -243,6 +279,7 @@ namespace Simitone.HtmlUi
             b.Bold = fw == "bold" || fw == "bolder" || (int.TryParse(fw, out wv) && wv >= 600);
             float lh = parent != null ? parent.LineHeight : 0; Dim(cs.GetPropertyValue("line-height"), (v, pct) => lh = v); b.LineHeight = lh;
             var tt = cs.GetPropertyValue("text-transform"); b.Upper = tt.Length > 0 ? tt == "uppercase" : (parent != null && parent.Upper);
+            ParseShadow(b, cs.GetPropertyValue("box-shadow"));
             var bg = cs.GetPropertyValue("background-image"); if (bg.Length == 0) bg = cs.GetPropertyValue("background");
             if (bg.StartsWith("linear-gradient")) ParseGradient(b, bg);
         }

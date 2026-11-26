@@ -93,3 +93,15 @@ body { width: 100%; height: 100%; display: flex; align-items: center; justify-co
 
 /* search field: a typed-into box (the page only shows the text; the window feeds the keys) */
 .search { flex-direction: row; align-items: center; gap: 10px; min-height: 48px; padding-left: 14px; padding-right: 14px; border-radius: var(--r-pill); background-color: var(--track); border: 2px solid var(--line-strong); color: var(--text); font-size: 18px; font-weight: 600; }
+
+/* depth, as in the design: a hard lip under pressable things, a soft lift under panels (box-shadow: x y blur colour; outer shadows only) */
+.dlg { box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5); }
+.btn { box-shadow: 0 4px 0 var(--pill-edge); }
+.btn.primary { box-shadow: 0 4px 0 var(--accent-deep); }
+.btn.quit { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.35); }
+.ibtn { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.35); }
+.tab.on { box-shadow: 0 3px 0 var(--accent-deep); }
+.seg .opt.on { box-shadow: 0 3px 0 var(--accent-deep); }
+.tile .fr { box-shadow: 0 4px 0 rgba(0, 0, 0, 0.3); }
+.sw .knob { box-shadow: 0 2px 0 rgba(0, 0, 0, 0.3); }
+.card { box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18); }
