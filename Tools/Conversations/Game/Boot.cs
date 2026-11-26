@@ -202,7 +202,7 @@ namespace Simitone.Conversations
 
         public static void OpenMemoryMenu()
         {
-            try { SimMemoryMenu.Open(null); }
+            try { var r = SimMemoryMenu.Open(null); Log("memory tab: open requested -> " + (r.Length > 40 ? r.Substring(0, 40) : r)); }
             catch (Exception e) { Log("memory menu error: " + e.Message); }
         }
 
@@ -303,6 +303,7 @@ namespace Simitone.Conversations
                 case "theme": if (a.Length > 1) Theme = a[1]; return "theme=" + Theme;
                 case "options":
                     if (a.Length > 1 && a[1] == "close") return SimsOptionsMenu.Close();
+                    if (a.Length > 1 && a[1] == "diag") return SimsOptionsMenu.Diagnose();
                     if (a.Length > 1 && a[1] == "click") return SimsOptionsMenu.Act(a.Length > 2 ? a[2] : "");
                     return SimsOptionsMenu.Open();
                 case "interaction": ParallelSocialPlanner.ForcedInteraction = a.Length > 1 && a[1] != "off" ? a[1] : null; return "forced interaction=" + (ParallelSocialPlanner.ForcedInteraction ?? "none");

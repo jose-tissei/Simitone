@@ -16,7 +16,7 @@ namespace Simitone.Conversations
         bool prevEsc = true;
         public static string LastAction = "";
 
-        public static bool IsOpen { get { return instance != null && instance.Parent != null; } }
+        public static bool IsOpen { get { return ModalHost.IsShown(instance); } }
 
         public static string Open(string file)
         {
@@ -29,7 +29,7 @@ namespace Simitone.Conversations
                 instance.page = file;
                 instance.surface = new HtmlSurface(instance, file);
                 instance.surface.Action += a => { LastAction = a; if (a == "close") Close(); };
-                if (instance.Parent != screen) { if (instance.Parent != null) instance.Parent.Remove(instance); screen.Add(instance); }
+                ModalHost.Show(instance);
                 instance.surface.IgnoreCurrentClick(); instance.prevEsc = true;
                 return Status();
             }
@@ -38,7 +38,7 @@ namespace Simitone.Conversations
 
         public static string Close()
         {
-            if (instance != null && instance.Parent != null) instance.Parent.Remove(instance);
+            ModalHost.Detach(instance);
             return "closed";
         }
 

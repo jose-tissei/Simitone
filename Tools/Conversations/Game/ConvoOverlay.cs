@@ -38,12 +38,7 @@ namespace Simitone.Conversations
                 if (screen == null) return;
                 LastPlacement = "none";   // set again when the balloons are drawn
                 if (instance == null) instance = new ConvoOverlay();
-                if (instance.Parent != screen)
-                {
-                    if (instance.Parent != null)
-                        instance.Parent.Remove(instance);
-                    screen.Add(instance);
-                }
+                ModalHost.Show(instance);   // also after a screen change
                 instance.Add(vm, speaker, speakerName, line, listener, listenerName, reply);
             }
             catch (Exception e) { Boot.Log("overlay: " + e.Message); }
