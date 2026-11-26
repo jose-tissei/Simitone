@@ -39,7 +39,7 @@ namespace Simitone.Conversations
         string lastKey = "";
         bool prevEsc = true, prevEnter = true;
 
-        public static bool IsOpen { get { return instance != null && instance.Parent != null && instance.req != null; } }
+        public static bool IsOpen { get { return ModalHost.IsShown(instance) && instance.req != null; } }
 
         TalkSheetMenu()
         {
@@ -60,7 +60,7 @@ namespace Simitone.Conversations
                 if (SimsOptionsMenu.IsOpen) SimsOptionsMenu.Close();
                 if (instance == null) instance = new TalkSheetMenu();
                 instance.req = r; instance.selected = 0; instance.tone = r.Tone ?? "gentle"; instance.text.Clear(); instance.lastKey = "";
-                if (instance.Parent != screen) { if (instance.Parent != null) instance.Parent.Remove(instance); screen.Add(instance); }
+                ModalHost.Show(instance);
                 instance.surface.IgnoreCurrentClick(); instance.prevEsc = true; instance.prevEnter = true;
                 return true;
             }
@@ -69,7 +69,7 @@ namespace Simitone.Conversations
 
         public static void Close()
         {
-            if (instance != null && instance.Parent != null) instance.Parent.Remove(instance);
+            ModalHost.Detach(instance);
         }
 
         public static string Status()

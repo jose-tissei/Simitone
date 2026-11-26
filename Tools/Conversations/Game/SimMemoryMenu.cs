@@ -49,7 +49,7 @@ namespace Simitone.Conversations
         bool prevLeftDown, prevEscDown;
         int prevScrollWheel;
 
-        public static bool IsOpen { get { return isOpen && instance != null; } }
+        public static bool IsOpen { get { return isOpen && ModalHost.IsShown(instance); } }
 
         // simtool: show the news side (true) or the dossier side (false) of an open menu
         public static string SetNews(bool on) { if (instance == null) return "closed"; instance.showNews = on; instance.htmlDirty = true; return Status(); }
@@ -68,11 +68,7 @@ namespace Simitone.Conversations
                 var screen = UIScreen.Current;
                 if (screen == null) return "no screen";
                 if (instance == null) instance = new SimMemoryMenu();
-                if (instance.Parent != screen)
-                {
-                    if (instance.Parent != null) instance.Parent.Remove(instance);
-                    screen.Add(instance);
-                }
+                ModalHost.Show(instance);
                 isOpen = true;
                 instance.Visible = true;
                 // Ignore the mouse/key press that triggered Open() so clicking Options -> Sim memory never instantly closes it
@@ -104,7 +100,7 @@ namespace Simitone.Conversations
                 if (instance != null)
                 {
                     instance.Visible = false;
-                    if (instance.Parent != null) instance.Parent.Remove(instance);
+                    ModalHost.Detach(instance);
                 }
                 return "closed";
             }

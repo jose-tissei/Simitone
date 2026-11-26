@@ -17,7 +17,7 @@ namespace Simitone.Conversations
         bool prevEsc = true, prevLeft = true;
         string lastKey = "";
 
-        public static bool IsOpen { get { return instance != null && instance.Parent != null; } }
+        public static bool IsOpen { get { return ModalHost.IsShown(instance); } }
 
         SimsOptionsMenu()
         {
@@ -35,7 +35,7 @@ namespace Simitone.Conversations
                 if (screen == null) return "no screen";
                 if (!File.Exists(Path.Combine(Boot.GameDir, "Content", "ui", "sims_options.html"))) return "missing sims_options.html";
                 if (instance == null) instance = new SimsOptionsMenu();
-                if (instance.Parent != screen) { if (instance.Parent != null) instance.Parent.Remove(instance); screen.Add(instance); }
+                ModalHost.Show(instance);
                 instance.surface.IgnoreCurrentClick(); instance.prevEsc = true; instance.prevLeft = true;
                 instance.lastKey = "";
                 return Status();
@@ -45,8 +45,18 @@ namespace Simitone.Conversations
 
         public static string Close()
         {
-            if (instance != null && instance.Parent != null) instance.Parent.Remove(instance);
+            ModalHost.Detach(instance);
             return "closed";
+        }
+
+        static int draws, updates;
+
+        // why an "open" page might not be on screen: is it in the live screen, visible, being drawn and updated
+        public static string Diagnose()
+        {
+            var screen = UIScreen.Current;
+            return "inCurrentScreen=" + ModalHost.IsShown(instance) +
+                   " visible=" + (instance != null && instance.Visible) + " draws=" + draws + " updates=" + updates;
         }
 
         public static string Status()
@@ -84,6 +94,7 @@ namespace Simitone.Conversations
         public override void Update(UpdateState state)
         {
             base.Update(state);
+            updates++;
             if (!IsOpen) return;
             bool esc = state.KeyboardState.IsKeyDown(Keys.Escape);
             if (esc && !prevEsc) { prevEsc = true; Close(); return; }
@@ -98,6 +109,7 @@ namespace Simitone.Conversations
         public override void Draw(UISpriteBatch batch)
         {
             if (!IsOpen) return;
+            draws++;
             string laya = Boot.Laya.Available ? "up" : (Boot.Laya.Configured ? "paused" : "off");
             string mode = GameBridge.ViewMode; bool aa = GameBridge.AaOn, light = GameBridge.LightOn;
             var data = AiSettingsPageData.Build(Boot.Enabled, Boot.GossipEnabled, !Boot.FullMenu, Boot.Theme == "day", laya, mode, aa, light, GameBridge.HasView);

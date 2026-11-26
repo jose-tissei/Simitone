@@ -10,19 +10,21 @@ static class ConvoLoader
 {
     static Type boot, early;
     static bool looked;
+    static int attempts;   // a failed load is retried a few times instead of leaving every menu dead for the whole session
 
     public static bool Installed { get { return File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Conversations.dll")); } }
 
     static void Look()
     {
-        if (looked) return;
-        looked = true;
+        if (looked || attempts >= 5) return;
+        attempts++;
         try
         {
             if (!File.Exists(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Conversations.dll"))) return;
             var asm = Assembly.Load("Conversations");   // default load context: the same assembly the patched game code calls into
             boot = asm.GetType("Simitone.Conversations.Boot");
             early = asm.GetType("Simitone.Conversations.Early");
+            looked = boot != null;
         }
         catch (Exception e) { Diag("conversations load failed: " + e.GetType().Name + ": " + e.Message); }
     }
